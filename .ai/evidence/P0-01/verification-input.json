@@ -5,68 +5,68 @@
         "command": "just verify",
         "exit_status": 0,
         "canonical": true,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
         "environment": "Linux (Claude Code on the web container), pinned tools from toolchains/dev-tools.lock on PATH, DATABASE_URL and SQLX_OFFLINE from the committed .env, CARGO_BUILD_JOBS=2.",
         "summary": "All 8 recipes passed (15 commands). cargo fmt, clippy -D warnings, sqlx prepare --check, cargo nextest (3 tests run, 3 passed, 0 skipped), doctests, tests/guards/run.sh (78 passed, 0 failed), cargo deny and cargo audit, every repository guard, and typos."
       },
       {
         "command": "pwsh -NoProfile -File scripts/verify.ps1 -Scope Full",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
         "environment": "Portable PowerShell 7.4.6 on Linux, not Windows.",
         "summary": "All checks passed. This is not the merge-authoritative Windows run (DR-A3); the windows-authoritative CI job on this PR is that evidence."
       },
       {
         "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
         "summary": "A fresh clone compiles offline against the committed .sqlx cache."
       },
       {
         "command": "./scripts/check-traceability.sh origin/main",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
-        "summary": "All 264 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
+        "summary": "All 267 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
       },
       {
         "command": "bash tests/guards/run.sh",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
         "summary": "78 passed, 0 failed (54 at 3823478; the new cases cover the authority-sync retarget, the P<phase>-NN traceability IDs, evidence-claims selection and immutability, R4-1 and R4-2, each verified to fail against the old script)."
       },
       {
         "command": "./scripts/check-authority-sync.sh",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
         "summary": "engine-spec.md and docs/00-meta/specs/engine-spec.md are byte-identical."
       },
       {
-        "command": "cd reference/python && python3 tools/verify_manifest.py",
+        "command": "cd reference/python && python3 tools/verify_manifest.py && python3 tools/verify_manifest.py --upstream <cautious-nevermore clone>",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
-        "summary": "105 rows: 103 verbatim, 2 patched (P1, P2); every hash matches."
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
+        "summary": "105 rows: 102 verbatim, 3 patched (P1, P2 and correction-ledger entry L0); every hash matches, and with --upstream every patch, the binary L0 patch included, re-applies to the cautious-nevermore@59bce1d bytes."
       },
       {
         "command": "cd reference/python && OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m pytest",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
-        "environment": "Linux, CPython 3.11.15, a venv installed from requirements.txt -c requirements.lock. Run on a65aa6f; reference/python/ is identical at the final commit (git diff a65aa6f..final -- reference is empty).",
-        "summary": "446 passed in 148.51 s; isolation guard: 0 violations. Same node IDs as the cautious-nevermore@59bce1d baseline."
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
+        "environment": "Linux, CPython 3.11.15, a venv installed from requirements.txt -c requirements.lock; OPENBLAS_CORETYPE unset, so tools/pytest_platform_pin.py set it to Haswell before NumPy loaded (reported in the session header).",
+        "summary": "446 passed in 137.62 s; isolation guard: 0 violations; platform pin: CPython 3.11, OPENBLAS_CORETYPE=Haswell. The plugin refuses OPENBLAS_CORETYPE=SkylakeX and CPython 3.12 with a usage error (checked on the L0 working tree)."
       },
       {
         "command": "typos",
         "exit_status": 0,
-        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
-        "summary": "Clean. Oracle identifiers and two spec terms (GAM, Tung) are allowlisted; the 22 verbatim copies are excluded by exact path (ADR-011 guard table)."
+        "run_against_commit": "ee4a7e411050fb4c4ed97b642b19e2daf8f1aacb",
+        "summary": "Clean. Oracle identifiers and two spec terms (GAM, Tung) are allowlisted; the 22 verbatim copies and the binary L0 patch are excluded by exact path (ADR-011 guard table)."
       }
     ],
     "note": "Populated from actual runs on the final content commit. A command that was not executed is never recorded as passing. The Windows run and the reference-oracle run on ubuntu-latest are CI evidence on the pull request, not claimed here."
   },
   "review": {
-    "reviewer_type": "none yet",
-    "reviewer": "A fresh-context adversarial review of P0-01 has not been performed. It is required before merge (engine-spec §7.11, §12.9).",
-    "reviewed_commit": null,
-    "verdict": "not reviewed"
+    "reviewer_type": "independent adversarial agents, fresh context (not the implementer); one round, three lenses",
+    "reviewer": "Spec fidelity, technical accuracy against the reference oracle, and cross-document consistency and hygiene; read-only.",
+    "reviewed_commit": "f3fb390",
+    "verdict": "26 findings: 0 blockers, 9 major, 17 minor. All 26 dispositioned as fixed (docs/06-sessions/review-P0-01-adversarial-round1.md). A verification round over the fixes has not been run."
   },
   "human_approvals": {
     "required": [
@@ -76,22 +76,23 @@
       "Merge reviewer: final diff and this evidence bundle; merge with a merge commit, never squash, so PR #1's attested commit 8d43203 stays reachable (DR-A6)"
     ],
     "obtained": [
-      "2026-10-01, in session: asked which language the consolidated engine should be built in, the owner chose 'Rust target + Python reference' (keep the Rust workspace trimmed to engine crates; import the Python engine under reference/python/ as the executable oracle; rewrite the specs engine-only)"
+      "2026-10-01, in session: asked which language the consolidated engine should be built in, the owner chose 'Rust target + Python reference'.",
+      "2026-10-08, in session, in writing: \"I approve DR-D31 option 1: regenerate the Layer C golden under Python 3.11 with the Haswell pin, recorded as ledger entry LO\" (L0). This is the Statistical owner's approval of correction-ledger entry L0 (reference/python/PARITY.md (b))."
     ],
-    "note": "A ruling on a question is not a review of a diff. No role-scoped sign-off on this diff has been obtained."
+    "note": "Rulings on questions are not a review of the diff. No role-scoped sign-off on this diff has been obtained; the A-decisions, ADR-011 and ADR-012 await the owner's merge comment, and DR-A10 the licence ruling."
   },
   "known_limitations": [
     "ai-toolchain.lock model and harness-version identity are 'unrecorded' for P0-01, a deviation from engine-spec §8.20: the implementing agent's harness policy forbids writing model identifiers into repository artifacts.",
     "The branch name was assigned by the harness (claude/grid-engine-consolidation-e7kmh9), not wp/P0-01-… (ADR-001 D1 convention).",
     "No agent budget was declared (engine-spec §8.18.1).",
     "Windows is unproven: the chain ran under pwsh on Linux only; the first windows-authoritative CI run is the evidence.",
-    "The runner's Python is unproven: ubuntu-latest's python3 has not been checked against the lock (verified on 3.11.15); the first reference-oracle CI run is the evidence.",
+    "The runner's Python is pinned but unproven on this commit: the job uses the image's tool-cache CPython 3.11 and the Haswell pin; its first run on this PR head is the evidence.",
     "Contracts and model specs are drafts with unapproved equations; B, C and D decisions are proposed or open.",
-    "The reference oracle is legacy-59bce1d with known defects (KI-NEW-Y0 first); no correction-ledger entry is applied.",
-    "Guard residuals (ADR-011): the R4-1 behaviour change for non-regular paths; the R4-2 gaps (pipes, construct keywords); the traceability rename gap."
+    "Guard residuals (ADR-011): the R4-1 behaviour change for non-regular paths; the R4-2 gaps (pipes, construct keywords); the traceability rename gap.",
+    "The reference oracle is legacy-59bce1d plus correction-ledger entry L0 (the golden's numerical platform, DR-D31); its known defects stay (KI-NEW-Y0 first) and no B-1 ledger entry is applied."
   ],
   "follow_up": [
-    "Fresh-context adversarial review of P0-01, recorded under docs/06-sessions/.",
+    "A verification round of the round-1 review fixes, recorded under docs/06-sessions/.",
     "Oracle correction-ledger work package once DR-B1 is ratified, starting with KI-NEW-Y0.",
     "ADR on the authoritative platform (DR-A3) before P1-11.",
     "Security/Release: a Bash(python3 -m pytest:*) rule in .claude/settings.json; cargo audit's yanked chacha20 0.10.1 versus deny.toml yanked = \"deny\"; setup-python or a pinned runner image for reference-oracle.",
