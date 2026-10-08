@@ -511,8 +511,10 @@ must then be added to "Paths affected" here and in ADR-011.
   package makes no further D5 amendment.
 - **The assembled `engine-spec.md` renumbers a section** that a contract, model spec, register or
   ADR-011/012 cites. Fix the citations before merge.
-- **`typos` hits a word inside a verbatim record.** Add a justified allowlist entry. Never edit the
-  record, and never exclude a directory.
+- **`typos` hits a word inside a verbatim record.** Never edit the record, and never exclude a
+  directory. A domain term or identifier gets a justified allowlist entry; a verbatim copy whose hits
+  are not domain terms is excluded by its exact path with a justification (P0-01 lists the nine
+  inventory reports and the thirteen archived cautious-nevermore copies this way).
 - **Traceability reports an unlisted path.** Add it to "Paths affected" here and in ADR-011 only if it
   belongs to P0-01. Otherwise remove it from the change set, as with a stray download or build artifact.
 
