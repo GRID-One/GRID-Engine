@@ -34,17 +34,18 @@ The local CN clones are shallow (oldest visible commit 2026-06-21). The `6b0eeee
 and PR #53 facts above were read from GitHub on 2026-10-01.
 
 **Import rule.** Exactly 105 upstream files, copied from `git archive 59bce1d` with their
-relative paths kept. 103 are byte-identical. Two carry documented patches, which are kept as
-unified diffs in `patches/`:
+relative paths kept. 102 are byte-identical. Three carry documented patches, which are kept in
+`patches/` (P1 and P2 as unified diffs, L0 as a binary git patch):
 
 | Patch | File | Why |
 |---|---|---|
 | P1 | `backend/validation/lineup_sim.py` | Inlines the 9-line, stdlib-only `snake_order`. Its body is verbatim from `backend/services/mock_draft.py:38-46` and only the docstring is extended. This cuts the one import edge into the app-only `backend.services` package. |
 | P2 | `run_demo.py` | `OUT = os.environ.get("GRID_DEMO_OUT", "/mnt/user-data/outputs")`. The default is unchanged, and the sandbox path is not writable on CI runners. |
+| L0 | `tests/grid/golden/snapshot.npz` | Correction-ledger entry L0 (`PARITY.md` (b); DR-D31, ratified 2026-10-08): the golden master regenerated once, by the unchanged `tests/grid/golden_master.py`, under CPython 3.11.15 and `OPENBLAS_CORETYPE=Haswell`, so it reproduces on any x86-64 AVX2 CPU. Only Layer C arrays changed (max \|Δ\| 1.28e-2, `qb_credit`). The legacy golden stays in git history and in `cautious-nevermore@59bce1d`. |
 
 `MANIFEST.tsv` records each imported file. Paths in it are relative to this directory. Its
 columns are `dest_path`, `source_path`, `source_commit`, `source_sha256`, `dest_sha256` and
-`status` (`verbatim`, `patched:P1` or `patched:P2`). Re-check it with:
+`status` (`verbatim`, `patched:P1`, `patched:P2` or `patched:L0`). Re-check it with:
 
 ```bash
 python3 -m tools.verify_manifest                                   # dest hashes, verbatim == source, completeness
@@ -67,11 +68,21 @@ outside any such ruling and is never committed here (DR-A11).
 
 ```bash
 cd reference/python
-python3 -m venv .venv && . .venv/bin/activate                 # Python 3.11 (verified: 3.11.15)
+python3 -m venv .venv && . .venv/bin/activate                 # CPython 3.11 (verified: 3.11.15)
 pip install -r requirements.txt -c requirements.lock           # engine + pytest
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 python3 -m pytest                                              # 446 passed, about 150 s on 4 vCPU
 ```
+
+- **The platform is pinned for you under pytest.** `pytest.ini` loads
+  `tools/pytest_platform_pin.py`, which sets `OPENBLAS_CORETYPE=Haswell` before NumPy loads,
+  refuses a different explicit `OPENBLAS_CORETYPE` and any interpreter other than CPython 3.11,
+  and checks through threadpoolctl that OpenBLAS really runs the `Haswell` kernel. No manual
+  export is needed for the test suite; the session header prints the pin.
+- **Outside pytest, pin it yourself.** `run_demo.py`, `python3 -m tests.grid.golden_master`
+  and the scripts in `tools/investigations/` do not load the plugin. Run them under CPython 3.11
+  with `export OPENBLAS_CORETYPE=Haswell` (and the three thread variables), or their numbers
+  are not comparable with the golden.
 
 - `pytest.ini` pins rootdir here and sets `pythonpath = .` (so there is no root conftest).
   It also loads `tools/pytest_isolation_guard.py`, which fails the run on any network
@@ -90,12 +101,15 @@ Demo (documentation, not a gate; its numbers are asserted by `tests/grid/test_ti
 
 ```bash
 pip install -r requirements-demo.txt -c requirements.lock      # adds matplotlib
+export OPENBLAS_CORETYPE=Haswell                               # the platform pin (DR-D31)
 GRID_DEMO_OUT=/tmp/grid-demo python3 run_demo.py               # about 8 s; writes two PNG files there
 ```
 
-With threads pinned to 1, the demo prints `overall 0.803`, `team strength 0.664`,
-`current-ability (tau+form) corr 0.958`, `talent (tau) 0.674` and
-`rookie prior ... corr 0.583`. That matches the Tier-0 gate's observed 0.958 / 0.6745.
+With threads pinned to 1 and the Haswell kernel, the demo prints `overall 0.803`,
+`team strength 0.664`, `current-ability (tau+form) corr 0.956`, `talent (tau) 0.672` and
+`rookie prior ... corr 0.583` (re-run 2026-10-08). Under the AVX-512 (`SkylakeX`) kernel the
+two state-space lines read 0.958 / 0.674 instead, which is what the Tier-0 gate's "observed"
+comments (0.958 / 0.6745) and the inventory recorded.
 `run_demo.py` does not pin threads itself. With default threading on a 4-vCPU Linux box it
 prints `0.972` / `0.955` / `0.675` for the three state-space lines, and its text and PNG files
 are byte-identical to the inventory's run. The difference is GBM thread-count sensitivity.
@@ -107,14 +121,22 @@ failing on Windows: golden master Layer C (cross-platform GBM variance) and
 CN's `docs/10-next-steps-plan.md` Stage 0 and inventory critic G-6; neither was re-run on
 Windows here.
 
-**Linux is not enough on its own (KI-NEW-Z78).** The two Layer C golden tests reproduce at
-rtol 1e-5 only on CPython 3.11 with OpenBLAS AVX-512 kernels. With Python 3.12, or with the
-`Haswell`/`Zen`/`Sandybridge` kernels (for example on AMD CI runners), they fail by up to 1.4e-2,
-while the other 444 tests pass. Check your kernel with
-`python -c 'import threadpoolctl; print(threadpoolctl.threadpool_info())'`; the fix is an owner
-decision (DR-D31), never a looser tolerance.
+**The platform pin (KI-NEW-Z78, DR-D31, ledger entry L0).** Linux alone does not fix the
+numbers. The Layer C golden tests compare gradient-boosted outputs at rtol 1e-5, and those move
+with the OpenBLAS kernel and the interpreter: the imported golden reproduced only on CPython 3.11
+with AVX-512 kernels, and failed by up to 1.4e-2 on AMD CI runners and under Python 3.12. The
+owner ratified DR-D31 option 1 on 2026-10-08, and entry L0 regenerated the golden once under
+CPython 3.11 + `OPENBLAS_CORETYPE=Haswell`, a kernel every x86-64 AVX2 CPU (Intel or AMD) runs.
+The sensitivity is controlled, not removed: the new golden passes under `Haswell` and `Zen`, and
+fails under `SkylakeX` and under Python 3.12. That is why `tools/pytest_platform_pin.py`
+enforces the pin instead of advising it. Check the kernel in use with
+`python3 -c 'import numpy, threadpoolctl; print(threadpoolctl.threadpool_info())'` (import NumPy
+first: `threadpool_info()` reports only libraries already loaded, so on its own it prints `[]`).
+Never loosen a tolerance or disable the plugin to make a golden pass; a different platform is an
+owner decision and a new ledger entry.
 
-- The oracle CI job therefore runs on `ubuntu-*` only, on the runner's tool-cache CPython 3.11.
+- The oracle CI job therefore runs on `ubuntu-*` only, on the runner's tool-cache CPython 3.11,
+  with `OPENBLAS_CORETYPE=Haswell`.
 - It is outside the frozen `just verify` / `verify.ps1` chain.
 - It is never wired into `windows-authoritative` (DR-A3).
 - A Windows checkout with `core.autocrlf=true` also breaks every `MANIFEST.tsv` hash.
@@ -123,6 +145,8 @@ decision (DR-D31), never a looser tolerance.
 `python3 -m tests.grid.golden_master`, run from this directory. Never run it to make a test
 pass. A regeneration is an oracle correction: it needs a correction-ledger entry in
 `PARITY.md`, a failing test first, a model-spec note and the approver named there (DR-B1).
+It runs outside pytest, so export `OPENBLAS_CORETYPE=Haswell` and use CPython 3.11 first. The
+committed golden is the L0 regeneration (`MANIFEST.tsv` status `patched:L0`).
 
 ## Environment variables
 
@@ -131,6 +155,7 @@ pass. A regeneration is an oracle correction: it needs a correction-ledger entry
 | `DB_PATH` | `backend/db/connection.py:8` | SQLite path, default `data/db/fantasy.sqlite` (cwd-relative). This is the only variable engine code reads. **Never put `DB_PATH` in the repository-root `.env`:** `connection.py` calls `load_dotenv()` at import, which walks up from `backend/db/` to GRID-Engine's root `.env`, which belongs to the Rust toolchain (ADR-002). That root file's `DATABASE_URL` and `SQLX_OFFLINE` already leak into the Python process. This is harmless today, because no Python code reads them. Set `DB_PATH` in the shell if you need it. |
 | `GRID_DEMO_OUT` | `run_demo.py` (patch P2) | Output directory for the two demo PNG files. Default `/mnt/user-data/outputs`. |
 | `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` | numpy, scipy, scikit-learn | Set all three to `1` for every oracle run: tests, CI, demo and investigations. The scripts in `tools/investigations/` default them to 1. |
+| `OPENBLAS_CORETYPE` | OpenBLAS (through numpy and scipy) | Must be `Haswell` for every oracle run (DR-D31, ledger entry L0). `tools/pytest_platform_pin.py` sets it under pytest and rejects any other value; export it yourself for the demo, the golden generator and investigations. |
 
 **Runtime writes are cwd-relative.** Run from this directory and they stay under its
 gitignored `data/`:
@@ -221,10 +246,11 @@ This oracle scope is separate from the Rust **port** scope recorded in ADR-011.
 | Path | Contents |
 |---|---|
 | `backend/`, `tests/`, `run_demo.py` | Imported upstream files (`MANIFEST.tsv`). `tests/projection/` and `tests/validation/` have no `__init__.py` upstream, and that is kept. |
-| `patches/` | P1 and P2 as unified diffs against `59bce1d`. |
+| `patches/` | P1 and P2 as unified diffs against `59bce1d`; `L0-golden-snapshot-haswell-regeneration.patch`, the L0 golden regeneration as a binary git patch. |
 | `MANIFEST.tsv` | Per-file provenance and hashes. |
-| `PARITY.md` | Oracle status, correction ledger (proposed), legacy vs fixed Tier-0, tolerance classes, deliberate Rust divergences, non-gating checks, lifecycle. |
+| `PARITY.md` | Oracle status, correction ledger (L0 applied; entries 1 to 5 proposed), legacy vs fixed Tier-0, tolerance classes, deliberate Rust divergences, non-gating checks, lifecycle. |
 | `requirements.txt`, `requirements-demo.txt`, `requirements.lock` | Engine dependencies, demo extra, and exact verified pins (Python 3.11.15). |
 | `pytest.ini`, `tools/pytest_isolation_guard.py` | Test configuration and isolation enforcement. |
+| `tools/pytest_platform_pin.py` | The numerical-platform pin (CPython 3.11, `OPENBLAS_CORETYPE=Haswell`), loaded by `pytest.ini` (DR-D31, ledger entry L0). |
 | `tools/verify_manifest.py` | Manifest verifier (stdlib only). |
 | `tools/investigations/` | Repro scripts for the recorded defects and decisions, and the pinned real-data fetcher. |

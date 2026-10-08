@@ -7,8 +7,10 @@
 #   reference-oracle      the Python reference oracle (reference/python/, ADR-012), Linux only,
 #                         OUTSIDE the frozen verify chain (see the job for why)
 #
-# scripts/verify.ps1 is authoritative for merge and release because the production target is
-# Windows (alpha-spec.md 8.11). The Linux job cannot substitute for it.
+# scripts/verify.ps1 stays merge-authoritative pending DR-A3 (ADR-011 D8). The old rationale, "the
+# production target is Windows", no longer holds: the engine has no Windows application. Windows
+# authority is kept only because removing it would reduce coverage without its own ADR (ADR-007,
+# ADR-009). Until that follow-up ADR lands, the Linux job cannot substitute for it.
 #
 # No third-party actions beyond actions/checkout: this file is a security boundary, and every
 # action added here is supply-chain surface (alpha-spec.md 14.1, 14.2). Tools are installed
@@ -268,12 +270,18 @@ jobs:
   # verify.ps1 chain (ADR-001 D5): adding it there would be a D5 amendment that, on Windows,
   # would have to skip Layer C -- weaker than this job.
   #
-  # No actions/setup-python: this file is a security boundary (header). The runner's
-  # preinstalled python3 builds a throwaway venv, and the install is constrained to the exact
-  # pins in reference/python/requirements.lock (verified there on CPython 3.11.15). If the
-  # runner's Python moves the golden master, that is an owner decision (critic X-7), never a
-  # reason to loosen a tolerance. Threads are pinned to 1: the determinism-sensitive tests pin
-  # themselves, and unpinned OpenMP/OpenBLAS oversubscription slowed one file more than 10x.
+  # No actions/setup-python: this file is a security boundary (header). The runner image's
+  # tool-cache CPython 3.11 builds a throwaway venv (the job fails if it is absent), and the
+  # install is constrained to the exact pins in reference/python/requirements.lock (verified
+  # there on CPython 3.11.15). If the runner's interpreter or BLAS kernel moves the golden
+  # master, that is an owner decision (critic X-7), never a reason to loosen a tolerance or skip
+  # a test. It happened once (KI-NEW-Z78: the imported Layer C golden held only under OpenBLAS
+  # AVX-512 kernels), and the owner ratified option 1 (DR-D31, 2026-10-08): every oracle run
+  # pins OPENBLAS_CORETYPE=Haswell, which any x86-64 AVX2 CPU runs, and correction-ledger entry
+  # L0 regenerated the golden once under CPython 3.11 + Haswell (reference/python/PARITY.md (b)),
+  # so this job is expected green on ordinary ubuntu-latest runners. Threads are pinned to 1: the
+  # determinism-sensitive tests pin themselves, and unpinned OpenMP/OpenBLAS oversubscription
+  # slowed one file more than 10x.
   reference-oracle:
     name: reference-oracle (Linux only)
     runs-on: ubuntu-latest
@@ -282,6 +290,8 @@ jobs:
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
+      # DR-D31 / ledger entry L0: the golden is frozen under this kernel; tools/pytest_platform_pin.py enforces it too.
+      OPENBLAS_CORETYPE: "Haswell"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
     defaults:
       run:
@@ -289,8 +299,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The lock was verified on CPython 3.11, and the Layer C golden reproduces only on 3.11
-      # (PR #4: the runner's default python3 is 3.12, which moves it). Use the runner image's
+      # The lock was verified on CPython 3.11, and the golden is frozen on 3.11 (PR #4: the
+      # runner's default python3 is 3.12, which moves Layer C; tools/pytest_platform_pin.py
+      # refuses any other interpreter). Use the runner image's
       # tool-cache 3.11 directly -- no setup action, so no new supply-chain surface -- and fail
       # loudly if the image stops shipping it rather than silently testing another interpreter.
       - name: Select the tool-cache CPython 3.11 (the lock was verified on 3.11.15)
@@ -303,7 +314,8 @@ jobs:
           echo "ORACLE_PY=$py" >> "$GITHUB_ENV"
           "$py" --version
           "$py" -c 'import platform, sys; print(sys.executable, platform.machine())'
-          # Golden-master numerics depend on the OpenBLAS kernel the CPU selects (KI-NEW-Z78).
+          # Golden-master numerics depend on the OpenBLAS kernel (KI-NEW-Z78); the job pins
+          # OPENBLAS_CORETYPE=Haswell above, and the CPU is logged for the record.
           grep -m1 'model name' /proc/cpuinfo || true
 
       # Stdlib only, so it runs before anything is installed: provenance is checked against
@@ -321,5 +333,8 @@ jobs:
       - name: Oracle test suite (446 tests at import)
         run: |
           command -v python3
-          python3 -c 'import threadpoolctl; [print(i.get("internal_api"), i.get("version"), i.get("architecture")) for i in threadpoolctl.threadpool_info()]'
+          # threadpoolctl reports only libraries already loaded: import numpy, scipy and sklearn
+          # first, or threadpool_info() is empty. The kernel in use must be Haswell (DR-D31, L0);
+          # the pytest platform-pin plugin fails the session otherwise.
+          python3 -c 'import numpy, scipy.linalg, sklearn.ensemble, threadpoolctl; info = threadpoolctl.threadpool_info(); [print(i.get("internal_api"), i.get("version"), i.get("architecture"), i.get("filepath")) for i in info]; any(i.get("user_api") == "blas" for i in info) or print("::warning::threadpoolctl found no BLAS library")'
           python3 -m pytest

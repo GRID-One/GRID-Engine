@@ -53,6 +53,9 @@ extend-exclude = [
     # be corrected in place, and allowlisting their tokens (ot, fo, OT, PN, thr, ...) would hide
     # the same letters as real typos everywhere else. Only the copies are excluded: each tree's
     # maintained README, MANIFEST, HISTORY and results files stay spell-checked.
+    # Correction-ledger entry L0's binary git patch (DR-D31): base85-encoded bytes of the
+    # regenerated golden snapshot, not prose, so any "words" typos finds there are noise.
+    "reference/python/patches/L0-golden-snapshot-haswell-regeneration.patch",
     "docs/06-sessions/2026-10-01-consolidation-inventory/alpha-spec.md",
     "docs/06-sessions/2026-10-01-consolidation-inventory/final-build-spec.md",
     "docs/06-sessions/2026-10-01-consolidation-inventory/bootstrap-infra.md",

@@ -8,15 +8,20 @@ Status words used here:
 - **DR-A** decisions are adopted by the consolidation PR, subject to owner ratification.
 - **DR-B** and **DR-C** decisions are **proposed defaults pending the owner**
   (`docs/00-meta/decision-register.md`).
-- Nothing in the correction ledger below has been applied.
+- **DR-D** decisions are proposed or open, except **DR-D31**, which the owner ratified on
+  2026-10-08 (option 1).
+- One correction-ledger entry has been applied: **L0**, the golden master's platform pin
+  (KI-NEW-Z78), which implements DR-D31. It changes no engine code, test or tolerance.
+  Entries 1 to 5 are proposed and not applied.
 
 ## (a) Oracle status
 
 | Field | Value |
 |---|---|
-| Status | **legacy-59bce1d, as imported**. Proposed tag for the import commit: `oracle-legacy-59bce1d` (critic X-4). The tag is created by whoever commits; it is not created here. |
-| Code | 105 files from `cautious-nevermore@59bce1d`: 103 verbatim, plus patches P1 (import cut) and P2 (demo output dir). Neither patch changes engine behaviour (`MANIFEST.tsv`). |
-| Verified | 2026-10-01, clean venv, `requirements.lock`, Python 3.11.15, Linux x86_64, threads pinned to 1. **446 passed** (node-ID set identical to the upstream in-scope run), isolation guard 0 violations, `tools/verify_manifest.py` OK. |
+| Status | **legacy-59bce1d + L0**: the import, plus correction-ledger entry L0 (section (b)), which regenerated the golden master's Layer C arrays under the pinned platform. Proposed tag for the import commit: `oracle-legacy-59bce1d` (critic X-4). The tag is created by whoever commits; it is not created here. |
+| Code | 105 files from `cautious-nevermore@59bce1d`: 102 verbatim, plus patches P1 (import cut), P2 (demo output dir) and L0 (golden snapshot regenerated under the platform pin). None of them changes engine behaviour (`MANIFEST.tsv`). |
+| Platform of record | Linux x86_64, CPython 3.11, `OPENBLAS_CORETYPE=Haswell`, threads pinned to 1. `tools/pytest_platform_pin.py` (loaded by `pytest.ini`) sets the kernel before NumPy loads and refuses any other kernel or interpreter (DR-D31, entry L0). |
+| Verified | At import: 2026-10-01, clean venv, `requirements.lock`, Python 3.11.15, Linux x86_64, threads pinned to 1. **446 passed** (node-ID set identical to the upstream in-scope run), isolation guard 0 violations, `tools/verify_manifest.py` OK. After L0: 2026-10-08, Python 3.11.15, the plugin-set Haswell kernel: **446 passed**; `tools/verify_manifest.py` OK (105 rows: 102 verbatim, 3 patched), also with `--upstream`. |
 | Usable as a parity target today | Only outputs that no known defect touches. The defect list is `docs/00-meta/known-issues.md`; the cn-issues trust map is summarised next. |
 | Not usable as a parity target until the ledger runs | Every synthetic number that depends on defenders, team strength, the matchup grade or the filtered Kalman path. That covers golden Layer B and C team ratings, `qb_credit`, `k_total_filt` and `k_total_pred`, the Tier-0 team gate, and DEF recovery. It also covers anything from `weekly_update` and every real-data number. |
 
@@ -34,21 +39,82 @@ section d).
 
 **Procedure (DR-B1, proposed):**
 
-1. Import verbatim. This is the current state.
+1. Import verbatim. Done at `59bce1d`, followed by the platform-portability entry L0
+   (section (b)), which the owner approved through DR-D31. This is the current state.
 2. Apply approved correction commits in the order of section (b). Each needs a failing
    test first, a model-spec note, and a golden regeneration with a reviewed semantic
    explanation.
 3. Rust targets the **corrected** oracle. The legacy golden is kept for audit.
 4. The deliberate typed-failure divergences in section (e) stay out of parity.
 
-The oracle is never changed *to make a Rust parity test pass* (superseded alpha-spec
-Appendix D #13). Only pre-approved corrections from this ledger may change it.
+The oracle is never changed *to make a Rust parity test pass* (engine-spec Appendix D
+item 13). Only pre-approved corrections from this ledger may change it.
 
-## (b) Correction ledger: PROPOSED, NOT APPLIED
+## (b) Correction ledger: L0 APPLIED; entries 1 to 5 PROPOSED, NOT APPLIED
 
 The order is binding: every later entry is measured on the generator that entry 1 produces
 (critic B-1 / X-4). Each entry gets its own commit inside `reference/python/`, and each
 updates `MANIFEST.tsv` (status `patched:<ID>`, new `dest_sha256`) and `patches/`.
+
+Entry L0 is outside that order. It is a platform-portability correction that changes no
+generator, estimator, test or tolerance, so it was applied ahead of the DR-B1 ledger and does
+not pre-empt it: entry 1 remains the first semantic correction, and every later regeneration
+is made under the L0 platform pin. Golden deltas quoted in entries 1 to 5 and in section (c)
+were measured against the legacy golden under the AVX-512 (`SkylakeX`) kernel; each entry
+re-measures them when it runs.
+
+### L0. Golden-master platform pin: KI-NEW-Z78 (DR-D31) — APPLIED
+
+- **Status.** Applied in P0-01 on 2026-10-08, ahead of entry 1.
+- **Defect.** The imported golden master's Layer C arrays reproduced at rtol 1e-5 only on
+  CPython 3.11 with OpenBLAS AVX-512 (`SkylakeX`) kernels. On GitHub's AMD `ubuntu-latest`
+  runners (`Haswell`/`Zen` kernels) and under Python 3.12 they moved by up to 1.4e-2, so
+  `test_layerC_player_and_team_ratings` and `test_layerC_qb_weekly_and_kalman` failed while
+  the other 444 tests passed. The cause is kernel-level floating-point noise through the
+  gradient-boosted stages, whose tree splits move with it; no model changed.
+- **Evidence.**
+  - PR #4 CI job 113122913918 (ubuntu-24.04, Python 3.12.3, AMD): 2 failed, 444 passed.
+    Reproduced exactly with Python 3.12 + `OPENBLAS_CORETYPE=Zen`.
+  - CPython 3.11.15 against the legacy golden: `auto`/`SkylakeX` pass; `Haswell`, `Zen` and
+    `Sandybridge` fail. These two failures are the failing test that precedes the change.
+  - CPython 3.11.15 against the regenerated golden: **446 passed** under the plugin-set
+    `Haswell` kernel, and the golden also passes under `Zen` (the AMD-equivalent kernel). It
+    fails under `SkylakeX` and under Python 3.12, which is why the pin is enforced rather than
+    advised.
+- **Change.**
+  - `tests/grid/golden/snapshot.npz` regenerated once with the unchanged
+    `python -m tests.grid.golden_master`, under CPython 3.11.15, `OPENBLAS_CORETYPE=Haswell`
+    and threads = 1.
+  - `tools/pytest_platform_pin.py`, wired in `pytest.ini`: it sets `OPENBLAS_CORETYPE=Haswell`
+    before NumPy loads, refuses any other explicit kernel and any interpreter other than
+    CPython 3.11, and checks through threadpoolctl that OpenBLAS runs the `Haswell` kernel.
+  - The `reference-oracle` CI job sets `OPENBLAS_CORETYPE: "Haswell"` as well
+    (`.github/workflows/alpha-ci.yml`).
+  - No tolerance, test, generator or estimator changed. Haswell kernels run on every x86-64
+    AVX2 CPU, Intel or AMD, so the golden is portable at the existing rtol.
+- **Goldens and gates affected.** The golden's Layer C arrays only. Max |Δ| against the
+  legacy golden: `rating` 1.46e-3, `team_rating` 4.78e-4, `qb_credit` 1.28e-2,
+  `k_total_filt` 1.07e-2, `k_total_pred` 1.05e-2, `k_total_smooth` 9.36e-3, `k_tau_smooth`
+  1.14e-2. `ability`, `planted_team`, the identifier arrays, the focus arrays and the Kalman
+  variances are identical. All 11 golden-master tests and every gate pass under the pin.
+  Documents that quote a value read from the golden are updated with it
+  (`docs/05-model-specs/state-space-kalman.md` §10.3 PF-SS-02 `x0`).
+- **Semantic note.** The regenerated arrays are the same legacy-generator computation under
+  another BLAS kernel. They carry every legacy defect that entries 1 to 5 address, so L0 makes
+  no Layer C value a Rust parity target (section (a)).
+- **Record.**
+  - `MANIFEST.tsv` row `tests/grid/golden/snapshot.npz`: status `patched:L0`;
+    `source_sha256` `caeda4fc5b1eb3331ab4d8c7164a5ad94ccdc2f34046289150ec5c71ccbad2c6`
+    (the legacy golden, `cautious-nevermore@59bce1d`); `dest_sha256`
+    `1fbf3e8b3356816a794ccfb21d192df40b522b9f43b70e06db656b3ee9decc74`.
+  - `patches/L0-golden-snapshot-haswell-regeneration.patch`, a binary git patch against
+    `59bce1d`.
+  - The legacy golden stays in git history and in `cautious-nevermore@59bce1d`.
+- **Approver.** The owner, who holds every role, on 2026-10-08: the Statistical owner's
+  written ratification of DR-D31 option 1 (2026-10-08) is the approval of this entry. The Security/Release part of
+  DR-D31 (the runner choice) is moot, because ordinary `ubuntu-latest` runners suffice. No
+  model-spec note is needed: no equation or estimand changes; the reviewed semantic explanation
+  is this entry and DR-D31.
 
 ### 1. Synthetic defenders: KI-NEW-Y0 (critic G-1)
 
@@ -117,7 +183,7 @@ updates `MANIFEST.tsv` (status `patched:<ID>`, new `dest_sha256`) and `patches/`
   - Sites: `weekly_update.py:84`, its docstring at `:62-66`, `backtest.py:185-186` and its
     docstring at `:48-51`.
   - A stronger defence has a larger `β_def`, so the stored grade is an "easiness" score.
-  - The tests at `tests/pipeline/test_weekly_update.py:286-370` and
+  - The tests at `tests/pipeline/test_weekly_update.py:286-366` and
     `tests/validation/test_verdict.py:47-51` are tautological: they hand-plant the wrong
     sign.
 - **Evidence.**
@@ -190,7 +256,11 @@ updates `MANIFEST.tsv` (status `patched:<ID>`, new `dest_sha256`) and `patches/`
 ## (c) Tier-0 values: legacy vs defender-fixed generator
 
 These were produced by `python3 -m tools.investigations.tier0_legacy_vs_fixed` on
-2026-10-01 with threads pinned to 1. They are identical to the critic's G-1 table. Both
+2026-10-01 with threads pinned to 1, under the machine's default AVX-512 (`SkylakeX`) kernel,
+before entry L0. Under the Haswell pin the Kalman rows move in the third decimal (for
+example `run_demo.py` on the legacy generator prints 0.956 / 0.672 for total_smooth /
+tau_smooth instead of 0.958 / 0.674); every legacy-generator gate still passes (446 passed).
+The defender-fixed column has not been re-run under the pin. They are identical to the critic's G-1 table. Both
 columns use the canonical `load_synthetic()`, `fit(n_iter=3)`, market seed 1, and the
 **legacy** planted `team_strength` (off − def).
 
@@ -225,12 +295,22 @@ regenerate. The proposed default classes are:
 | C | Booster stages (V(s), Layer-1 context model) | corr(dV) ≥ 0.999 and \|ΔV\| ≤ 0.10 EP on grid cells with support ≥ `min_samples_leaf` |
 | D | End-to-end recovery | Floors re-set on the **fixed** generator, calibrated below observed (as the CN gates are) |
 
+**Class C is the unratified DR-B3 default, and it is unattainable (KI-NEW-Z74).** The oracle
+fails it against itself: re-seeding the V(s) booster gives corr(dV) 0.9891–0.9942 (legacy) and
+0.9896–0.9931 (fixed), and under a fold-seed change the Layer-1 context residual correlates
+with itself at only 0.9936–0.9974.
+The stage-specific replacements are proposed, not ratified: **C-V** for V(s) (proposed — DR-D27;
+`docs/05-model-specs/value-model.md` §10.3) and **C-L1** for the Layer-1 context model (proposed
+amendment to DR-B3; `docs/05-model-specs/layer1-credit.md` §10.3). Both must be pre-registered by
+the statistical owner before any Rust result is seen. The contract (§5, §6) carries the detail.
+
 Comparisons are **stage-isolated**. Python-produced dV is fed into Rust RAPM, and
 Python-produced weekly credit into the Rust Kalman filter, so Rust never has to bit-match
 sklearn's HistGradientBoosting.
 
 For reference, the oracle's own golden master checks Layer C at `rtol 1e-5, atol 1e-6`
-single-threaded on Linux. That tolerance is an oracle self-consistency check, not a Rust
+single-threaded on Linux, on its pinned platform: CPython 3.11 and `OPENBLAS_CORETYPE=Haswell`
+(KI-NEW-Z78; entry L0; section (f)). That tolerance is an oracle self-consistency check, not a Rust
 tolerance. It is also why `run_demo.py`, which does not pin threads, prints slightly
 different state-space numbers at different thread counts (`README.md`).
 
@@ -260,11 +340,13 @@ is defined on the healthy path only, and Rust tests assert the typed error inste
   - If it flakes in the oracle CI job, treat it as a performance signal, never as a parity
     failure. Do not weaken it inside the verbatim tree. Record the flake against this entry
     and raise a decision request.
-- **Golden master Layer C is platform-pinned (KI-NEW-Z78).** It reproduces only on CPython 3.11
-  with OpenBLAS AVX-512 kernels; on AVX2-only CPUs (for example AMD CI runners) or Python 3.12 the
-  two Layer C tests fail by up to 1.4e-2. This is kernel noise through the GBM cross-fitted
-  credit, not a model change, but it is not waived: the tests stay gating, and the remedy (a
-  portable kernel pin plus a ledger-entry regeneration, or an AVX-512 runner) is DR-D31.
+- **Golden master Layer C is platform-pinned (KI-NEW-Z78, fixed by entry L0).** The golden is
+  frozen under CPython 3.11 and `OPENBLAS_CORETYPE=Haswell`, which any x86-64 AVX2 CPU runs.
+  `tools/pytest_platform_pin.py` sets that kernel before NumPy loads and refuses any other kernel
+  or interpreter, so the tests stay gating on developer machines and CI runners alike. The
+  kernel sensitivity itself is controlled, not removed: under `SkylakeX` (AVX-512) or Python
+  3.12 the two Layer C tests still fail by up to 1.4e-2. That is kernel noise through the GBM
+  stages, not a model change, and it is never absorbed by a looser tolerance.
 - **`run_demo.py`** is documentation. Its numbers are asserted by the Tier-0 gates, and its
   state-space lines depend on the thread count (`README.md`).
 - **Windows.** Golden Layer C and `test_cache.py::test_ttl_expired` are recorded as failing
@@ -277,7 +359,8 @@ is defined on the healthy path only, and Rust tests assert the typed error inste
   **Phase-2 live evidence exists**. Retirement is reviewed at work package **P2-09**.
 - **Changes only through section (b).** One reviewed commit per ledger entry, in order,
   each with its approver. `requirements.lock` bumps count as oracle changes, because they
-  can move the golden (rtol 1e-5).
+  can move the golden (rtol 1e-5). So does a change of the platform pin (the interpreter or
+  `OPENBLAS_CORETYPE` in `tools/pytest_platform_pin.py`; entry L0).
 - **Hygiene.** No other edits to `backend/` or `tests/`. `tools/verify_manifest.py` fails
   on any unmanifested change.
 - **Retirement.** On retirement the legacy and corrected goldens, `MANIFEST.tsv` and this
