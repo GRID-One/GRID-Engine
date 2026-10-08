@@ -4,7 +4,7 @@ status: Accepted
 date: 2026-08-20
 deciders: Product/Architecture owner (ratification pending)
 supersedes:
-superseded-by:
+superseded-by: "011 (in part, proposed): item 6 app/ deliverables and the toolchains/flutter.version sentence"
 ---
 
 # ADR-006 — §8.7 and §9.2 deliverables deferred out of P1-00

@@ -4,7 +4,7 @@ status: Accepted
 date: 2026-08-20
 deciders: Product/Architecture owner
 supersedes:
-superseded-by:
+superseded-by: "011 (in part, proposed): the chain listing naming test-ffi and its step count"
 ---
 
 # ADR-007 — `just verify` covers the repository guards and doctests

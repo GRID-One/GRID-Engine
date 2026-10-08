@@ -4,7 +4,7 @@ status: Accepted
 date: 2026-08-20
 deciders: Product/Architecture owner (D1-D3, D5, D6); Data/Licensing owner (D4)
 supersedes:
-superseded-by:
+superseded-by: "011 (in part, proposed): crate list incl. ffi; alpha-spec authority rows; D5 recipe count; Appendix B reference; P1-01…P1-11"
 ---
 
 # ADR-001 — Repository bootstrap decisions

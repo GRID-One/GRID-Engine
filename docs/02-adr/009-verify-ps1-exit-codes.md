@@ -4,7 +4,7 @@ status: Accepted
 date: 2026-08-20
 deciders: Product/Architecture owner
 supersedes:
-superseded-by:
+superseded-by: "011 (in part, proposed): the 16-command count and the Windows-production-target rationale"
 ---
 
 # ADR-009 — `scripts/verify.ps1` must propagate native command exit codes
