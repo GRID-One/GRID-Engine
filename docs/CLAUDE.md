@@ -124,7 +124,7 @@ status, correction ledger, tolerances and divergences: `reference/python/PARITY.
     maintained);
   - `docs/07-archive/cautious-nevermore/` copies (only `MANIFEST.md`, `HISTORY.md` and
     `real-data-results.md` there were written for the archive);
-  - `docs/00-meta/specs/superseded/`.
+  - `docs/00-meta/specs/superseded/` originals (its `README.md` index is maintained).
 
   Corrections go in a current document, never in the copy. `.gitattributes` marks these trees, and
   `reference/python/`, `-text` so a Windows `core.autocrlf` checkout keeps their exact bytes.
