@@ -107,7 +107,14 @@ failing on Windows: golden master Layer C (cross-platform GBM variance) and
 CN's `docs/10-next-steps-plan.md` Stage 0 and inventory critic G-6; neither was re-run on
 Windows here.
 
-- The oracle CI job therefore runs on `ubuntu-*` only.
+**Linux is not enough on its own (KI-NEW-Z78).** The two Layer C golden tests reproduce at
+rtol 1e-5 only on CPython 3.11 with OpenBLAS AVX-512 kernels. With Python 3.12, or with the
+`Haswell`/`Zen`/`Sandybridge` kernels (for example on AMD CI runners), they fail by up to 1.4e-2,
+while the other 444 tests pass. Check your kernel with
+`python -c 'import threadpoolctl; print(threadpoolctl.threadpool_info())'`; the fix is an owner
+decision (DR-D31), never a looser tolerance.
+
+- The oracle CI job therefore runs on `ubuntu-*` only, on the runner's tool-cache CPython 3.11.
 - It is outside the frozen `just verify` / `verify.ps1` chain.
 - It is never wired into `windows-authoritative` (DR-A3).
 - A Windows checkout with `core.autocrlf=true` also breaks every `MANIFEST.tsv` hash.

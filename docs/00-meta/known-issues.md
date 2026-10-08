@@ -20,7 +20,7 @@ is the engine backlog that the Rust port works against.
   KI-NEW-Y0) unless the row says otherwise.
 - **Full finding text.** For the reasoning and measurements in full, see `cn-issues.md` §3.x (each
   section heading below names its source section) and `critic.md` §1–§2.
-- **KI-NEW-Z rows.** KI-NEW-Z1 to KI-NEW-Z77 were found during the 2026-10 consolidation, by the
+- **KI-NEW-Z rows.** KI-NEW-Z1 to KI-NEW-Z78 were found during the 2026-10 consolidation, by the
   authors of `docs/05-model-specs/` and `docs/03-contracts/`. Z marks the consolidation as their origin.
   - Each row names the spec or contract that describes or measured it. That document has the full text,
     and carries the KI ID next to its own description of the defect.
@@ -46,7 +46,7 @@ There are 172 issues:
 
 - 93 cn-issues IDs;
 - KI-NEW-Y0 and KI-NEW-D1, from the critic;
-- KI-NEW-Z1 to KI-NEW-Z77, from the 2026-10 consolidation.
+- KI-NEW-Z1 to KI-NEW-Z78, from the 2026-10 consolidation.
 
 A further alias row, KI-V1 → KI-G1, is not counted.
 
@@ -465,6 +465,7 @@ W7) is a different audit; its document was never committed (critic G-3).
 | **KI-NEW-Z75** | The golden master's comment attributes the ~1e-2 multi-threaded drift to V(s), but V(s) is thread-invariant; the drift appears downstream. `layer1-credit.md` §5.2 repeats the claim, and lessons-learned LL-09 did until 2026-10-07 | LOW | OPEN (documentation) | `reference/python/tests/grid/golden_master.py:55-59` | `value-model.md` §5.2: V(s) predictions at 1 and 4 OpenMP threads differ by 0.0. Under 4 threads the golden drifts in ratings (9.6e-4), `qb_credit` (0.021) and `k_total_filt` (0.0185) | NONE (the golden runs single-threaded) | Documentation only; the oracle is unchanged. The Rust determinism gate covers every stage | — |
 | **KI-NEW-Z76** | `tests/grid/golden/snapshot.npz` stores the focus QB's `qb_week` and `qb_credit` but not their exposures (snaps), which the Kalman needs as precision. `state-space-kalman.md` §10.3 PF-SS-02 says the snapshot holds the series | LOW | OPEN | `reference/python/tests/grid/golden/snapshot.npz` (keys listed 2026-10-07) | `layer1-credit.md` §8 row 20. The exposures from a live run are 99, 97, 105, 97, 88, 82, 84, 116, 99, 87, 75, 81 | GM: the Kalman parity case PF-SS-02 cannot be built from the snapshot alone | Layer-1 and Kalman fixtures export exposures from the run | — |
 | **KI-NEW-Z77** | Wrong `value.py` line citations in two contracts (`value.py` has 123 lines): plays-contract §1 cites `:87,111-112,151-166` and §2.1–§2.2 cite `:112`, `:157`, `:159`, `:161-164`, `:169-172`; parity-fixture-contract §5 cites `:153-164` and `:113-116` | LOW | OPEN (documentation) | `docs/03-contracts/plays-contract.md` §1, §2.1–§2.2; `docs/03-contracts/parity-fixture-contract.md` §5 | `value-model.md` §8.2 N-8. The correct sites are `:50` (label), `:51-54` (estimator; `min_samples_leaf` at `:53`), `:89-104` (`compute_dv`: terminal `:95`, `terminal_value` `:97`, next state `:99-102`) and `:107-110` (`attach_dv`) | NONE | — (the contract owners fix the citations) | — |
+| **KI-NEW-Z78** | The imported golden master's Layer C (`test_layerC_player_and_team_ratings`, `test_layerC_qb_weekly_and_kalman`) reproduces at rtol 1e-5 only on CPython 3.11 with OpenBLAS AVX-512 kernels. With Python 3.12, or with the Haswell, Zen or Sandybridge kernels, ratings move by up to 1.6e-3 and `qb_credit` by up to 1.4e-2 (the other 444 tests pass) | MOD | OPEN (measured 2026-10-08) | `reference/python/tests/grid/golden/snapshot.npz`; `reference/python/tests/grid/test_golden_master.py:147,163,170`; `.github/workflows/alpha-ci.yml` `reference-oracle` | PR #4 CI job 113122913918 (ubuntu-24.04, Python 3.12.3, AMD): 2 failed, 444 passed. Reproduced exactly with Python 3.12 + `OPENBLAS_CORETYPE=Zen` (rating[0] 0.598227, qb_credit[0] 0.0252321). Python 3.11.15: `auto`/`SkylakeX` pass; `Haswell`/`Zen`/`Sandybridge` fail. Same family as the Windows failure recorded in cautious-nevermore. Layer C runs through the GBM cross-fitted credit, where kernel-level float differences change tree splits | GM: the Layer C golden is platform-pinned; the reference-oracle job is red on AVX2-only runners | Parity fixtures and goldens record and pin the BLAS kernel and interpreter they were exported under (`docs/03-contracts/parity-fixture-contract.md`) | DR-D31 |
 
 ---
 

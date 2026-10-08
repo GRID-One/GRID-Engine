@@ -289,19 +289,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Record the runner's Python (the lock was verified on CPython 3.11.15)
+      # The lock was verified on CPython 3.11, and the Layer C golden reproduces only on 3.11
+      # (PR #4: the runner's default python3 is 3.12, which moves it). Use the runner image's
+      # tool-cache 3.11 directly -- no setup action, so no new supply-chain surface -- and fail
+      # loudly if the image stops shipping it rather than silently testing another interpreter.
+      - name: Select the tool-cache CPython 3.11 (the lock was verified on 3.11.15)
         run: |
-          python3 --version
-          python3 -c 'import platform, sys; print(sys.executable, platform.machine())'
+          py="$(ls -d /opt/hostedtoolcache/Python/3.11.*/x64/bin/python3 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$py" ]; then
+            echo "::error::no CPython 3.11 in /opt/hostedtoolcache/Python; the oracle lock needs 3.11 (ADR-012)"
+            exit 1
+          fi
+          echo "ORACLE_PY=$py" >> "$GITHUB_ENV"
+          "$py" --version
+          "$py" -c 'import platform, sys; print(sys.executable, platform.machine())'
+          # Golden-master numerics depend on the OpenBLAS kernel the CPU selects (KI-NEW-Z78).
+          grep -m1 'model name' /proc/cpuinfo || true
 
       # Stdlib only, so it runs before anything is installed: provenance is checked against
       # the committed bytes, not against an environment pip has already touched.
       - name: Oracle files match MANIFEST.tsv
-        run: python3 tools/verify_manifest.py
+        run: '"$ORACLE_PY" tools/verify_manifest.py'
 
       - name: Install the pinned oracle dependencies into a venv
         run: |
-          python3 -m venv "$RUNNER_TEMP/oracle-venv"
+          "$ORACLE_PY" -m venv "$RUNNER_TEMP/oracle-venv"
           "$RUNNER_TEMP/oracle-venv/bin/python" -m pip install -r requirements.txt -c requirements.lock
           "$RUNNER_TEMP/oracle-venv/bin/python" -m pip freeze
           echo "$RUNNER_TEMP/oracle-venv/bin" >> "$GITHUB_PATH"
@@ -309,4 +321,5 @@ jobs:
       - name: Oracle test suite (446 tests at import)
         run: |
           command -v python3
+          python3 -c 'import threadpoolctl; [print(i.get("internal_api"), i.get("version"), i.get("architecture")) for i in threadpoolctl.threadpool_info()]'
           python3 -m pytest

@@ -162,6 +162,7 @@ several roles; all are currently held by the repository owner.
 | [DR-D28](#dr-d28-synth-draw-tape) | How is the Rust generator proven exact without numpy streams? | Statistical | Proposed — awaiting Statistical owner | P1-12 (Rust-native generator) |
 | [DR-D29](#dr-d29-parity-fixture-format) | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Proposed — awaiting Security/Release owner and Product/Architecture owner | branch protection (no WP) |
+| [DR-D31](#dr-d31-oracle-golden-platform) | How is the oracle golden master made reproducible on CI hardware (KI-NEW-Z78)? | Statistical, Security/Release | Proposed — awaiting Statistical owner and Security/Release owner | `reference-oracle` green; P1-12 parity fixtures |
 
 ---
 
@@ -1295,7 +1296,7 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
 | Output | DR-D6 to DR-D9 |
 | Modeling | DR-D10 to DR-D22 |
 | Validation | DR-D23 to DR-D26 |
-| Parity | DR-D27 to DR-D30 |
+| Parity | DR-D27 to DR-D31 |
 
 - **Status rule.** An entry is **Proposed** when a source document states a default, and **Open** when
   the sources state only an interim rule or nothing. Either way it does not bind until the named owner
@@ -2004,6 +2005,34 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
 - **Blocks.** No WP. It decides the branch-protection configuration.
 - **Where implemented (when ratified).** `engine-spec.md` §8.19; `.github/workflows/alpha-ci.yml`; the
   repository's branch-protection settings.
+
+### DR-D31 oracle-golden-platform
+
+- **Question.** The imported golden master's Layer C reproduces only on CPython 3.11 with OpenBLAS
+  AVX-512 kernels (KI-NEW-Z78). How is the oracle made reproducible on the CI hardware?
+- **Owner roles.** Statistical owner (any golden regeneration); Security/Release owner (runner choice).
+- **Context and evidence.**
+  - PR #4's first `reference-oracle` run failed 2 of 446 tests: the two Layer C golden tests, with Δ up
+    to 1.4e-2 against rtol 1e-5. It was reproduced exactly with Python 3.12 + `OPENBLAS_CORETYPE=Zen`.
+    The rest of the suite is unaffected.
+  - P0-01 switches the job to the runner's tool-cache CPython 3.11, to match the lock. That removes the
+    interpreter difference, but not the kernel difference on AMD (AVX2-only) runners.
+  - Not allowed: loosening the tolerance; skipping or quarantining the tests; editing or regenerating the
+    verbatim golden outside the correction ledger (reference/python/PARITY.md (b)).
+- **Options considered.**
+  1. Pin `OPENBLAS_CORETYPE=Haswell` (runs on any x86-64 AVX2 CPU, Intel or AMD) for every oracle run,
+     and regenerate the Layer C golden once under CPython 3.11 + Haswell kernels as a correction-ledger
+     entry, with a reviewed semantic note.
+  2. Run `reference-oracle` on a runner guaranteed to have AVX-512 (larger or self-hosted runner),
+     keeping the golden byte-for-byte.
+  3. Keep the golden; treat the Layer C signal as known-red until the KI-NEW-Y0 correction regenerates
+     the goldens anyway.
+- **Recommended default.** Option 1: the golden becomes portable at the existing rtol, and the kernel
+  pin is recorded in every fixture manifest.
+- **Status.** Proposed — awaiting Statistical owner and Security/Release owner.
+- **Blocks.** A green `reference-oracle` job; P1-12 parity fixtures exported from the oracle.
+- **Where implemented (when ratified).** `reference/python/PARITY.md` (b) and (f);
+  `.github/workflows/alpha-ci.yml`; `docs/03-contracts/parity-fixture-contract.md`.
 
 ### Owner information request (not a decision)
 

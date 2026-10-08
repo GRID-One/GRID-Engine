@@ -8666,7 +8666,7 @@ For an engine with no UI, "screenshots" means captured command output, reports a
 
 ## Appendix F — Open Owner Decisions
 
-_Source: new — `docs/00-meta/decision-register.md` (summary and §A–§D entries); consolidation inventory critic §3; decisions raised in this specification, in `docs/03-contracts/` and in `docs/05-model-specs/`, entered in the register as DR-D1 to DR-D30._
+_Source: new — `docs/00-meta/decision-register.md` (summary and §A–§D entries); consolidation inventory critic §3; decisions raised in this specification, in `docs/03-contracts/` and in `docs/05-model-specs/`, entered in the register as DR-D1 to DR-D31._
 
 This appendix is a summary. **`docs/00-meta/decision-register.md` is authoritative** for every
 decision's question, options, recommended default, status and blocked packages. Only the owner role
@@ -8750,6 +8750,7 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-D28 | How is the Rust generator proven exact without numpy streams? | Statistical | Option 3, draw-tape replay: the oracle exporter records each draw's result by wrapping the generator (`synth.py` is never edited); the Rust generator takes its randomness through an injectable draw source and, fed the tape, reproduces `plays`, `players`, `gt` and `college` exactly (S-2) | Proposed — awaiting Statistical owner | P1-12 (Rust-native generator) |
 | DR-D29 | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Option 1: one deterministic JSON manifest per case; one raw little-endian file per array; UTF-8 JSON arrays for strings; offsets + values for ragged lists; hash verification in a shell guard | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | DR-D30 | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Option 2: required for PRs that touch `reference/python/`, fixtures or parity tests, informational otherwise (§8.19). Interim: the job is not merge-authoritative while DR-A3 stands | Proposed — awaiting Security/Release owner and Product/Architecture owner | branch protection (no WP) |
+| DR-D31 | How is the oracle golden master made reproducible on CI hardware? Its Layer C reproduces only on CPython 3.11 with OpenBLAS AVX-512 kernels (KI-NEW-Z78) | Statistical, Security/Release | Option 1: pin `OPENBLAS_CORETYPE=Haswell` for every oracle run and regenerate the Layer C golden once under it as a correction-ledger entry; never loosen the tolerance | Proposed — awaiting Statistical owner and Security/Release owner | a green `reference-oracle` job; P1-12 parity fixtures |
 
 ### F.2 Open parameters inside registered decisions
 

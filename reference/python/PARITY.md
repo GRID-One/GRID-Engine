@@ -260,6 +260,11 @@ is defined on the healthy path only, and Rust tests assert the typed error inste
   - If it flakes in the oracle CI job, treat it as a performance signal, never as a parity
     failure. Do not weaken it inside the verbatim tree. Record the flake against this entry
     and raise a decision request.
+- **Golden master Layer C is platform-pinned (KI-NEW-Z78).** It reproduces only on CPython 3.11
+  with OpenBLAS AVX-512 kernels; on AVX2-only CPUs (for example AMD CI runners) or Python 3.12 the
+  two Layer C tests fail by up to 1.4e-2. This is kernel noise through the GBM cross-fitted
+  credit, not a model change, but it is not waived: the tests stay gating, and the remedy (a
+  portable kernel pin plus a ledger-entry regeneration, or an AVX-512 runner) is DR-D31.
 - **`run_demo.py`** is documentation. Its numbers are asserted by the Tier-0 gates, and its
   state-space lines depend on the thread count (`README.md`).
 - **Windows.** Golden Layer C and `test_cache.py::test_ttl_expired` are recorded as failing
