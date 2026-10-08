@@ -1,0 +1,102 @@
+{
+  "verification": {
+    "commands": [
+      {
+        "command": "just verify",
+        "exit_status": 0,
+        "canonical": true,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "environment": "Linux (Claude Code on the web container), pinned tools from toolchains/dev-tools.lock on PATH, DATABASE_URL and SQLX_OFFLINE from the committed .env, CARGO_BUILD_JOBS=2.",
+        "summary": "All 8 recipes passed (15 commands). cargo fmt, clippy -D warnings, sqlx prepare --check, cargo nextest (3 tests run, 3 passed, 0 skipped), doctests, tests/guards/run.sh (78 passed, 0 failed), cargo deny and cargo audit, every repository guard, and typos."
+      },
+      {
+        "command": "pwsh -NoProfile -File scripts/verify.ps1 -Scope Full",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "environment": "Portable PowerShell 7.4.6 on Linux, not Windows.",
+        "summary": "All checks passed. This is not the merge-authoritative Windows run (DR-A3); the windows-authoritative CI job on this PR is that evidence."
+      },
+      {
+        "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "A fresh clone compiles offline against the committed .sqlx cache."
+      },
+      {
+        "command": "./scripts/check-traceability.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "All 264 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
+      },
+      {
+        "command": "bash tests/guards/run.sh",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "78 passed, 0 failed (54 at 3823478; the new cases cover the authority-sync retarget, the P<phase>-NN traceability IDs, evidence-claims selection and immutability, R4-1 and R4-2, each verified to fail against the old script)."
+      },
+      {
+        "command": "./scripts/check-authority-sync.sh",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "engine-spec.md and docs/00-meta/specs/engine-spec.md are byte-identical."
+      },
+      {
+        "command": "cd reference/python && python3 tools/verify_manifest.py",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "105 rows: 103 verbatim, 2 patched (P1, P2); every hash matches."
+      },
+      {
+        "command": "cd reference/python && OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m pytest",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "environment": "Linux, CPython 3.11.15, a venv installed from requirements.txt -c requirements.lock. Run on a65aa6f; reference/python/ is identical at the final commit (git diff a65aa6f..final -- reference is empty).",
+        "summary": "446 passed in 148.51 s; isolation guard: 0 violations. Same node IDs as the cautious-nevermore@59bce1d baseline."
+      },
+      {
+        "command": "typos",
+        "exit_status": 0,
+        "run_against_commit": "a4f62f7c7cef3acf042e2d46673ba464ff7b7fa0",
+        "summary": "Clean. Oracle identifiers and two spec terms (GAM, Tung) are allowlisted; the 22 verbatim copies are excluded by exact path (ADR-011 guard table)."
+      }
+    ],
+    "note": "Populated from actual runs on the final content commit. A command that was not executed is never recorded as passing. The Windows run and the reference-oracle run on ubuntu-latest are CI evidence on the pull request, not claimed here."
+  },
+  "review": {
+    "reviewer_type": "none yet",
+    "reviewer": "A fresh-context adversarial review of P0-01 has not been performed. It is required before merge (engine-spec §7.11, §12.9).",
+    "reviewed_commit": null,
+    "verdict": "not reviewed"
+  },
+  "human_approvals": {
+    "required": [
+      "Product/Architecture owner: accept ADR-011 and ADR-012 and ratify the adopted A-decisions (DR-A1, A2, A4–A9, A11, A12) in the merge comment",
+      "Data/Licensing owner: record the licence ruling for reference/python/ (DR-A10) on the pull request before merge",
+      "Security/Release owner: the follow-up ADR on the authoritative CI platform (DR-A3) and the reference-oracle job's Python provenance",
+      "Merge reviewer: final diff and this evidence bundle; merge with a merge commit, never squash, so PR #1's attested commit 8d43203 stays reachable (DR-A6)"
+    ],
+    "obtained": [
+      "2026-10-01, in session: asked which language the consolidated engine should be built in, the owner chose 'Rust target + Python reference' (keep the Rust workspace trimmed to engine crates; import the Python engine under reference/python/ as the executable oracle; rewrite the specs engine-only)"
+    ],
+    "note": "A ruling on a question is not a review of a diff. No role-scoped sign-off on this diff has been obtained."
+  },
+  "known_limitations": [
+    "ai-toolchain.lock model and harness-version identity are 'unrecorded' for P0-01, a deviation from engine-spec §8.20: the implementing agent's harness policy forbids writing model identifiers into repository artifacts.",
+    "The branch name was assigned by the harness (claude/grid-engine-consolidation-e7kmh9), not wp/P0-01-… (ADR-001 D1 convention).",
+    "No agent budget was declared (engine-spec §8.18.1).",
+    "Windows is unproven: the chain ran under pwsh on Linux only; the first windows-authoritative CI run is the evidence.",
+    "The runner's Python is unproven: ubuntu-latest's python3 has not been checked against the lock (verified on 3.11.15); the first reference-oracle CI run is the evidence.",
+    "Contracts and model specs are drafts with unapproved equations; B, C and D decisions are proposed or open.",
+    "The reference oracle is legacy-59bce1d with known defects (KI-NEW-Y0 first); no correction-ledger entry is applied.",
+    "Guard residuals (ADR-011): the R4-1 behaviour change for non-regular paths; the R4-2 gaps (pipes, construct keywords); the traceability rename gap."
+  ],
+  "follow_up": [
+    "Fresh-context adversarial review of P0-01, recorded under docs/06-sessions/.",
+    "Oracle correction-ledger work package once DR-B1 is ratified, starting with KI-NEW-Y0.",
+    "ADR on the authoritative platform (DR-A3) before P1-11.",
+    "Security/Release: a Bash(python3 -m pytest:*) rule in .claude/settings.json; cargo audit's yanked chacha20 0.10.1 versus deny.toml yanked = \"deny\"; setup-python or a pinned runner image for reference-oracle.",
+    "P1-01: crate restructure (application → pipeline, grid-cli, synth; DR-A8) and structural guards for engine-spec §1.1 item 8 and §8.1 rule 4.",
+    "After merge: close PR #1 as included; close PRs #2 and #3 unmerged; tag oracle-legacy-59bce1d on the import commit.",
+    "Commit the probe scripts behind model-spec numbers recorded as not reproducible from the repository."
+  ]
+}
