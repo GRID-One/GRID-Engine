@@ -1,0 +1,11 @@
+--- a/run_demo.py
++++ b/run_demo.py
+@@ -23,7 +23,7 @@
+ )
+ from backend.grid import SSParams, PRIOR_SD
+ 
+-OUT = "/mnt/user-data/outputs"
++OUT = os.environ.get("GRID_DEMO_OUT", "/mnt/user-data/outputs")
+ os.makedirs(OUT, exist_ok=True)
+ POS_COLORS = {"QB": "#1f77b4", "RB": "#ff7f0e", "WR": "#2ca02c",
+               "TE": "#9467bd", "DEF": "#d62728"}

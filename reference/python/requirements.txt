@@ -1,0 +1,23 @@
+# GRID Python reference engine (executable oracle) -- engine-only dependencies.
+#
+# Derived from cautious-nevermore @ 59bce1d requirements.txt minus the app stack
+# (fastapi, uvicorn, httpx, pydantic, websockets, anthropic, posthog): nothing in the
+# imported closure needs them, and tools/pytest_isolation_guard.py blocks them in tests.
+#
+# Install with the lock as a constraints file, from reference/python:
+#   pip install -r requirements.txt -c requirements.lock
+# The golden master (tests/grid/test_golden_master.py, rtol 1e-5 / atol 1e-6) is sensitive
+# to numpy / scikit-learn versions, so an unconstrained install is not an oracle run.
+numpy>=1.24
+pandas>=2.0
+scipy>=1.11
+scikit-learn>=1.3
+pyarrow>=14.0          # parquet engine for pandas (cache, snapshots); never imported directly
+joblib>=1.3            # backend/grid/value.py model cache
+python-dotenv>=1.0     # backend/db/connection.py loads .env at import (DB_PATH)
+threadpoolctl>=3.1     # imported directly by the determinism-pinned tests
+# Test runner. >=8.4 because pytest.ini loads tools/pytest_isolation_guard.py with `-p`, and
+# only from pytest 8.4 is the ini `pythonpath` applied before `-p` plugins are imported
+# (verified in the 7.4.4 / 8.0.0 / 8.3.5 / 8.4.0 wheels). Older pytest finds the plugin only
+# under `python -m pytest` run from this directory.
+pytest>=8.4

@@ -1,0 +1,24 @@
+# Reference oracle (reference/python). Runtime outputs are cwd-relative: run from this
+# directory and they land under data/ here (data/cache/*.parquet|*.npz|*.joblib,
+# data/db/*.sqlite, data/logs/, data/health.json, data/snapshots/, data/reports/), and
+# tools/investigations/fetch_realdata.py downloads nflverse inputs to data/realdata/.
+# Nothing under data/ is source, and real third-party data is never committed.
+/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.parquet
+*.joblib
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+.env
+# run_demo.py output when GRID_DEMO_OUT points here
+grid_recovery.png
+grid_focus_qb.png
+# The committed golden master must stay tracked even if a broader rule is ever added.
+!tests/grid/golden/snapshot.npz
