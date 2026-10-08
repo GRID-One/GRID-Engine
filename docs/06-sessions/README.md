@@ -58,6 +58,7 @@ Date is the record's own `date:` front matter where it has one.
 | 2026-08-20 | P1-00 adversarial review, round 2, at `de3b36c` | CONDITIONAL: 3 blockers, 9 major, 11 minor | [`review-P1-00-adversarial-round2.md`](review-P1-00-adversarial-round2.md) | `claude/adversarial-review-p1-00-l32emp` (PR #3) |
 | 2026-08-20¹ | P1-00 adversarial review, round 3, at `8e07b04` | CONDITIONAL: 1 blocker, 3 major, 4 minor | [`review-P1-00-adversarial-round3.md`](review-P1-00-adversarial-round3.md) | `claude/adversarial-review-p1-00-l32emp` (PR #3) |
 | 2026-08-30 | P1-00 adversarial review, round 4 (verification pass), at `3823478` | APPROVED with findings: 0 blockers, 1 major, 1 minor | [`review-P1-00-adversarial-round4.md`](review-P1-00-adversarial-round4.md) | `claude/adversarial-review-p1-00-l32emp` (PR #3) |
+| 2026-10-08 | P0-01 adversarial review, round 1 (three fresh-context lenses), at `f3fb390` | 26 findings (0 blockers, 9 major, 17 minor), all dispositioned | [`review-P0-01-adversarial-round1.md`](review-P0-01-adversarial-round1.md) | written in this repository by P0-01 (not imported) |
 | 2026-10-01 | P0-01 consolidation inventory: 8 inventory reports plus a completeness critic | — | [`2026-10-01-consolidation-inventory/`](2026-10-01-consolidation-inventory/README.md) | `claude/grid-engine-consolidation-e7kmh9` |
 
 ¹ Round 3's front matter says 2026-08-20. The commit that wrote it, `c220a69`, is dated

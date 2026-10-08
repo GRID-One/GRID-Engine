@@ -404,7 +404,7 @@ G[t]     = +E_def[t]                       (higher = tougher)
 - **Tier-2 has never validated any grade on engine output** (KI-NEW-V2). The Tier-2 synth test is
   tautological: it builds `points_allowed = 20 − 30·grade` from the grades themselves
   (`tests/validation/test_verdict.py:47-51`). The unit tests plant the wrong sign by hand
-  (`tests/pipeline/test_weekly_update.py:286-370`).
+  (`tests/pipeline/test_weekly_update.py:286-366`).
 
 ### 4.6 Defender ratings and opponent adjustment
 
@@ -723,7 +723,7 @@ synths. The fixed values are the starting point for re-set Class D floors (DR-B3
 | `tests/grid/test_determinism.py:50-60` | In-process `atol 1e-9` | Port as a Rust determinism gate |
 | `tests/grid/test_golden_master.py` | Layer A truth-anchored (`:69-104`); Layer B ordering (`:108-128`); Layer C numeric (`:152-173`, rtol 1e-5 / atol 1e-6) | **Legacy goldens are not Rust targets.** On the fixed synth, Layer B ×2 and Layer C ×2 fail (critic G-1). Targets are regenerated on the corrected oracle (DR-B1) |
 | `tests/validation/test_backtest.py`, `tests/validation/test_leakage_guards.py` | §6.2; future-poisoning bit-identical (`:84-104`); watermark (`:110-121`); tripwire (`:127-145`) | Port (evaluation-and-leakage.md) |
-| `tests/pipeline/test_weekly_update.py:286-370` | Matchup-grade sign with hand-planted betas | **Tautological; encodes the wrong sign.** Rewrite truth-anchored (§10.3) |
+| `tests/pipeline/test_weekly_update.py:286-366` | Matchup-grade sign with hand-planted betas | **Tautological; encodes the wrong sign.** Rewrite truth-anchored (§10.3) |
 
 ### 7.4 Real data (historical, non-parity; engine-spec §3.3)
 

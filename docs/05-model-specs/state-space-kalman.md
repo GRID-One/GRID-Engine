@@ -411,7 +411,7 @@ Provenance key:
 | P0 / init Σ | diag(0.05, 0.02, 0.01) | `statespace.py:50, :188` | v0 (0.05, 0.02) plus Task 8 (0.01); hand-set, synth units (KI-NEW-P4) |
 | default x0 | `[nanmean(y[:3]), 0, 0]` | `statespace.py:186` | v0; look-ahead defect KI-#15 |
 | RTS jitter | 1e-10·I | `statespace.py:241` | PR #53 C2 (v0 used `inv` without jitter) |
-| `z_thresh` | 3.0 | `statespace.py:265` | Phase-4 Task 11, hand-set |
+| `z_thresh` | 3.0 | `statespace.py:266` | Phase-4 Task 11, hand-set |
 | legacy-migration scheme variance | 0.01 | `statespace.py:71` | Phase-4 Task 9, hand-set; not ported (§10) |
 
 **Per-position overrides.** `SSParams.from_position(pos)` (`statespace.py:121-133, :149-152`) is
@@ -723,7 +723,7 @@ Two inconsistencies in the oracle's own comments:
 | Unit tests (102 tests, all pass on Linux at `59bce1d`) | `test_kalman_numerical.py` (7), `test_incremental.py` (20 Kalman plus 5 accumulator), `test_changepoint.py` (5), `test_phase0_prereqs.py` (9), `test_coaching_changes.py` (4: 2 kalman_step, 1 schema, 1 DB-coupled `weekly_update`), `test_calibration_synth.py` (6), `test_tier0_recovery.py` (8), `test_golden_master.py` (11), `test_priors.py` (15), `tests/projection/test_features.py` (12) |
 | 3-state vs 2-state regression | `test_two_component_recovery_unchanged` (`test_incremental.py:407-438`): baseline 0.7272, measured 0.7543 |
 | Changepoint | Unit tests only, in z-score units. `test_weekly_update_auto_interventions_recovers_demo` calls `kalman_step` and `detect_changepoints` directly, not `weekly_update`. The planned changepoint precision/recall target (≥ 0.6 / ≥ 0.5; validation plan §9) was never implemented (reconcile-code-first C25) |
-| Look-ahead effect (KI-#15) | Default `x0` vs `x0 = 0` on the golden focus-QB series (legacy): Δ`total_pred[0]` = 0.1776 (that is `x0` itself); Δ`total_filt` = 0.0095 at week 0, decaying to about 3e-4 by week 13; total_smooth corr 0.9580 vs 0.9571, tau 0.6745 vs 0.6738, NIS 4.581 vs 4.694 |
+| Look-ahead effect (KI-#15) | Default `x0` vs `x0 = 0` on the golden focus-QB series (legacy, measured on the pre-L0 golden under the AVX-512 kernel): Δ`total_pred[0]` = 0.1776 (that is `x0` itself; 0.1720 on the L0 golden); Δ`total_filt` = 0.0095 at week 0, decaying to about 3e-4 by week 13; total_smooth corr 0.9580 vs 0.9571, tau 0.6745 vs 0.6738, NIS 4.581 vs 4.694 |
 | Scale of observation vs RAPM rating | Legacy synth, snap-weighted season credit regressed on RAPM rating: QB slope 1.217 (credit SD 0.349 vs rating 0.272), RB 1.399, TE 1.283, WR 1.189. Correlations 0.66–0.95 |
 
 ### 7.4 Real-data status
@@ -858,7 +858,7 @@ explicit `x0`. Rust therefore never implements the look-ahead.
 | ID | Fixture (inputs) | Compared outputs | Class |
 |---|---|---|---|
 | PF-SS-01 | Benign series `test_phase0_prereqs.py` (seed 11, W=18, intervention {6}, snaps 40) with the exported `x0` | all §3.4 keys (incl. `sigma_smooth`) | **A** (≤ 1e-12 abs element-wise) |
-| PF-SS-02 | Golden focus-QB credit and snaps series from `tests/grid/golden/snapshot.npz` (intervention {9}, `SSParams()`), exported `x0 = 0.17763474167048995`; and the same with QB params | all §3.4 keys | **A**. Closed-form parity on a fixed numeric series is independent of the synth's validity; the legacy *recovery* numbers are not targets |
+| PF-SS-02 | Golden focus-QB credit and snaps series from `tests/grid/golden/snapshot.npz` (intervention {9}, `SSParams()`), exported `x0 = 0.17201694537356657` (the golden after ledger entry L0; the pre-L0 legacy golden gave 0.17763474167048995); and the same with QB params | all §3.4 keys | **A**. Closed-form parity on a fixed numeric series is independent of the synth's validity; the legacy *recovery* numbers are not targets |
 | PF-SS-03 | Adversarial series from `test_kalman_numerical.py` (seeds 7, 13, 55, and 42 benign) | all keys plus symmetry/PSD properties | **A** |
 | PF-SS-04 | Near-singular series (`test_kalman_numerical.py:53-62`; cond 3.3e5) | smoother outputs | **A′** (≤ 1e-9 rel); filter outputs **A** |
 | PF-SS-05 | Incremental sequences: `test_incremental.py` seeds 77/99, `test_coaching_changes.py` two-player states (reset, intervention, both), changepoint states from `test_changepoint.py` | μ, Σ, `pred_var`, flag sets and z | **A** (flags exact) |

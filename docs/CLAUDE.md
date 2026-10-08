@@ -93,8 +93,9 @@ Governed by ADR-012 and engine-spec §1.7. Operating rules and provenance: `refe
 status, correction ledger, tolerances and divergences: `reference/python/PARITY.md`.
 
 - **What it is.** The cautious-nevermore Python engine at `59bce1d`, package `backend.*`: 105 files,
-  103 byte-identical and two patched (P1, P2 in `patches/`), each recorded in `MANIFEST.tsv`. Status
-  `legacy-59bce1d`. Source sits at authority level 6; committed fixtures and goldens at level 5.
+  102 byte-identical and three patched (P1, P2 and ledger entry L0 in `patches/`), each recorded in
+  `MANIFEST.tsv`. Status `legacy-59bce1d + L0`. Source sits at authority level 6; committed fixtures
+  and goldens at level 5.
 - **Never edited** under `backend/` or `tests/` except by an approved correction-ledger entry: a
   separate reviewed commit, failing test first, goldens regenerated with a model-spec note,
   `MANIFEST.tsv`, `patches/` and `PARITY.md` §(b) updated. A `requirements.lock` bump is an oracle
@@ -105,10 +106,16 @@ status, correction ledger, tolerances and divergences: `reference/python/PARITY.
   manifest. Rust tests read files and never invoke Python. Fixture regeneration is never part of the
   change that ports the component it gates. Fixtures are synthetic-only (DR-A11).
 - **Environment.** Linux only; `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` = 1. The
-  isolation guard blocks app imports and network access. `python3 tools/verify_manifest.py` must pass.
+  pinned numerical platform is CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31,
+  ledger entry L0): `tools/pytest_platform_pin.py` enforces it for pytest, and anything run outside
+  pytest exports it. The isolation guard blocks app imports and network access.
+  `python3 tools/verify_manifest.py` must pass.
 - **CI.** The `reference-oracle` job is outside the frozen verify chain, never wired into
   `verify.ps1`, `just verify` or `windows-authoritative`, and not merge-authoritative (DR-A3, DR-D30).
-  If the runner's Python moves a golden, escalate; never loosen a tolerance.
+  It runs on the runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, fails if
+  that interpreter is absent, and is expected green (446 passed). If the runner's interpreter or BLAS
+  kernel still moves a golden, escalate; never loosen a tolerance, disable the platform pin or skip a
+  test.
 - **Data.** Real third-party data is never committed. `backend/db/data/coaching_changes_2025.json` is
   unverified (KI-NEW-D1) and never becomes a fixture or provider input.
 - **Spelling.** `_typos.toml` allowlists oracle identifiers entry by entry; never exclude the tree.

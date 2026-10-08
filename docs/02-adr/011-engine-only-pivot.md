@@ -206,7 +206,7 @@ frozen (ADR-010). The facts below were measured by the infrastructure change.
 | `tests/guards/run.sh` | **54 → 78 cases**: authority-sync +1, traceability +4, evidence-claims +7, R4-1 +4, R4-2 (ps1 analysis) +4, R4-2 (parity) +4. The authority-sync fixture is renamed to `engine-spec.md` | Each new positive case **fails** when its script is swapped back to its `3823478` version, and every control passes under both versions | strengthen |
 | `.gitignore` | The Flutter block is replaced by Python caches (`__pycache__/`, `*.py[cod]`, `.pytest_cache/`, `.venv/`, `venv/`) and `/reference/python/data/` | Untracked oracle caches would otherwise enter the traceability and secrets change sets (critic X-8). Neither an oracle source file nor `tests/grid/golden/snapshot.npz` is ignored | de-scope and strengthen |
 | `_typos.toml` | Allowlist entries with a justification comment per group: `vor`, `mis`, `yhat`, `ot_yl`, `ot_dn`, `ot_yds`, `fo_s`, `fo_w`, `pn` (oracle tree); `GAM`, `Tung` (engine-spec terms). Exact-path exclusions for the 22 verbatim copies (nine inventory reports, thirteen archived cautious-nevermore documents), whose spellings can never be corrected in place | Allowlist, never an exclusion of `reference/python/` (critic X-6); verbatim copies excluded file by file, never by directory, and maintained files in those trees stay checked | allowlist + scoped exclusion |
-| `.github/workflows/alpha-ci.yml` | Adds the `reference-oracle` job (ADR-012). Comments on the evidence-claims step and on the self-test count | `windows-authoritative` and `linux-smoke` are otherwise byte-unchanged. The evidence-claims command is unchanged, because the script now selects the record | strengthen |
+| `.github/workflows/alpha-ci.yml` | Adds the `reference-oracle` job (ADR-012). Comments on the evidence-claims step and on the self-test count. The header's Windows-authority rationale is restated per D8 | `windows-authoritative` and `linux-smoke` are otherwise byte-unchanged. The evidence-claims command is unchanged, because the script now selects the record | strengthen |
 
 **Residuals, recorded rather than fixed:**
 
@@ -431,6 +431,7 @@ listed here is outside P0-01. The same list appears in the P0-01 work package.
 - `docs/06-sessions/review-P1-00-adversarial-round2.md`
 - `docs/06-sessions/review-P1-00-adversarial-round3.md`
 - `docs/06-sessions/review-P1-00-adversarial-round4.md`
+- `docs/06-sessions/review-P0-01-adversarial-round1.md`
 - `docs/07-archive/`
 - `reference/python/`
 - `.ai/evidence/P0-01/`

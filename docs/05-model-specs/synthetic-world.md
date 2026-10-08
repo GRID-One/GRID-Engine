@@ -450,10 +450,11 @@ only one that changes any draw.
 
 - **G-1. Defenders from `def_team`.** The oracle correction SHOULD be exactly the measured patch:
   two `_pick_onfield` calls, offense from `tidx[off_team]` and defense from `tidx[def_team]`
-  (`_common.py:175-179`). Its effects are the "fixed" columns throughout this spec and critic G-1,
-  so they are already measured and reviewed. A different code shape (separate offense and defense
-  selection) is equivalent in distribution but changes the stream again, so it would need its own
-  measurements.
+  (`reference/python/tools/investigations/_common.py:51-55`, the legacy and fixed lines, applied
+  by `apply_defender_fix` at `:71-100`). Its effects are the "fixed" columns throughout this spec
+  and critic G-1, so they are already measured and reviewed. A different code shape (separate
+  offense and defense selection) is equivalent in distribution but changes the stream again, so it
+  would need its own measurements.
 - **G-2. Planted net strength = offense quality + defense quality** (proposed — DR-B5). Defenders
   subtract from the yards of the offense they face, so a larger defensive ability is a better
   defense, and a spread prices `off + def` (critic X-2; rapm-attribution.md §1.3).

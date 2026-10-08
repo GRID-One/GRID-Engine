@@ -37,14 +37,14 @@ powershell -ExecutionPolicy Bypass -File scripts/verify.ps1 -Scope Full   # merg
 just evidence <WP-ID>   # evidence manifest for a work package
 ```
 
-Reference oracle (Linux only, outside the verify chain):
+Reference oracle (Linux only, CPython 3.11 + `OPENBLAS_CORETYPE=Haswell`, outside the verify chain):
 
 ```bash
 cd reference/python
-python3 -m venv .venv && . .venv/bin/activate
+python3 -m venv .venv && . .venv/bin/activate   # python3 must be CPython 3.11
 pip install -r requirements.txt -c requirements.lock
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
-python3 tools/verify_manifest.py && python3 -m pytest
+python3 tools/verify_manifest.py && python3 -m pytest   # pytest pins OPENBLAS_CORETYPE=Haswell itself
 ```
 
 **Verification recipes are a frozen contract.** Make the repository satisfy them. Never edit a
@@ -107,8 +107,12 @@ without a reviewed semantic explanation.
   make a Rust test pass.
 - Never port a known oracle defect (`docs/00-meta/known-issues.md`) "for parity". Cite the `KI-…`
   entry and implement the spec.
-- Linux only, BLAS/OpenMP threads pinned to 1. Real third-party data is never committed; parity
-  fixtures are synthetic-only.
+- Linux only, BLAS/OpenMP threads pinned to 1, and the pinned numerical platform: CPython 3.11 with
+  `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, correction-ledger entry L0). The golden is frozen on
+  it, and `reference/python/tools/pytest_platform_pin.py` enforces it for pytest; export it yourself
+  for the demo, the golden generator and investigations. Never loosen a tolerance or disable the pin
+  to absorb a platform difference. Real third-party data is never committed; parity fixtures are
+  synthetic-only.
 - `python3 tools/verify_manifest.py` must pass: the imported files match `MANIFEST.tsv`.
 - Legacy-oracle numbers and historical real-data results are never evidence of engine accuracy.
 

@@ -27,14 +27,17 @@ decisions that are still *proposed*:
 |---|---|
 | Correction levels | DR-B1 |
 | Committed fixtures and oracle job | DR-B2 |
-| Tolerance classes | DR-B3 |
+| Tolerance classes | DR-B3, including the proposed C-L1 amendment |
+| V(s) parity criterion C-V | DR-D27 |
 | Synthetic world | DR-B4 |
 | Typed-failure divergences | DR-B6 |
 | Synthetic-only fixtures | DR-A11 |
 | Fixture format | DR-D29 |
+| Oracle golden platform (interpreter and OpenBLAS kernel) | DR-D31 (ratified 2026-10-08, option 1; ledger entry L0) |
 
 See [decision-register.md](../00-meta/decision-register.md). Until ratification these rules are
-the default the first port WP proposes to the owners. They are not settled law.
+the default the first port WP proposes to the owners. They are not settled law. The exception is the
+oracle platform pin, which DR-D31 settled.
 
 ## 1. What parity is, and what it is not
 
@@ -55,9 +58,9 @@ the default the first port WP proposes to the owners. They are not settled law.
    Rust raises typed errors there *(proposed — DR-B6)*. The ADR making ill-conditioning a typed
    failure cites cautious-nevermore PR #53 audit item C3, which added the fallback deliberately.
    Each divergence is listed in `PARITY.md`.
-4. **The oracle is never edited to make a Rust test pass** (superseded alpha-spec Appendix D,
-   and §6.6 rule 3). Approved corrections are made first in Python under the correction ledger
-   (§7) and only then exported.
+4. **The oracle is never edited to make a Rust test pass** (engine-spec Appendix D item 13
+   and §6.8 rule 3, which carries superseded alpha-spec §6.6 rule 3). Approved corrections are
+   made first in Python under the correction ledger (§7) and only then exported.
 
 ## 2. Fixture format (DR-D29)
 
@@ -140,10 +143,13 @@ Run provenance (date, runner, operator) goes into the PR evidence, not the manif
   "contracts": { "parity_fixture": "1", "plays": "grid.plays/0" },
   "description": "Focus-QB Kalman filter + RTS on the oracle's weekly Layer-1 credit (golden master inputs).",
   "environment": {
+    "blas": { "architecture": "Haswell", "internal_api": "openblas", "openblas_coretype": "Haswell",
+              "version": "<OpenBLAS version reported by threadpoolctl>" },
     "packages": { "joblib": "1.6.0", "numpy": "2.4.6", "pandas": "3.0.6", "pyarrow": "25.0.1",
                   "scikit-learn": "1.9.1", "scipy": "1.17.1", "threadpoolctl": "3.7.0" },
     "platform": "linux-x86_64",
     "python": "3.11.15",
+    "python_implementation": "CPython",
     "threads": { "MKL_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
                  "threadpool_limits": 1 }
   },
@@ -177,6 +183,18 @@ Run provenance (date, runner, operator) goes into the PR evidence, not the manif
 
 - `environment.packages` is read from the running interpreter. The exporter MUST refuse to run
   if any version differs from `reference/python/requirements.lock`.
+- `environment.python` and `environment.python_implementation` record the interpreter the case
+  was exported under (`sys.version_info`, `platform.python_implementation()`).
+- `environment.blas` records the BLAS library and the **OpenBLAS kernel (core type)** in use:
+  `internal_api`, `version` and `architecture` as `threadpoolctl.threadpool_info()` reports them
+  after NumPy, SciPy and scikit-learn are imported (before that it reports nothing), and
+  `openblas_coretype`, the value of `OPENBLAS_CORETYPE` in the environment or `null` when unset.
+  Gradient-boosted oracle outputs move with the kernel and the interpreter (KI-NEW-Z78), so a case
+  is only expected to reproduce under its recorded interpreter and kernel. Every oracle run pins
+  CPython 3.11 and `OPENBLAS_CORETYPE=Haswell` (DR-D31, ratified 2026-10-08; correction-ledger entry
+  L0, which regenerated the golden master under that pin). The exporter MUST refuse to run unless
+  `openblas_coretype` and `architecture` are both `Haswell`, as `tools/pytest_platform_pin.py`
+  already does for the test suite.
 - The seeds of the canonical world are the oracle's own:
   - synthetic `seed=7`; college `seed+99 = 106`;
   - market `default_rng(1)`;
@@ -198,12 +216,13 @@ therefore takes the oracle's realized intermediate as an **injected input**.
 | Component / stage | Injected from the oracle | Rust computes | Compared outputs | Class |
 |---|---|---|---|---|
 | `synthetic-world` canonical world | — (exported frames are the input) | loads v0 frames and upgrades them (`from_legacy_v0`) | round-trip of every column and id order | exact |
-| `value-model` dV | per-row V(s) and V(s′) for continuing rows (`value.py:153-164`) | `compute_dv` | `dv` | A |
-| `value-model` V(s) estimator | the plays frame; the oracle V on a declared state grid, with per-cell support counts | Rust V(s) (C-7 estimator) | V on grid cells with support ≥ `min_samples_leaf` (120 in the oracle, `value.py:113-116`); `dv` on all rows | C |
+| `value-model` dV | per-row V(s) (`value.py:92`) and V(s′) for continuing rows (`value.py:99-102`) | `compute_dv` | `dv` | A |
+| `value-model` V(s) estimator | the plays frame; the oracle V on a declared state grid, with per-cell support counts; the oracle's seed envelope (V on the grid and `dv` for seeds 1–10) | Rust V(s) (C-7 estimator) | V on grid cells with support ≥ `min_samples_leaf` (120 in the oracle, `value.py:53`); `dv` on all rows | C-V (proposed — DR-D27; `value-model.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `rapm-attribution` design | plays + players + `dv` | `build_design` | COO/CSR triplets, player and team index maps, y | exact (values in {−1, +1, +2}, [plays-contract.md](plays-contract.md) D-8) |
 | `rapm-attribution` normal equations | design + `dv` | XᵀX, Xᵀy, incremental accumulation | XᵀX, Xᵀy; incremental == batch | A |
 | `rapm-attribution` solve | XᵀX, Xᵀy, `lam=120`, mask (players 1.0 or `lambda_by_pos`; team intercepts 0.05; interactions 10.0), prior mean, market rows (`w_market=40`) | dense or CG ridge | β, ratings, team ratings | A′ (dense) / B (CG) |
 | `rapm-attribution` situations | plays | situation masks | boolean masks | exact |
+| `layer1-credit` context model | play features `x_i`, `dv` and the fold map (`layers.py:497-519`) | the Rust booster's out-of-fold residual | the residual, weekly credit, per-position season credit | C-L1 (proposed amendment to DR-B3; `layer1-credit.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `layer1-credit` weekly credit | plays + `dv` + the out-of-fold residual `_resid` (`layers.py:497-519`); fold ids for audit | per-player weekly mean residual and snaps | `credit`/`qb_credit`, `snaps`, week set | A (credit), exact (snaps, weeks) |
 | `layer1-credit` fixed point `fit(n_iter=3)` | `_resid` **for each iteration** (the defender-rating feature changes per iteration) and V(s)/dV | the RAPM ↔ Layer-1 loop | ratings, team ratings, `qb_weekly` | A′/B + A |
 | `state-space-kalman` | `y`, `snaps`, `played`, interventions, scheme resets, `SSParams`, and the **effective** `x0` and `P0` | filter, RTS, predictive variance | `total_filt`, `total_smooth`, `tau_smooth`, `var_total_filt`, `total_pred`, `var_total_pred`, NIS terms | A |
@@ -236,8 +255,31 @@ choices are part of the same proposal.
 | **A** | element-wise closed forms: Kalman, RTS, fixed-lag, affine and scoring, credit means, metrics, dV subtraction, XᵀX/Xᵀy | `max_i \|r_i − p_i\| ≤ 1e-12` |
 | **A′** | dense linear solves (ridge with prior mean, least squares) | `‖r − p‖∞ / ‖p‖∞ ≤ 1e-9` |
 | **B** | iterative sparse CG RAPM | `‖β_r − β_p‖₂ / ‖β_p‖₂ ≤ 10 × cg_tol` **and** the solver diagnostics report `converged = true`. `cg_tol` is recorded in the case |
-| **C** | booster stages: V(s) and the Layer-1 context model | `corr(dV_r, dV_p) ≥ 0.999` **and** `\|V_r − V_p\| ≤ 0.10` EP on state-grid cells with support ≥ `min_samples_leaf` |
+| **C** | booster stages: V(s) and the Layer-1 context model. The unratified DR-B3 default, measured unattainable (KI-NEW-Z74); see the stage-specific C-V and C-L1 below | `corr(dV_r, dV_p) ≥ 0.999` **and** `\|V_r − V_p\| ≤ 0.10` EP on state-grid cells with support ≥ `min_samples_leaf` |
 | **D** | end-to-end recovery on the synthetic world | the recovery floors of engine-spec §7.13, **re-set on the corrected (defender-fixed) synthetic world**, calibrated below observed values the way the oracle's gates are. The floors live in engine-spec §7.13 and `reference/python/PARITY.md`, never in fixtures |
+
+**Class C cannot be met as written (KI-NEW-Z74).** It is the DR-B3 default as proposed, and the
+oracle fails it against itself: re-seeding the V(s) booster gives corr(dV) 0.9891–0.9942 on the
+legacy synthetic world, 0.9896–0.9931 on the defender-fixed one and 0.9940–0.9960 on real 2023
+data (`value-model.md` §7.3), and under a fold-seed change the Layer-1 context residual
+correlates with itself at only 0.9936–0.9974 (`layer1-credit.md` §5.3). The model specs therefore propose stage-specific
+criteria in its place. Neither is ratified:
+
+- **C-V** for V(s) (proposed — DR-D27; `value-model.md` §10.3). All four are required:
+  corr(dV_r, dV_p) ≥ 0.98 over all rows; max `|V_r − V_p|` ≤ 0.30 EP on states with support
+  ≥ 120; the Rust estimator passes its own spec goldens (P-V4); and the Class D gates hold with
+  Rust dV (P-V8). The `value-model` fixture carries the oracle's seed envelope (seeds 1–10) from
+  which the reference values are computed.
+- **C-L1** for the Layer-1 context model (proposed amendment to DR-B3; `layer1-credit.md`
+  §10.3). On the canonical fixed synth, with injected `x`, `dv` and fold map, all four are
+  required: residual corr ≥ 0.99; weekly credit corr ≥ 0.99 with RMS Δ ≤ 0.05 EP per play;
+  per-position season-credit corr ≥ 0.995; and the P-L1-7 Class D gates.
+
+Both sit below the oracle's own measured envelope and MUST be pre-registered by the statistical
+owner before any Rust result is seen (engine-spec §7.13.4). A Rust stage that fails them is a
+decision request, not a reason to loosen them. engine-spec §7.12.5 also records the two other
+proposed DR-B3 amendments: the Class B refinement (`rapm-attribution.md` §10.3) and Class D over
+a seed ensemble (proposed — DR-D26).
 
 **In every class:**
 
@@ -260,7 +302,9 @@ Linux. **It is not a Rust tolerance.**
 ## 7. Legacy versus corrected oracle (proposed — DR-B1)
 
 1. **Two levels.** `oracle.level = "legacy"` means the as-imported oracle: `59bce1d` plus import
-   patches P1 and P2 (critic.md X-4 proposes the tag `oracle-legacy-59bce1d` for that commit). `oracle.level = "corrected"` means the
+   patches P1 and P2 (critic.md X-4 proposes the tag `oracle-legacy-59bce1d` for that commit), and
+   ledger entry L0, the golden master's platform-pin regeneration. L0 changes no semantics, so a case
+   exported after it is still `legacy`; its platform is recorded in `environment`. `oracle.level = "corrected"` means the
    oracle after the statistical-owner-approved entries of the **correction ledger** in
    `reference/python/PARITY.md`, each listed in `corrections_applied`.
 2. **Ledger order.** Correction #1, the synthetic defenders, comes first, before any other
@@ -317,7 +361,9 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
    "Make a failing Rust test pass" is never a trigger.
 2. **Environment:**
    - Linux x86_64; the exact interpreter and packages of `reference/python/requirements.lock`
-     (Python 3.11.15);
+     (CPython 3.11.15);
+   - `OPENBLAS_CORETYPE=Haswell`, the kernel every oracle run pins and every case records in
+     `environment.blas` (KI-NEW-Z78; DR-D31, ratified 2026-10-08; ledger entry L0);
    - `OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=1` in the environment, **and**
      `threadpool_limits(1)` inside the exporter. Multi-threaded GBM diverges at about 1e-2;
    - working directory `reference/python` (oracle paths are cwd-relative);
@@ -330,7 +376,8 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
    - the semantic explanation (ledger id, model-spec section, or contract version);
    - a per-array change summary (max |Δ| and the largest movers, as the golden master prints
      them);
-   - statistical-owner sign-off when a Class C or D case or a `-corrected` target moves.
+   - statistical-owner sign-off when a booster-stage case (C-V, C-L1 or Class C), a Class D case
+     or a `-corrected` target moves.
 6. Windows never regenerates fixtures. Rust tests never write fixtures.
 
 ## 10. How CI checks fixtures
@@ -339,16 +386,16 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
 |---|---|---|
 | `guards` (Linux) | A fixture guard, for example `scripts/check-parity-fixtures.sh`, using `sha256sum` as `check-evidence-claims.sh` already does. It checks: every listed file exists and its sha256 matches; no unlisted file is present; required manifest keys exist; `provenance.data == "synthetic"`; `INDEX.tsv` agrees; the fixture tree is marked `-text` | **proposed**. A new step in `.github/workflows/alpha-ci.yml` touches the workflow security boundary (Security/Release owner) |
 | `linux-smoke`, `windows-authoritative` | The Rust parity tests run inside the existing Rust test step. They read the committed fixtures, apply the §6 classes, and need no Python | no recipe change; tests are added under the existing `test-rust` step |
-| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner's preinstalled `python3` with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval | **proposed — DR-B2** |
+| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner image's tool-cache CPython 3.11 and fails if that is absent, with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval. The job pins `OPENBLAS_CORETYPE=Haswell`, and the golden master was regenerated under CPython 3.11 + Haswell by ledger entry L0, so the suite is expected green on GitHub's AMD runners (KI-NEW-Z78; DR-D31, ratified 2026-10-08) | suite run: in place since P0-01; fixture regeneration: **proposed — DR-B2** |
 
 **Rules for the `reference-oracle` job:**
 
 - It is never wired into `verify.ps1` or `windows-authoritative`. Golden Layer C and the cache
   TTL test fail on Windows (critic.md G-6).
-- If the runner's Python cannot reproduce the fixtures, escalate to the owner. Never loosen a
-  tolerance or regenerate to absorb the drift.
-- Adding an oracle smoke step to the frozen `verify` chain is an ADR-005 amendment. This
-  contract does not make it.
+- If the runner's Python or BLAS kernel cannot reproduce the fixtures under the platform pin, escalate
+  to the owner (KI-NEW-Z78; DR-D31). Never loosen a tolerance or regenerate to absorb the drift.
+- Adding an oracle smoke step to the frozen `verify` chain is an ADR-001 D5 amendment and needs
+  its own ADR. This contract does not make it.
 
 ## 11. Rust harness
 

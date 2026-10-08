@@ -71,7 +71,7 @@ on, and "Enforced in" says where that requirement lives or will live.
 
 - **What happened.** The matchup grade `−β_def` is inverted (KI-NEW-A2), yet both tests that cover it
   pass.
-  - `reference/python/tests/pipeline/test_weekly_update.py:286-370` plants `β_ELITE = −3` by hand. That
+  - `reference/python/tests/pipeline/test_weekly_update.py:286-366` plants `β_ELITE = −3` by hand. That
     encodes the same wrong algebra as the code.
   - The Tier-2 synth test builds `points_allowed = 20 − 30·grade` from the grades under test
     (`reference/python/tests/validation/test_verdict.py:47-51`).
@@ -113,15 +113,21 @@ on, and "Enforced in" says where that requirement lives or will live.
     - Layer C differs on Windows because of cross-platform float differences in gradient boosting.
     - The TTL test fails because of Windows mtime granularity.
   - The golden snapshot was last written in CN PR #65 and still matches at 1e-5 on Linux.
-- **Evidence.** cn-issues §1; cn-docs §0.6; critic G-6.
+  - Linux alone turned out not to be enough for Layer C. PR #4's first `reference-oracle` run, on
+    AVX2-only AMD runners, failed both Layer C tests. The golden holds at 1e-5 only on CPython 3.11 with
+    OpenBLAS AVX-512 kernels (KI-NEW-Z78). DR-D31 (ratified 2026-10-08) pinned every oracle run to
+    CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, a kernel every x86-64 AVX2 CPU runs, and ledger
+    entry L0 regenerated Layer C once under it: a portable pin beat a hardware-specific runner.
+- **Evidence.** cn-issues §1; cn-docs §0.6; critic G-6; KI-NEW-Z78.
 - **Rule.**
-  - Every golden declares its platform of record.
+  - Every golden declares its platform of record, including the interpreter and the BLAS kernel.
   - A golden failure is triaged by platform before anyone attributes it to a code change.
   - Rust goldens state per-stage cross-platform tolerances.
   - The Python oracle runs on Linux only.
 - **Enforced in.**
   - `engine-spec.md` §7.12 and §8.19;
-  - the Linux-only oracle CI job (DR-A3, DR-B2): planned;
+  - the Linux-only oracle CI job (DR-A3, DR-B2): in place since P0-01, on the tool-cache CPython 3.11.
+    `OPENBLAS_CORETYPE=Haswell`, enforced for pytest by `reference/python/tools/pytest_platform_pin.py`;
   - `reference/python/PARITY.md` (P0-01).
 
 ### LL-05 Label every parity number with the version of the generator and oracle that produced it

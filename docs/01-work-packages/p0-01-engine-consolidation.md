@@ -37,8 +37,9 @@ No criterion is claimed as passing here. Each is to be run against the final com
      and ADR-012 (`docs/00-meta/decision-register.md`, "How to ratify or override", step 3).
   2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1.
   3. **Security/Release owner.** DR-A7 and the guard changes (ADR-011 D7). Also the design of the
-     `reference-oracle` job: the runner's preinstalled `python3`, and no `actions/setup-python`
-     (ADR-012 §4).
+     `reference-oracle` job: the runner image's tool-cache CPython 3.11, failing if it is absent, and no
+     `actions/setup-python` (ADR-012 §4). DR-D31 (how the job turns green, KI-NEW-Z78) was ratified by
+     the owner on 2026-10-08 (option 1) and is implemented here as correction-ledger entry L0.
   4. **Data/Licensing owner.** The DR-A10 licence ruling, **recorded on the pull request before merge**
      in the form of GRID-Engine PR #1 comment 5357318508. Also DR-A11.
   5. **Merge reviewer.** A merge commit, never a squash (DR-A6, ADR-011 D10).
@@ -146,11 +147,19 @@ The D items were raised by this consolidation's documents. Owner roles are as in
 | DR-D29 | On-disk parity-fixture format | Statistical, Product/Architecture |
 | DR-D30 | `reference-oracle` as a required merge check | Security/Release, Product/Architecture |
 
+DR-D31 (making the oracle golden master reproducible on CI hardware, KI-NEW-Z78) was raised by P0-01 and
+**ratified by the owner on 2026-10-08**, in writing in the implementing session: "I approve DR-D31
+option 1: regenerate the Layer C golden under Python 3.11 with the Haswell pin, recorded as ledger entry
+LO" (L0). P0-01 implements it as correction-ledger entry L0 (`reference/python/PARITY.md` (b)): the
+Layer C golden regenerated once under CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, enforced by
+`reference/python/tools/pytest_platform_pin.py`. No tolerance is loosened and no test is skipped.
+
 ## Objective
 At the P0-01 merge commit, the repository is engine-only and consistent with itself:
 
 - one authority document (`engine-spec.md`) with a byte-identical mirror;
-- the Python oracle imported and passing its own suite;
+- the Python oracle imported and passing its own suite on its pinned platform, CPython 3.11 with
+  `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, correction-ledger entry L0), locally and in CI;
 - no application artifacts;
 - every verification gate passing;
 - every owner decision either adopted for ratification at merge or registered as open.
@@ -225,6 +234,7 @@ commit messages cite.
 - `docs/06-sessions/review-P1-00-adversarial-round2.md`
 - `docs/06-sessions/review-P1-00-adversarial-round3.md`
 - `docs/06-sessions/review-P1-00-adversarial-round4.md`
+- `docs/06-sessions/review-P0-01-adversarial-round1.md`
 - `docs/07-archive/`
 - `reference/python/`
 - `.ai/evidence/P0-01/`
@@ -401,11 +411,17 @@ Each criterion is verified by the command shown, run against the final content c
 **Reference oracle**
 
 - [ ] `cd reference/python && python3 tools/verify_manifest.py` prints
-      `verify_manifest: OK (105 rows: 103 verbatim, 2 patched; ...)`.
+      `verify_manifest: OK (105 rows: 102 verbatim, 3 patched; ...)` (patches P1, P2 and ledger entry L0),
+      and `python3 tools/verify_manifest.py --upstream <cautious-nevermore clone>` also reports OK.
 - [ ] Set up a venv with `pip install -r requirements.txt -c requirements.lock` and
       `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1`. Then `python3 -m pytest` in
-      `reference/python/` reports `446 passed` and `isolation guard: 0 violations`, and the
-      `reference-oracle` CI job is green.
+      `reference/python/` reports `446 passed` and `isolation guard: 0 violations` on CPython 3.11; the
+      platform-pin plugin sets `OPENBLAS_CORETYPE=Haswell` and refuses any other kernel or interpreter
+      (KI-NEW-Z78; DR-D31, ledger entry L0).
+- [ ] The `reference-oracle` CI job runs on the final commit under the tool-cache CPython 3.11 and logs
+      the interpreter, CPU and OpenBLAS kernel, and is green: `446 passed` under
+      `OPENBLAS_CORETYPE=Haswell` (DR-D31, ledger entry L0). No tolerance is loosened and no test is
+      skipped or quarantined.
 - [ ] `grep -rn -i 'python\|pyo3' crates/ Cargo.toml` prints nothing.
 
 **Evidence**
@@ -448,7 +464,9 @@ recipe to make a failure disappear.
 ## Numerical/performance tolerances
 - **Rust.** Not applicable: no numerical code changes.
 - **Oracle.** The oracle suite's own tolerances, unchanged and verbatim. That includes the golden-master
-  tolerance recorded in `reference/python/PARITY.md`.
+  tolerance recorded in `reference/python/PARITY.md`. Layer C holds that tolerance only on one numerical
+  platform (KI-NEW-Z78): the golden is frozen on CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (DR-D31,
+  ledger entry L0), never absorbed by a looser tolerance.
 - **Timing.** The suite takes about 150 s on 4 vCPU with threads pinned to 1. The `reference-oracle`
   job has a 30-minute timeout. The wall-clock assertion in `tests/grid/test_performance.py` is
   non-gating (`PARITY.md` section (f)).
@@ -505,8 +523,11 @@ must then be added to "Paths affected" here and in ADR-011.
 ## Stop/decision conditions
 - **The owner overrides an A-decision.** Change the pull request to match, before merge.
 - **DR-A10 is not recorded, or is ruled otherwise.** Do not merge `reference/python/`.
-- **The runner's Python moves the golden master.** Escalate to the owner. Never loosen a tolerance or
-  edit the verbatim tree (critic X-7).
+- **The runner's interpreter or BLAS kernel moves the golden master.** Escalate to the owner. Never
+  loosen a tolerance, skip a test, or edit or regenerate the verbatim golden outside the correction
+  ledger (critic X-7). This has happened once: KI-NEW-Z78, settled by DR-D31 (ratified 2026-10-08) and
+  correction-ledger entry L0. Any `reference-oracle` failure under the pinned platform is a stop
+  condition.
 - **A verify recipe fails** for any reason other than the `test-ffi` de-scoping. Stop and report. This
   package makes no further D5 amendment.
 - **The assembled `engine-spec.md` renumbers a section** that a contract, model spec, register or
@@ -526,7 +547,7 @@ must then be added to "Paths affected" here and in ADR-011.
 | 2 | ADR on the authoritative platform (DR-A3), before P1-11 | Product/Architecture, Security/Release | The release platform and the reference machine stay undefined |
 | 3 | A `Bash(python3 -m pytest:*)` rule in `.claude/settings.json` | Security/Release | Agent sessions keep prompting before running the oracle suite |
 | 4 | `cargo audit` reports `chacha20 0.10.1` yanked, while `deny.toml` sets `yanked = "deny"` and `cargo deny check` passes | Security/Release | A dependency policy that is not enforced as written |
-| 5 | `actions/setup-python` or a pinned runner image for `reference-oracle` | Security/Release | A change of the runner's `python3` moves the golden master unannounced |
+| 5 | Pin the runner image (or approve `actions/setup-python`) for `reference-oracle`, so the tool-cache CPython 3.11 patch level cannot change under the pinned golden unannounced (DR-D31 implemented the kernel pin; the interpreter minor version is enforced by the platform-pin plugin) | Security/Release | A new 3.11 patch release could move the golden; the plugin catches a minor-version change but not a patch-level one |
 | 6 | Crate restructure: `application` → `pipeline`, plus `grid-cli` and `synth` (DR-A8) | P1-01 | None until P1-01; the crate-count claims change then |
 | 7 | `.gitattributes` rules for the verbatim trees (`reference/python/`, `docs/07-archive/`, `docs/00-meta/specs/superseded/`, the imported session records), if they do not land in P0-01 | Product/Architecture | A `core.autocrlf` checkout breaks the `MANIFEST.tsv` hashes and the verbatim copies |
 | 8 | After merge, close PR #1 as included. Close PRs #2 and #3 unmerged | Owner | Merging #2 or #3 recreates the invalid `docs/05-sessions/` |
@@ -547,8 +568,12 @@ must then be added to "Paths affected" here and in ADR-011.
 - **No agent budget was declared** (engine-spec §8.18.1).
 - **Windows is unproven.** The full chain and the new `run.sh` evidence fixtures have run only under pwsh
   on Linux, in a scratch copy. The first `windows-authoritative` run is the evidence for Windows.
-- **The runner's Python is unproven.** `ubuntu-latest`'s `python3` has not been checked against the lock,
-  which was verified on 3.11.15. The first `reference-oracle` run is the evidence.
+- **The oracle golden is pinned to one numerical platform (KI-NEW-Z78).** PR #4's first run
+  (ubuntu-24.04, Python 3.12.3, AMD) failed the two Layer C golden tests: the imported golden reproduced
+  only on CPython 3.11 with AVX-512 kernels. DR-D31 (ratified 2026-10-08) and ledger entry L0
+  regenerated Layer C under CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, which every x86-64 AVX2 CPU
+  runs. Oracle runs outside pytest (the demo, the golden generator, investigations) must export the pin
+  themselves.
 - **Contracts and model specs are drafts,** and their equations are unapproved. Their citations into
   `engine-spec.md` depend on the assembled numbering.
 - **Guard residuals** (ADR-011 D7):

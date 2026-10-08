@@ -84,9 +84,10 @@ scope never puts a module in the port scope.
 ### 3. Verbatim import and its integrity
 
 - **Source.** The files come from `git archive 59bce1d`, with relative paths kept: 105 files, of which
-  **103 are byte-identical**.
-- **Two patches.** Neither changes engine behaviour. Both are kept as unified diffs in
-  `reference/python/patches/`:
+  **102 are byte-identical** (103 at import; correction-ledger entry L0 then regenerated the golden
+  snapshot, §5).
+- **Two import patches.** Neither changes engine behaviour. Both are kept as unified diffs in
+  `reference/python/patches/`, next to the binary git patch of ledger entry L0:
   - **P1** inlines the 9-line, stdlib-only `snake_order` into `backend/validation/lineup_sim.py`. This
     cuts the only import edge into the app-only `backend.services`.
   - **P2** makes the output directory of `run_demo.py` overridable through `GRID_DEMO_OUT`. The default
@@ -100,6 +101,10 @@ scope never puts a module in the port scope.
 - **The isolation guard.** `tools/pytest_isolation_guard.py`, loaded by `pytest.ini` on every run, fails
   the session on network access or on any import of an app-only module or of the demo-only
   `matplotlib`. A clean run ends `isolation guard: 0 violations`.
+- **The platform pin.** `tools/pytest_platform_pin.py`, also loaded by `pytest.ini`, sets
+  `OPENBLAS_CORETYPE=Haswell` before NumPy loads, refuses any other explicit kernel and any interpreter
+  other than CPython 3.11, and checks through threadpoolctl that OpenBLAS runs the `Haswell` kernel. It
+  pins the platform the golden master is frozen on (KI-NEW-Z78; DR-D31; ledger entry L0).
 - **Engine-only files added around the import:**
   - `README.md`, `PARITY.md` and `MANIFEST.tsv`;
   - `pytest.ini`;
@@ -113,12 +118,17 @@ scope never puts a module in the port scope.
 ### 4. The `reference-oracle` CI job runs outside the frozen verify chain
 
 The job `reference-oracle` in `.github/workflows/alpha-ci.yml` runs on `ubuntu-latest`, with a 30-minute
-timeout, and `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` all set to `1`. Its steps:
+timeout, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` all set to `1`, and
+`OPENBLAS_CORETYPE=Haswell` (DR-D31, ratified 2026-10-08; ledger entry L0). Its steps:
 
-1. record the runner's Python;
-2. run `python3 tools/verify_manifest.py` before anything is installed;
-3. create a venv and run `pip install -r requirements.txt -c requirements.lock`, then `pip freeze`;
-4. run `python3 -m pytest`, which ran 446 tests at import.
+1. select the newest tool-cache CPython 3.11 on the runner image
+   (`/opt/hostedtoolcache/Python/3.11.*/x64/bin/python3`), failing the job if there is none, and record
+   the interpreter, the machine and the CPU model;
+2. run `tools/verify_manifest.py` with that interpreter before anything is installed;
+3. create a venv from it and run `pip install -r requirements.txt -c requirements.lock`, then `pip freeze`;
+4. record the OpenBLAS kernel in use, then run `python3 -m pytest` (446 tests, expected all passing; the
+   platform-pin plugin fails the session unless the interpreter is CPython 3.11 and OpenBLAS runs the
+   `Haswell` kernel).
 
 **Why it is outside the chain.**
 
@@ -128,13 +138,22 @@ timeout, and `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` all
 - A separate job needs no amendment. It is never wired into `verify.ps1` or `windows-authoritative`, and
   no `cargo` target depends on it.
 
-**Why `python3` is the runner's preinstalled one.**
+**Why the interpreter is the runner image's tool-cache CPython 3.11.**
 
 - The workflow file is a security boundary: no third-party action is used beyond `actions/checkout`.
-- `actions/setup-python`, or pinning the runner image, needs the Security/Release owner's approval.
-- The lock was verified on CPython 3.11.15, and `ubuntu-latest` may ship a different `python3`. If that
-  moves the golden master, the owner is asked to decide (critic X-7). A tolerance is never loosened
-  instead.
+- `actions/setup-python`, or pinning the runner image, needs the Security/Release owner's approval. The
+  tool-cache interpreter ships with the image, so selecting it adds no action.
+- The lock was verified on CPython 3.11.15, and the image's default `python3` is 3.12, which moves the
+  golden master: PR #4's first run failed the two Layer C golden tests (KI-NEW-Z78). The job therefore
+  selects 3.11 explicitly and fails loudly if the image stops shipping it, rather than testing another
+  interpreter.
+- 3.11 removes the interpreter difference but not the kernel difference: the imported Layer C golden
+  reproduced at rtol 1e-5 only with OpenBLAS AVX-512 kernels, so the AMD runners failed it. The owner
+  decided that through **DR-D31** (ratified 2026-10-08, option 1; critic X-7): every oracle run pins
+  `OPENBLAS_CORETYPE=Haswell`, a kernel every x86-64 AVX2 CPU runs, and correction-ledger entry L0
+  regenerated the golden once under CPython 3.11 + Haswell. The job is therefore expected green on
+  ordinary `ubuntu-latest` runners, with no runner change. A tolerance is never loosened, and a test is
+  never skipped, instead.
 
 **Why threads = 1.** The determinism-sensitive tests pin themselves. Without the environment variables,
 OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
@@ -142,13 +161,15 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
 **Still open.**
 
 - Whether this job is a required merge check is **DR-D30**.
+- How its golden master is made reproducible on CI hardware was **DR-D31** (KI-NEW-Z78). It is no longer
+  open: the owner ratified option 1 on 2026-10-08, and P0-01 implements it as ledger entry L0.
 - The fixture-regeneration and hash-drift step arrives with the first parity package (proposed —
   DR-B2).
 
 ### 5. Legacy status; the correction-ledger policy is not decided here
 
-- **Status.** The imported oracle has the status `legacy-59bce1d`. `PARITY.md` proposes the tag
-  `oracle-legacy-59bce1d` for the import commit. Creating the tag is an owner action.
+- **Status.** The oracle has the status `legacy-59bce1d + L0`: the import plus ledger entry L0. `PARITY.md`
+  proposes the tag `oracle-legacy-59bce1d` for the import commit. Creating the tag is an owner action.
 - **Freeze rule.** While KI-NEW-Y0 stands, no legacy output is frozen as a Rust parity target for any
   quantity that a ledger correction would change.
 - **The ledger policy is DR-B1**, proposed and awaiting the Statistical owner. Under it, each correction
@@ -159,8 +180,13 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
   3. the matchup-grade sign;
   4. causal Kalman initialization;
   5. ingest bias.
-- **Nothing in the ledger is applied.** `PARITY.md` section (b) is headed "PROPOSED, NOT APPLIED". If
-  DR-B1 is ratified, the corrections are a separate work package.
+- **Only entry L0 is applied.** L0 is a platform-portability entry, applied in P0-01 with the owner's
+  written ratification of DR-D31 option 1 (2026-10-08) as its approval: `tests/grid/golden/snapshot.npz` regenerated once
+  under CPython 3.11 and `OPENBLAS_CORETYPE=Haswell`, with only Layer C arrays changed and no generator,
+  estimator, test or tolerance touched (`MANIFEST.tsv` status `patched:L0`;
+  `patches/L0-golden-snapshot-haswell-regeneration.patch`). It sits ahead of the DR-B1 ledger and does
+  not pre-empt it. Entries 1 to 5 are proposed and not applied; if DR-B1 is ratified, they are a separate
+  work package.
 
 ### 6. Parity regime
 
@@ -256,8 +282,10 @@ The recommended default:
 
 - **A second language to keep running.** A 105-file Python tree lives in a Rust repository, and its CI
   job adds an install plus about 150 s of tests.
-- **Python drift on the runner** can move the golden master. That escalates to the owner; it is not
-  absorbed.
+- **Python or BLAS-kernel drift on the runner** can move the golden master. That escalates to the owner;
+  it is not absorbed. It has happened once: KI-NEW-Z78, settled by DR-D31 (ratified 2026-10-08) and
+  fixed by ledger entry L0, which pins the kernel and the interpreter. The sensitivity is controlled,
+  not removed: under another kernel or Python 3.12 the Layer C tests would fail again.
 - **Defects must not leak into Rust.** Every known oracle defect has to be tracked so that it is never
   ported, and every legacy number has to carry its generator label.
 - **Most parity work waits.** DR-B1 to DR-B3 and DR-D26 to DR-D29 are open, so the parity packages
@@ -280,7 +308,8 @@ The recommended default:
 |---|---|
 | Verbatim import | `tools/verify_manifest.py` in the `reference-oracle` job, before install. It fails on any unmanifested change |
 | Isolation (no app imports, no network) | `tools/pytest_isolation_guard.py`, loaded by `pytest.ini` on every run |
-| Oracle suite green | `python3 -m pytest` in the `reference-oracle` job (446 at import) |
+| Oracle suite green | `python3 -m pytest` in the `reference-oracle` job (446 tests), on the tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`; the job fails if that interpreter is absent. Any failure is a regression |
+| Pinned numerical platform | `tools/pytest_platform_pin.py`, loaded by `pytest.ini` on every run: it refuses any interpreter other than CPython 3.11 and any OpenBLAS kernel other than `Haswell` (DR-D31; ledger entry L0) |
 | Outside the frozen chain | `scripts/check-verify-parity.sh` (15 steps, with no oracle step) and review of any change to `justfile`, `verify.sh` or `verify.ps1` |
 | No Python in the engine | Review: `grep -rn -i 'python\|pyo3' crates/ Cargo.toml` empty. No guard asserts it yet (ADR-011 Compliance) |
 | No real data committed | Both `.gitignore` files; `scripts/check-secrets.sh` and `scripts/check-traceability.sh` see every untracked file; review |

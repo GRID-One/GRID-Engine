@@ -92,8 +92,11 @@ just bootstrap                                                            # once
   frozen contract: make the repository satisfy them; a recipe changes only by ADR (ADR-001 D5).
 - **The reference-oracle job is Linux-only and outside the frozen chain.** The `reference-oracle` job
   in `.github/workflows/alpha-ci.yml` checks `reference/python/` against `MANIFEST.tsv` and runs the
-  oracle suite with threads pinned to 1. It is never wired into `verify.ps1`, `just verify` or
-  `windows-authoritative`, and whether it becomes a required merge check is open (DR-D30).
+  oracle suite with threads pinned to 1, on the runner image's tool-cache CPython 3.11 (the job fails
+  if that interpreter is absent) and with `OPENBLAS_CORETYPE=Haswell`. It is never wired into
+  `verify.ps1`, `just verify` or `windows-authoritative`, and whether it becomes a required merge check
+  is open (DR-D30). The oracle's golden is frozen on that pinned platform (KI-NEW-Z78; DR-D31, ratified 2026-10-08; correction-ledger entry L0), `reference/python/tools/pytest_platform_pin.py` enforces it,
+  and the job is expected green. Never loosen a tolerance to absorb a platform difference.
 
 ## Active work
 

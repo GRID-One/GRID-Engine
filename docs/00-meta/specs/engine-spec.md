@@ -13,7 +13,7 @@
 | Primary implementation agent | The project-designated frontier coding model ("the designated coding model", referenced through a configurable alias, §1.3), working through Claude Code or an equivalent repository-aware harness |
 | Implementation mode | AI-first, contract-driven, human-governed |
 | Governing ADRs | ADR-011 "Engine-only pivot" (`docs/02-adr/011-engine-only-pivot.md`); ADR-012 "Python reference oracle" (`docs/02-adr/012-python-reference-oracle.md`). Both are created by P0-01. |
-| Decision status | This consolidation adopts the structural decisions DR-A1 to DR-A12, subject to owner ratification at merge (DR-A3 keeps the existing default and DR-A10 still needs an owner ruling). Every DR-B, DR-C and DR-D item cited here is either a proposed default, tagged "(proposed — DR-xx)", or an open question with no default, tagged "(open — DR-xx)". Neither is settled. A work package that depends on one is not Ready until the owner ratifies it (§8.16.1). The register is `docs/00-meta/decision-register.md`; Appendix F lists the open items. |
+| Decision status | This consolidation adopts the structural decisions DR-A1 to DR-A12, subject to owner ratification at merge (DR-A3 keeps the existing default and DR-A10 still needs an owner ruling). Every DR-B, DR-C and DR-D item cited here is either a proposed default, tagged "(proposed — DR-xx)", or an open question with no default, tagged "(open — DR-xx)". Neither is settled. The one exception is DR-D31, which the owner ratified on 2026-10-08 (option 1; implemented by oracle correction-ledger entry L0, §1.7). A work package that depends on one is not Ready until the owner ratifies it (§8.16.1). The register is `docs/00-meta/decision-register.md`; Appendix F lists the open items. |
 | Known issues | `docs/00-meta/known-issues.md` (IDs `KI-…`). The defects recorded there are never required engine behaviour. |
 | Superseded-section lookup | Appendix H maps every superseded section to its disposition in this document. |
 
@@ -608,7 +608,7 @@ The GRID engine adds four principles carried over from the cautious-nevermore en
 
 ### 1.7 The Python reference oracle
 
-_Source: new (ADR-012; DR-A2, DR-A3, DR-A10–A12, DR-B1–B4, DR-B6, DR-C11, DR-D1, DR-D26, DR-D27, DR-D29, DR-D30; critic §1 G-1, G-4, G-6 and §2 X-4, X-5, X-7; reference/python/README.md, PARITY.md, MANIFEST.tsv; .github/workflows/alpha-ci.yml; docs/05-model-specs/value-model.md §7.3, synthetic-world.md §8.4). alpha-spec Appendix D (superseded): extended._
+_Source: new (ADR-012; DR-A2, DR-A3, DR-A10–A12, DR-B1–B4, DR-B6, DR-C11, DR-D1, DR-D26, DR-D27, DR-D29, DR-D30, DR-D31; KI-NEW-Z78; critic §1 G-1, G-4, G-6 and §2 X-4, X-5, X-7; reference/python/README.md, PARITY.md, MANIFEST.tsv; .github/workflows/alpha-ci.yml; docs/05-model-specs/value-model.md §7.3, synthetic-world.md §8.4). alpha-spec Appendix D (superseded): extended._
 
 **Role.** `reference/python/` holds the working Python GRID engine, imported from cautious-nevermore
 at commit `59bce1d`. It is an executable reference oracle with two uses:
@@ -623,24 +623,30 @@ oracle fixtures and goldens sit at authority level 5 and oracle source at level 
 that governs it is ADR-012.
 
 **Contents and provenance.** The oracle is the package `backend.*` (name kept, so that byte-identity
-with upstream stays auditable). It consists of exactly 105 upstream files: 103 byte-identical
-(sha256-verified) and two with documented patches, kept as unified diffs in `reference/python/patches/`:
+with upstream stays auditable). It consists of exactly 105 upstream files: 102 byte-identical
+(sha256-verified) and three with documented patches, kept in `reference/python/patches/` (P1 and P2
+as unified diffs, L0 as a binary git patch):
 
 - **P1** inlines `snake_order` into `backend/validation/lineup_sim.py`. This cuts the only import edge
   into app-only code.
 - **P2** makes the output directory of `run_demo.py` overridable through `GRID_DEMO_OUT`.
+- **L0** is correction-ledger entry L0: `tests/grid/golden/snapshot.npz` regenerated once under the
+  platform pin (CPython 3.11, `OPENBLAS_CORETYPE=Haswell`; KI-NEW-Z78, DR-D31). Only Layer C arrays
+  changed.
 
-Neither patch changes engine behaviour. At import, the oracle's own suite passed on Linux (446 tests,
-CPython 3.11.15, threads pinned to 1, isolation guard with 0 violations). Three files document the
-import:
+None of them changes engine behaviour. At import, the oracle's own suite passed on Linux (446 tests,
+CPython 3.11.15, threads pinned to 1, isolation guard with 0 violations); after L0 it passes 446 tests
+under the pinned Haswell kernel. Three files document the import:
 
 | File | Contents |
 |---|---|
-| `reference/python/MANIFEST.tsv` | Every imported file with its source path, source and destination hashes, and import status (`verbatim`, `patched:P1`, `patched:P2`) |
+| `reference/python/MANIFEST.tsv` | Every imported file with its source path, source and destination hashes, and import status (`verbatim`, `patched:P1`, `patched:P2`, `patched:L0`) |
 | `reference/python/README.md` | Provenance, environment, licence status and warnings |
 | `reference/python/PARITY.md` | Oracle status, the correction ledger, legacy vs defender-corrected Tier-0 values, tolerance classes, deliberate divergences, non-gating checks and lifecycle |
 
-**Status: `legacy-59bce1d`, as imported** (`PARITY.md` §(a)). The proposed tag for the import commit is
+**Status: `legacy-59bce1d + L0`** (`PARITY.md` §(a)): the import plus correction-ledger entry L0,
+which regenerated the golden master's Layer C arrays under the platform pin and changed no engine
+code, test or tolerance. The proposed tag for the import commit is
 `oracle-legacy-59bce1d`. It is created when the import is committed (proposed — DR-B1). The imported
 oracle contains known defects, all recorded in `docs/00-meta/known-issues.md`. The most consequential
 is in the synthetic generator, which draws every play's defenders from the offense's own team
@@ -650,8 +656,11 @@ MUST NOT be frozen as a Rust parity target for any quantity that a ledger correc
 correction lands, parity may be asserted only against legacy outputs that no ledger entry or known
 issue touches, and such evidence is labelled legacy (§7.12.2).
 
-**Correction ledger (proposed — DR-B1).** This consolidation proposes corrections; it does not apply
-any. Each correction is made in Python and recorded:
+**Correction ledger (proposed — DR-B1).** This consolidation proposes corrections 1 to 5 below and
+applies none of them. It applies one platform-portability entry, **L0**, which the owner approved by
+ratifying DR-D31 (2026-10-08): the golden master regenerated once under CPython 3.11 and
+`OPENBLAS_CORETYPE=Haswell`, with no generator, estimator, test or tolerance change. L0 sits ahead of
+the ledger and does not pre-empt DR-B1. Each correction is made in Python and recorded:
 
 - it is a separate reviewed commit inside `reference/python/`, approved by the statistical owner
   (the ingest-bias entry jointly with the Data/Licensing owner);
@@ -737,10 +746,18 @@ survives only inside the evaluation lineup simulation, if that metric is retaine
 - Its CI job is never wired into `scripts/verify.ps1`, `just verify` or the `windows-authoritative`
   job (DR-A3). Adding an oracle step to the frozen verify chain is an ADR-001 D5 amendment and needs
   its own ADR.
-- The job uses the runner's preinstalled `python3` with the pinned `reference/python` requirements
-  and lock file, unless the Security/Release owner approves another setup action. If the runner's
-  Python moves the golden master, the problem is escalated to the owner; tolerances are never
-  loosened.
+- The job selects the runner image's tool-cache CPython 3.11 (the newest
+  `/opt/hostedtoolcache/Python/3.11.*/x64/bin/python3`) and fails if none is present; it never falls
+  back to another interpreter. It installs the pinned `reference/python` requirements and lock file
+  (verified on CPython 3.11.15). No setup action is used unless the Security/Release owner approves
+  one. If the runner's interpreter or hardware moves the golden master, the problem is escalated to
+  the owner; tolerances are never loosened.
+- Linux is necessary but not sufficient for the golden master: its Layer C moves with the OpenBLAS
+  kernel and the interpreter (KI-NEW-Z78). The golden is therefore frozen on a pinned platform,
+  CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, a kernel every x86-64 AVX2 CPU runs (DR-D31, ratified 2026-10-08; correction-ledger entry L0). `reference/python/tools/pytest_platform_pin.py` sets the
+  kernel before NumPy loads and refuses any other kernel or interpreter, and the job sets it too, so
+  the job is expected green on ordinary `ubuntu-latest` runners. A different platform is a new ledger
+  entry; no tolerance is loosened and no test is skipped.
 - The job is not merge-authoritative while DR-A3 stands. Whether it becomes a required merge check is
   undecided (proposed — DR-D30).
 - Wall-clock performance assertions in the oracle suite are non-gating and are listed in
@@ -1130,7 +1147,7 @@ model-quality gate of §9.4.2. That gate requires the promoted ensemble to:
 The direction of the historical result is the only qualitative signal. GRID tied last-season
 actuals and lost to the season-to-date mean. That direction is consistent across the reports, but
 it is not a measurement under this protocol. Whether last-season actuals joins the §9.4.2 naive
-baseline set is undecided; until then it is reported as a diagnostic baseline (proposed — DR-D24).
+baseline set is undecided; until then it is reported as a diagnostic baseline (open — DR-D24).
 GRID's contribution is therefore a hypothesis to be
 re-proven inside Layers A–F (§6.1; proposed — DR-C2). That requires re-measurement after the label
 fixes (§4.7) and participation gating (§4.5), and those results are produced as P1-09 and P1-12
@@ -2767,7 +2784,7 @@ The time index throughout is the NFL game-week `(season, week)` (§1.2, §8.6.5)
     backwards. With a planted elite defense the oracle produced the lowest grade (KI-NEW-A2). The engine
     stores `+E_def`.
   - **Tests must be truth-anchored.** The oracle's grade tests are tautological:
-    - the pipeline tests plant `β` by hand (`tests/pipeline/test_weekly_update.py:286-370`);
+    - the pipeline tests plant `β` by hand (`tests/pipeline/test_weekly_update.py:286-366`);
     - the synthetic Tier-2 case builds points allowed from the grades themselves
       (`tests/validation/test_verdict.py:47-51`).
 
@@ -4717,7 +4734,12 @@ depends on is ratified. A proposed default is not a ratification.
 - The oracle is imported verbatim from CN @ `59bce1d`, except two documented patches (the `snake_order`
   inline in `backend/validation/lineup_sim.py` and the `GRID_DEMO_OUT` override in `run_demo.py`), and is
   identified as `legacy-59bce1d`. `reference/python/MANIFEST.tsv` records source and destination hashes.
-- Corrections are proposed, not applied. Each correction is a separate reviewed change to
+- One platform-portability entry is applied ahead of the ledger: **L0** regenerated
+  `tests/grid/golden/snapshot.npz` once under CPython 3.11 and `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78;
+  DR-D31, ratified 2026-10-08). It changed only the golden's Layer C arrays and no generator, estimator,
+  test or tolerance, so the oracle is `legacy-59bce1d + L0` and every legacy defect remains. L0 does not
+  pre-empt DR-B1.
+- Corrections 1 to 5 are proposed, not applied. Each correction is a separate reviewed change to
   `reference/python/`, made with a failing test first, approved by the statistical owner, accompanied by a
   model-spec change and a reviewed semantic explanation for any golden or fixture it regenerates, and
   entered in the correction ledger in `reference/python/PARITY.md`. The ledger order is:
@@ -4788,11 +4810,16 @@ depends on is ratified. A proposed default is not a ratification.
   pinned dependencies into a virtual environment, and runs the oracle's own suite (446 tests at import).
   When parity fixtures exist it also regenerates every committed fixture and fails if any differs from the
   committed manifest (proposed — DR-B2). The job details are in §8.19.
-  - It uses the runner's preinstalled `python3` and the pinned lock, unless the Security/Release owner
-    approves another setup action.
+  - It uses the runner image's tool-cache CPython 3.11 and the pinned lock, and fails if that
+    interpreter is absent (§8.19). A setup action needs Security/Release owner approval.
   - It is outside the frozen verify chain and is not merge-authoritative while DR-A3 stands. Whether it
     becomes a required merge check is proposed under DR-D30.
-  - It never runs on Windows: the oracle's golden Layer C and its cache-TTL test fail there.
+  - It never runs on Windows: the oracle's golden Layer C and its cache-TTL test fail there. Linux is
+    not sufficient on its own, because Layer C moves with the OpenBLAS kernel (KI-NEW-Z78). The job pins
+    `OPENBLAS_CORETYPE=Haswell`, and the oracle's pytest plugin `tools/pytest_platform_pin.py` enforces
+    that kernel and CPython 3.11, matching the golden that ledger entry L0 regenerated under them
+    (DR-D31, ratified 2026-10-08). The job is expected green (446 passed) on ordinary `ubuntu-latest`
+    runners. No tolerance is loosened and no test is skipped.
 - Fixture hashes are to be checked by a shell fixture guard in the `guards` CI job, as proposed in
   parity-fixture-contract §10; no such guard exists yet. An in-Rust sha256 check would need owner approval of a hashing crate
   (DR-D29).
@@ -5325,9 +5352,9 @@ engine and GRID.
 7. The exact crate split may evolve through ADRs, but ownership boundaries and the
    Rust-authoritative architecture must remain clear.
 
-**Target end state (proposed — DR-A8).** P0-01 changes only one thing in the crate set: it drops
-`ffi`. The remaining changes are made by later work packages. `persistence` and SQLite stay,
-because `check-sqlx` and `test-rust` (§8.19) depend on them.
+**Target end state (DR-A8, adopted subject to ratification).** P0-01 changes only one thing in the
+crate set: it drops `ffi`. The remaining changes are made by later work packages. `persistence` and
+SQLite stay, because `check-sqlx` and `test-rust` (§8.19) depend on them.
 
 | Change | Created by | Content |
 |---|---|---|
@@ -5892,8 +5919,18 @@ own flow, so the permitted transitions are stated explicitly:
 
 ```text
 TRAINING → CANDIDATE → VALIDATING → { PRODUCTION | REJECTED }
-PRODUCTION → SUPERSEDED   (when a later version is promoted for the same family)
+TRAINING → REJECTED       (training fails or is aborted, or its artifact cannot be written; §8.11)
+PRODUCTION → SUPERSEDED   (when a later version is promoted for the same family, or when
+                           rollback_to_snapshot moves the family's production pointer to
+                           another version; §8.7.4)
+SUPERSEDED → PRODUCTION   (only through rollback_to_snapshot, for the version the snapshot
+                           records; §8.2 command 10, §8.7.4)
 ```
+
+No other transition is permitted. The production pointers are authoritative: a version is
+`PRODUCTION` exactly when a production pointer names it, and its state changes in the same write
+transaction that moves the pointer (§8.13). A rejected version never returns to `PRODUCTION`, and a
+rollback never deletes or rewrites a version (§8.7.4).
 
 **Governance rules:**
 - A failed model update must leave the previous production model untouched.
@@ -5934,7 +5971,7 @@ value is ratified.
 | Parameter | Where it is specified | Needed by | Status |
 |---|---|---|---|
 | Fixed-lag window L | `docs/05-model-specs/state-space-kalman.md` | P2-03 (live); P1-06 tests MAY use any L | open — DR-C5 |
-| Empirical-Bayes estimator, including `n0` and `k` estimation | `docs/05-model-specs/cross-league-priors.md`, `projection-stack.md` | P1-07 | For Layer C, proposed — DR-C5: Gamma–Poisson method of moments with `k = m/τ²`, where `τ² ≤ 0` is a typed error (`projection-stack.md` §4.8.1). Otherwise open — DR-C5 |
+| Empirical-Bayes estimator, including `n0` and `k` estimation | `docs/05-model-specs/cross-league-priors.md`, `projection-stack.md` | P1-06, P1-07 | For Layer C, proposed — DR-C5: Gamma–Poisson method of moments with `k = m/τ²`, where `τ² ≤ 0` is a typed error (`projection-stack.md` §4.8.1). Otherwise open — DR-C5 |
 | Auto-rollback sanity thresholds | the model spec of each component | P1-11 (recovery), P2-07 | open — DR-C5 |
 | Home-field, garbage-time and overtime treatment in RAPM | `docs/05-model-specs/rapm-attribution.md` | P1-12 | open — DR-C5 |
 | Non-inferiority margin for routine promotion | `docs/05-model-specs/evaluation-and-leakage.md` | P2-07 | open — DR-C5 |
@@ -5971,9 +6008,15 @@ build/application version
   definition of the previous model.
 - Every projection traces to its data, feature, model, scoring and engine versions (alpha-spec §9.4
   (superseded)).
-- A model record references the feature schema it was trained on. Changing a feature definition
-  creates a new feature schema rather than silently modifying historical semantics
-  (final-build-spec §10 (superseded)).
+- Feature generation must be deterministic and versioned. Each feature definition receives a
+  schema/version identifier (e.g., `feature_schema_version = 17`). A model record references the
+  feature schema it was trained on. Changing a feature definition creates a new feature schema
+  rather than silently modifying historical semantics (final-build-spec §10 (superseded)).
+- Feature generation operates from durable source data (§1.1 item 4), never from transient
+  in-memory state (final-build-spec §10 (superseded); see H.4).
+- Polars may be used for analytical transformations and DataFrame operations (eager/lazy
+  execution, parallel processing; §1.1 item 7). Core services continue to exchange typed domain
+  structures and numerical arrays (final-build-spec §10 (superseded)).
 
 **Engine additions:**
 1. **Build version.** "Build/application version" is the engine crate version plus the git commit
@@ -6292,7 +6335,7 @@ contracts and verification paths without relying on earlier chat history. The tr
 | `docs/runbooks/`, `docs/model-cards/` | — | P1-11 (ADR-006); live-operation runbooks P2-00 |
 | `artifacts/` | Ignored build and test output | as needed |
 | `toolchains/native-dependencies.lock` | Only if a native booster backend is adopted (proposed — DR-C8) | that WP |
-| `crates/pipeline/`, `crates/grid-cli/`, `crates/synth/` | §8.1 target state (proposed — DR-A8) | P1-01 onward |
+| `crates/pipeline/`, `crates/grid-cli/`, `crates/synth/` | §8.1 target state (DR-A8, adopted subject to ratification) | P1-01 onward |
 
 `docs/traceability/` is superseded in substance by `scripts/check-traceability.sh` (ADR-006 item 5).
 The runtime data directory (default `data/`) is gitignored and never committed.
@@ -6519,7 +6562,7 @@ toolchain record:
 
 ### 8.19 Canonical verification interface
 
-_Source: alpha-spec §8.11 (superseded) — edited (Flutter/FRB checks dropped, Windows rationale replaced per DR-A3, oracle job added); ADR-001 D5, ADR-005, ADR-007, ADR-008, ADR-009, ADR-011 — current state described._
+_Source: alpha-spec §8.11 (superseded) — edited (Flutter/FRB checks dropped, Windows rationale replaced per DR-A3, oracle job added); ADR-001 D5, ADR-005, ADR-007, ADR-008, ADR-009, ADR-011 — current state described; new (KI-NEW-Z78, DR-D31) — oracle interpreter and kernel._
 
 **Commands:**
 
@@ -6600,15 +6643,20 @@ A future step that invokes a binary other than `cargo`, `bash` or `typos` MUST b
 | `reference-oracle` | ubuntu only, 30-minute timeout | See below. |
 
 The `reference-oracle` job, added by P0-01 (ADR-012), runs in `reference/python/` with
-`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` set to 1. It:
-1. records the runner's preinstalled `python3` (the lock was verified on CPython 3.11.15);
+`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` set to 1 and
+`OPENBLAS_CORETYPE=Haswell` (DR-D31, ratified 2026-10-08; correction-ledger entry L0). It:
+1. selects the newest tool-cache CPython 3.11 on the runner image
+   (`/opt/hostedtoolcache/Python/3.11.*/x64/bin/python3`), failing if there is none, and records the
+   interpreter, the machine and the CPU model (the lock was verified on CPython 3.11.15);
 2. checks the imported files against `MANIFEST.tsv` with the stdlib-only
    `tools/verify_manifest.py`, before anything is installed;
 3. installs `requirements.txt` constrained by `requirements.lock` into a throwaway virtual
    environment and records `pip freeze`;
-4. runs `python3 -m pytest` (446 tests at import). `pytest.ini` loads the isolation guard
+4. records the OpenBLAS kernel in use (KI-NEW-Z78), then runs `python3 -m pytest` (446 tests,
+   expected all passing). `pytest.ini` loads the isolation guard
    (`tools/pytest_isolation_guard.py`), which fails the session on network access or an app-only
-   import;
+   import, and the platform pin (`tools/pytest_platform_pin.py`), which fails it unless the
+   interpreter is CPython 3.11 and OpenBLAS runs the `Haswell` kernel;
 5. once parity fixtures exist, regenerates every fixture into a temporary directory and
    byte-compares it with the committed tree (proposed — DR-B2; parity-fixture-contract §10).
    This step does not exist yet.
@@ -6618,10 +6666,13 @@ Rules for the `reference-oracle` job:
   `verify.ps1` or `windows-authoritative`, and no `cargo` target depends on it. The oracle's
   golden Layer C and its TTL test fail on Windows, so a Windows run would have to be weaker.
 - **Adding to the chain.** Adding any oracle step to the chain is a D5 amendment by ADR.
-- **Setting up Python.** Using `actions/setup-python`, or pre-approving `python3 -m pytest` for
-  agents, requires Security/Release owner approval (§14.1).
-- **Version mismatch.** If the runner's Python version fails a golden, the owner is escalated to.
-  Tolerances are never loosened.
+- **Setting up Python.** The tool-cache interpreter is used directly, with no setup action. Using
+  `actions/setup-python`, or pre-approving `python3 -m pytest` for agents, requires Security/Release
+  owner approval (§14.1).
+- **Interpreter and kernel.** The golden master is frozen on CPython 3.11 with
+  `OPENBLAS_CORETYPE=Haswell`, a kernel every x86-64 AVX2 CPU runs (KI-NEW-Z78; DR-D31, ratified 2026-10-08; ledger entry L0), and the platform-pin plugin enforces both. If the runner's interpreter
+  or BLAS kernel still fails a golden, the owner is escalated to; a different platform is a new ledger
+  entry. Tolerances are never loosened and tests are never skipped.
 - **Merge status** (proposed — DR-D30). The job is a required merge check for pull requests
   that touch `reference/python/`, fixtures or parity tests, and informational otherwise. Interim
   rule: it is not merge-authoritative while DR-A3 stands.
@@ -7098,24 +7149,27 @@ DR-A3 and DR-A10; see Appendix F).
 
 | WP | Scope (one line) | Parity targets (§7.12.7) | Must be ratified before Ready | Also open, or other preconditions |
 |---|---|---|---|---|
-| P0-01 | The consolidation itself. **Specification and decisions:** ADR-011, ADR-012; `engine-spec.md` and its mirror; the superseded specs archived verbatim; the registers, contracts, model specs and provider documents. **Repository:** `crates/ffi/`, `app/`, the Flutter toolchain pin, the FRB dependency and `test-ffi` removed; traceability regex extended to `P[0-9]-[0-9]{2}`; `check-evidence-claims.sh` generalized; `check-authority-sync.sh` retargeted to `engine-spec.md` and its mirror; R4-1/R4-2 guard fixes. **Oracle:** `reference/python/` imported with its manifest, ledger and patches P1/P2, plus the `reference-oracle` job. **Records:** session and archive imports. | No Rust parity. At import, the oracle's own suite passes on Linux (python-closure record). | DR-A1, DR-A2, DR-A4–DR-A9, DR-A11, DR-A12: adopted, and ratified by the owner's merge comment | DR-A10: the licence ruling must be recorded on the PR before merge. DR-A3: the default is kept; the follow-up ADR is due before P1-11. |
+| P0-01 | The consolidation itself. **Specification and decisions:** ADR-011, ADR-012; `engine-spec.md` and its mirror; the superseded specs archived verbatim; the registers, contracts, model specs and provider documents. **Repository:** `crates/ffi/`, `app/`, the Flutter toolchain pin, the FRB dependency and `test-ffi` removed; traceability regex extended to `P[0-9]-[0-9]{2}`; `check-evidence-claims.sh` generalized; `check-authority-sync.sh` retargeted to `engine-spec.md` and its mirror; R4-1/R4-2 guard fixes. **Oracle:** `reference/python/` imported with its manifest, ledger and patches P1/P2, correction-ledger entry L0 (the golden regenerated under the platform pin, with `tools/pytest_platform_pin.py`), plus the `reference-oracle` job. **Records:** session and archive imports. | No Rust parity. At import, the oracle's own suite passes on Linux (python-closure record, CPython 3.11.15). After ledger entry L0 its golden is frozen on CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and the suite passes there (446; KI-NEW-Z78 fixed). | DR-A1, DR-A2, DR-A4–DR-A9, DR-A11, DR-A12: adopted, and ratified by the owner's merge comment | DR-A10: the licence ruling must be recorded on the PR before merge. DR-A3: the default is kept; the follow-up ADR is due before P1-11. DR-D31 (raised by P0-01; ratified by the owner on 2026-10-08, option 1; implemented here as ledger entry L0): the `reference-oracle` job must be green on the final commit. No tolerance is loosened and no test is skipped. |
 | P1-01 | Domain IDs, the `AsOf` type with publication-lag axis, typed errors; library API and output-contract skeleton; the `domain` dependency boundary for serializable DTOs (an ADR; §8.1 rule 5); oracle-fixture format, synthetic-fixture loader and parity-harness skeleton; `application` → `pipeline` plus `grid-cli` and `synth` skeletons; agent definitions | Committed canonical synthetic fixtures load hash-identically (`data_adapters.py` contract invariants) | DR-A2, DR-A8, DR-A11 (at the P0-01 merge); DR-B1, DR-B2, DR-B3, DR-C4 | DR-D7; DR-D8; DR-D29 |
 | P1-02 | §8.5 schema groups including the GRID state group; migrations; durable jobs with the full job-type enumeration (§8.10); raw-data, version and artifact-manifest primitives; atomic writes; production pointers | None. The oracle's `.npz`, joblib and Parquet caches are not ported. Corrupt persisted state is a typed failure (§7.12.6). | DR-B6, DR-C15 | — |
 | P1-03 | nflverse provider contracts and raw/normalized ingestion; plays-contract builder; official labels (§4.7); fetch cap and offline replay; per-dataset publication rules; the Phase 1 manual availability override import (§4.1.2, §9.2.2) | Behavioural only: the oracle loader and adapter cases on synthetic nflverse-shaped toy frames, not parity fixtures. KI-NEW-I1 to KI-NEW-I5 and KI-NEW-V0a to KI-NEW-V0d are not reproduced. | DR-A11, DR-C12, DR-C13, DR-C14 | DR-D15 (the involvement-roles field only; KI-NEW-Z50); `docs/04-providers/nflverse/access-and-license.md` (draft exists; per-dataset terms await Data/Licensing verification); a declared publication-lag rule for every dataset (§4.5); `docs/04-providers/availability/` (planned; created by this package) before the override import is built (§4.6); before Layer-1′ consumes snap counts, a snap-count provider contract with a PFR → GSIS crosswalk and a licence ruling (KI-NEW-Z50) |
 | P1-04 | Canonical registry, NFL identity, CFBD adapter, NCAA linking tiers, identity review queue | None | DR-C9 (CFBD play-by-play pass vs box score) | `docs/04-providers/cfbd/` licence and terms record before the adapter is Ready (§4.6) |
 | P1-05 | Point-in-time feature store; leakage harness with the publication-lag axis, the four oracle guards and the §12.3 scope and state checks; committed corrected synthetic fixtures | `validation/asof.py` behaviours: temporal, scope and state axes, the tripwire, `LeakageError` on undated interventions. Leakage canaries, with the watermark checked across season seams (KI-V2 and KI-NEW-W1 not reproduced). | DR-A11, DR-B4, DR-C1, DR-C6, DR-C12 | DR-D4 (only to relax the REG-only reading) |
 | P1-06 | Numerical primitives: affine scoring; generalized ridge (dense Cholesky reference and Jacobi-preconditioned CG with diagnostics); Kalman predict/update (Joseph form); full RTS and fixed-lag; EB; affine; booster trait and adapter | Classes A, A′ and B, all stage-injected: `scoring/{engine,columns,formats}.py`: presets exact (Class A); `statespace.py` `kalman_step`, RTS and fixed-lag: Class A, including the `test_kalman_numerical.py` properties; ridge with prior mean and mask: Class A′; CG: Class B; `sv_to_points.py`: Class A′, diagnostic only. | DR-B1, DR-B3, DR-B6, DR-C5 (fixed-lag `L`, EB estimator), DR-C7, DR-C8, DR-C10 | DR-D6 (only if a profile needs a non-affine rule); model specs approved (§6.8) |
-| P1-07 | §6.1 Layers A–D; §6.5 NCAA/rookie prior assembly; naive baselines | Partial, Class A/A′: `projection/volume.py`, `projection/model.py`, `projection/features.py` (KI-NEW-R1, KI-NEW-R2 and KI-P1 not reproduced); `validation/baselines.py` persistence and season-to-date cases. | DR-B4, DR-C2, DR-C3, DR-C9 | DR-B5 and DR-D2 (real-data market inputs to Layer B; §4.5, with the historical line source open); DR-D9; DR-D10 (Layer B); DR-D13 (RB/WR/TE credit as an individual Layer-D covariate); DR-D19; DR-D21; DR-D25; `projection-stack.md` approved; before any Layer A–F recovery gate is written, the stat-vector synthetic world (`docs/05-model-specs/synthetic-world.md` §4.12), whose spec revision the Statistical owner approves before P1-07 starts. No package is yet named to build it (proposed — DR-B4). |
+| P1-07 | §6.1 Layers A–D; §6.5 NCAA/rookie prior assembly; naive baselines | Partial, Class A/A′: `projection/volume.py`, `projection/model.py`, `projection/features.py` (KI-NEW-R1, KI-NEW-R2 and KI-P1 not reproduced); `validation/baselines.py` persistence and season-to-date cases. | DR-B4, DR-C2, DR-C3, DR-C5 (EB estimator), DR-C9 | DR-B5 and DR-D2 (real-data market inputs to Layer B; §4.5, with the historical line source open); DR-D9; DR-D10 (Layer B); DR-D13 (RB/WR/TE credit as an individual Layer-D covariate); DR-D19; DR-D21; DR-D25; `projection-stack.md` approved; before any Layer A–F recovery gate is written, the stat-vector synthetic world (`docs/05-model-specs/synthetic-world.md` §4.12), whose spec revision the Statistical owner approves before P1-07 starts. No package is yet named to build it (proposed — DR-B4). |
 | P1-08 | Layer E context; Layer F correlated simulation (5,000 draws per game in development); §5.2 conditional/unconditional outputs; §5.3 distributions; §6.6 stacking; §6.7 explanations | None from the oracle. Spec-defined goldens apply (§12.2). The derived-product row `projection/preseason.py` follows §7.12.7 and DR-C4. | DR-B4, DR-B5, DR-C2, DR-C4 | DR-C3 and DR-D20 (§6.6 readiness); DR-D7; DR-D8; DR-D16; DR-D25; the stat-vector synthetic world before Layer C/F recovery gates are claimed (§7.13.6; proposed — DR-B4) |
 | P1-09 | Rolling-origin backtest over the three-season window; player pool; PB-MAE and §7.5 metrics; calibration; rookie/low-evidence scorecards; week-clustered bootstrap; lineup simulation; threshold registry; H1/H2 diagnostics. This package produces the §9.4 model-quality evidence. | `metrics.py`: Class A, bootstrap exact given injected indices; `backtest.py`: per-origin ratings injected, leakage canaries, two-path equivalence; `lineup_sim.py`: exact; `thresholds.py`: registry semantics exact; `tier1.py`, `tier2.py`, `verdict.py`, `sniff.py`: diagnostic only. PB-MAE and the pool have no oracle source. | DR-B1, DR-C1, DR-C4, DR-C5, DR-C6, DR-C11, DR-C12 | DR-D2 (real-data market inputs); DR-D5; DR-D24 |
 | P1-10 | Engine CLI, reports and exports per §5.6 (Phase 1 outputs) and §9.2.7; completion of the output contract; identity review queue (read-only) | None | DR-C14 | DR-D3 (before any public distribution of participation-derived outputs); DR-D6 (only for a custom profile with a non-affine rule) |
-| P1-11 | Crash recovery (§8.11); the release artifact (`grid` CLI binary and library crates); clean-checkout and clean-environment reproduction; end-to-end acceptance evidence; model card; exported historical validation report; runbooks (`docs/runbooks/` and `docs/model-cards/`, both planned and first created by this package; ADR-006 item 4) | None | DR-A3 (the follow-up ADR on the authoritative platform and reference machine should land first) | DR-D3 (public distribution only); `toolchains/native-dependencies.lock` only if a native booster is adopted (DR-C8); the deferrals carried by ADR-011 D9: `-Scope Changed` (ADR-001 D5, ADR-008), repository-wide line-ending normalization (ADR-004) and CI caching (ADR-007) |
-| P1-12 | GRID component port (§9.2.5) | Classes A, A′, B and D, and the stage-specific booster criteria C-V and C-L1 (§7.12.4–§7.12.5, §7.13): `value.py`: C-V in place of Class C, which is unattainable for V(s) (proposed — DR-D27; KI-NEW-Z74); `situations.py`: masks exact; `layers.py` design, accumulators and market rows: Class A assembly, with the solve at Class A′ or B; `layers.py` Layer 1 and fixed point: Class A aggregation, C-L1 for the context model (proposed amendment to DR-B3; `layer1-credit.md` §10.3); `statespace.py` GRID model: Class A injected, batch equals incremental; `priors.py`: Class A′/A injected, Class D recovery; `synth.py` and `data_adapters.py`: fixtures load exactly, the Rust-native generator is exact under draw-tape replay (proposed — DR-D28) and passes Class D over a seed ensemble (proposed — DR-D26); re-set Tier-0 gates, calibration bands, golden master Layers A to C, determinism. | DR-A5, DR-B1, DR-B3, DR-B4, DR-B5, DR-B6, DR-C1, DR-C2, DR-C6, DR-C7, DR-C9, DR-C10, DR-C13; DR-D1 (real-data scheme-reset path only) | DR-D2, DR-D10 and DR-D12 (real data); DR-D4; DR-D9 (priors); DR-D11; DR-D13 (RB/WR/TE credit as an individual signal); DR-D14; DR-D15 (Layer-1′); DR-D16; DR-D17; DR-D18; DR-D19; DR-D26 (Class D gates); DR-D27 (P-V5); DR-D28 (Rust-native generator); the realistic profile (`synthetic-world.md` §4.11) before any real-data-scale claim |
+| P1-11 | Crash recovery (§8.11); the release artifact (`grid` CLI binary and library crates); clean-checkout and clean-environment reproduction; end-to-end acceptance evidence; model card; exported historical validation report; runbooks (`docs/runbooks/` and `docs/model-cards/`, both planned and first created by this package; ADR-006 item 4) | None | DR-A3 (the follow-up ADR on the authoritative platform and reference machine should land first); DR-C5 (the auto-rollback sanity thresholds used by recovery) | DR-D3 (public distribution only); `toolchains/native-dependencies.lock` only if a native booster is adopted (DR-C8); the deferrals carried by ADR-011 D9: `-Scope Changed` (ADR-001 D5, ADR-008), repository-wide line-ending normalization (ADR-004) and CI caching (ADR-007) |
+| P1-12 | GRID component port (§9.2.5) | Classes A, A′, B and D, and the stage-specific booster criteria C-V and C-L1 (§7.12.4–§7.12.5, §7.13): `value.py`: C-V in place of Class C, which is unattainable for V(s) (proposed — DR-D27; KI-NEW-Z74); `situations.py`: masks exact; `layers.py` design, accumulators and market rows: Class A assembly, with the solve at Class A′ or B; `layers.py` Layer 1 and fixed point: Class A aggregation, C-L1 for the context model (proposed amendment to DR-B3; `layer1-credit.md` §10.3); `statespace.py` GRID model: Class A injected, batch equals incremental; `priors.py`: Class A′/A injected, Class D recovery; `synth.py` and `data_adapters.py`: fixtures load exactly, the Rust-native generator is exact under draw-tape replay (proposed — DR-D28) and passes Class D over a seed ensemble (proposed — DR-D26); re-set Tier-0 gates, calibration bands, golden master Layers A to C, determinism. | DR-A5, DR-B1, DR-B3, DR-B4, DR-B5, DR-B6, DR-C1, DR-C2, DR-C5 (RAPM domain controls: home field, garbage time, overtime, minimum exposure and play weights), DR-C6, DR-C7, DR-C9, DR-C10, DR-C13; DR-D1 (real-data scheme-reset path only) | DR-D2, DR-D10 and DR-D12 (real data); DR-D4; DR-D9 (priors); DR-D11; DR-D13 (RB/WR/TE credit as an individual signal); DR-D14; DR-D15 (Layer-1′); DR-D16; DR-D17; DR-D18; DR-D19; DR-D26 (Class D gates); DR-D27 (P-V5); DR-D28 (Rust-native generator); oracle-exported parity fixtures made under the oracle's platform pin, CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (DR-D31, ratified 2026-10-08; KI-NEW-Z78); the realistic profile (`synthetic-world.md` §4.11) before any real-data-scale claim |
 
 **Decisions with no package.** DR-D22 (provider `ep`/`epa` as features; open) names no package: any feature
 that would read nflverse `ep` or `epa` waits for it, and until then EPA-type features come from GRID
 `dV` only (§11.6). DR-D30 (proposed) decides the branch-protection configuration of the `reference-oracle` job
-(§8.19).
+(§8.19). DR-D31, which decided how that job's golden master reproduces on CI hardware, was ratified by the
+owner on 2026-10-08 (option 1) and implemented in P0-01 as correction-ledger entry L0; it blocks no package
+any more, and the job is expected green. P1-12's oracle-exported parity fixtures are made under the same
+platform pin (above).
 
 **P1-12 internal order.** P1-12 SHOULD be split into several packages in dependency order (consolidation
 inventory `reconcile-code-first.md` §7.3):
@@ -8038,8 +8092,10 @@ Additional requirements:
   They never run in CI.
 - **CI workflow.** The CI workflow is a security boundary. It uses no third-party action beyond
   `actions/checkout`, and none is added without Security/Release owner approval (§8.19). The oracle
-  job uses the runner's preinstalled Python in a throwaway virtual environment, constrained to the
-  pinned lock; `actions/setup-python` needs the same approval (critic X-7).
+  job uses the runner image's tool-cache CPython 3.11, and fails if it is absent, in a throwaway
+  virtual environment constrained to the pinned lock, with `OPENBLAS_CORETYPE=Haswell` pinned (DR-D31,
+  ratified 2026-10-08; ledger entry L0); `actions/setup-python` needs the same approval (critic X-7;
+  KI-NEW-Z78).
 - **Untrusted content.** Oracle source, oracle comments and imported CN documents are untrusted
   content in the same sense as provider payloads. They inform work. They never redefine instructions
   or authority (§1.5, §1.7).
@@ -8679,7 +8735,8 @@ named in an entry changes its status (register, "How to ratify or override").
   block is not Ready until then (§8.16.1).
 - **D-decisions** were raised during the consolidation. An entry is **Proposed** when a source states a
   default and **Open** when the sources state only an interim rule or nothing. Text that relies on one
-  tags it "(proposed — DR-xx)" or "(open — DR-xx)". Neither binds until the named owner acts.
+  tags it "(proposed — DR-xx)" or "(open — DR-xx)". Neither binds until the named owner acts. One
+  D-decision is ratified: DR-D31 (2026-10-08, option 1; implemented in P0-01 as ledger entry L0).
 
 ### F.1 Decisions in the register
 
@@ -8703,13 +8760,13 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-B2 | Live oracle in CI, committed fixtures, or both? | Statistical, Product/Architecture (Security/Release for CI actions) | Both: committed sha256-manifested fixtures are the Rust contract; a Linux-only oracle job with threads pinned to 1 proves they regenerate | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | DR-B3 | What are the parity tolerances per stage class? | Statistical | A ≤ 1e-12 abs; A′ ≤ 1e-9 rel; B ≤ 10 × CG tolerance and converged; C corr(dV) ≥ 0.999 and \|ΔV\| ≤ 0.10 EP on supported cells; D recovery floors on the defender-fixed synth | Proposed — awaiting Statistical owner | P1-01, P1-06, P1-12 |
 | DR-B4 | How is the synthetic world fixed and extended? | Statistical | Now: fix the defenders, plant net strength, regenerate goldens, recalibrate the QB NIS bands. Before Layers A–F: a stat-vector world and a realistic profile. | Proposed — awaiting Statistical owner | P1-05, P1-07, P1-08, P1-12 |
-| DR-B5 | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Net strength from gauge-invariant aggregates; market rows anchor net strength with the line at lock; grade = `+E_def`; reject `[+1,−1]` | Proposed — awaiting Statistical owner | P1-08, P1-12 |
+| DR-B5 | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Net strength from gauge-invariant aggregates; market rows anchor net strength with the line at lock; grade = `+E_def`; reject `[+1,−1]` | Proposed — awaiting Statistical owner | P1-07 (real-data market inputs to Layer B), P1-08, P1-12 |
 | DR-B6 | Port oracle failure paths faithfully, or fail with a typed error? | Statistical, Product/Architecture | Typed failure in Rust; oracle unchanged; divergences in `PARITY.md`; the ADR cites CN PR #53 C3 | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-02, P1-06, P1-12 |
 | DR-C1 | How does participation-dependent RAPM relate to the live path? | Product/Architecture, Statistical | Two-tier GRID: offseason RAPM after publication; in-season participation-free Layer-1′ credit; a publication-lag axis in AsOf | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-05, P1-09, P1-12 |
 | DR-C2 | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Layers A–F are the skeleton; GRID is a signal provider (Layer D latent, Layer E matchup, Layer B anchor, priors) | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-07, P1-08, P1-12 |
 | DR-C3 | Where does GRID talent enter Layer D? | Statistical | Role-specific talent as covariates in EB-shrunk per-component rate models | Proposed — awaiting Statistical owner | P1-07, P1-08 |
 | DR-C4 | Which projection horizons does the engine contract cover? | Product/Architecture | Weekly primary; ROS and preseason as derived sums of weekly draws; H1 no longer a kill criterion | Proposed — awaiting Product/Architecture owner | P1-01, P1-08, P1-09 |
-| DR-C5 | What are the primary metric and the promotion gates? | Statistical | PB-MAE primary; §9.4 thresholds kept verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; open parameters set in model specs; calibrate-then-gate only for unnumbered KPIs on a disjoint period | Proposed — awaiting Statistical owner | P1-06, P1-09, P2-03, P2-07 |
+| DR-C5 | What are the primary metric and the promotion gates? | Statistical | PB-MAE primary; §9.4 thresholds kept verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; open parameters set in model specs; calibrate-then-gate only for unnumbered KPIs on a disjoint period | Proposed — awaiting Statistical owner | P1-06, P1-07, P1-09, P1-11 (recovery), P1-12 (RAPM domain controls), P2-03, P2-07 |
 | DR-C6 | How do stateful components honour the three-season window? | Statistical | Per-season `XᵀX`/`Xᵀy` blocks; V(s) refit per season; Kalman carried with discount in production, re-initialized on backtest replay | Proposed — awaiting Statistical owner | P1-05, P1-09, P1-12 |
 | DR-C7 | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Deterministic in-house V(s) behind a `Regressor` trait; no nflfastR `ep`; ridge/GAM vs GBM for the Layer-1 context model decided on recovery evidence | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-06, P1-12 |
 | DR-C8 | Which booster backend? | Product/Architecture | Pure-Rust first, no native artifacts; `xgb` optional behind a feature once a booster earns its place | Proposed — awaiting Product/Architecture owner | P1-06 |
@@ -8727,14 +8784,14 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-D5 | Is "corrected as retrieved" acceptable for the Phase 1 historical proof? | Statistical, Data/Licensing | None — open. Interim: the approximation is declared in every backtest report and is not extended to any other data class | Open — awaiting Statistical owner and Data/Licensing owner | P1-09 |
 | DR-D6 | May scoring profiles contain non-affine rules such as threshold bonuses? | Product/Architecture, Statistical | Option 1 until decided: affine profiles only; a non-affine rule is rejected with a typed error and never approximated (§2.3, §5.4) | Proposed — awaiting Product/Architecture owner and Statistical owner | custom profiles (P1-06, P1-10) |
 | DR-D7 | Is the superseded §5.1 stat-vector asymmetry intended? | Product/Architecture, Statistical | None — open. Interim: the stat vectors are binding as written | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 |
-| DR-D8 | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | None — open. Interim: each value (floor and ceiling percentiles, default `p_exceed` thresholds, boom/bust starter thresholds, change-attribution method) is recorded per output version | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 |
+| DR-D8 | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | None — open. Interim: each value (floor and ceiling percentiles, default `p_exceed` thresholds, boom/bust starter thresholds, change-attribution method) is recorded per output version | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 (distributions), P2-07 (change log) |
 | DR-D9 | What are the §2.5 minimum NFL opportunity thresholds and weights? | Statistical | None — open. The values are set in `cross-league-priors.md` before use | Open — awaiting Statistical owner | P1-07, P1-12 (priors) |
 | DR-D10 | How does a spread at lock map to the market target in EP per play? | Statistical | None — open | Open — awaiting Statistical owner | P1-07 (Layer B), P1-12 (real data) |
 | DR-D11 | What are the fixed point's re-seed set, scale mapping and stopping rule? | Statistical | None — open. Interim: `fit` is ported as is, with parity only in fixture-injected mode | Open — awaiting Statistical owner | P1-12 |
 | DR-D12 | What are the RAPM penalties on the real scale, and how is QB identifiability handled? | Statistical | None — open. Method: calibrate by rolling origin on completed seasons, pre-registered before results | Open — awaiting Statistical owner | P1-12 (real data) |
 | DR-D13 | Is Layer-1 credit an on-field-unit or an individual quantity? | Statistical | None — open. Interim: outputs carry `role = on_field`, and explanations do not describe the credit as individual | Open — awaiting Statistical owner | RB/WR/TE credit as an individual signal (P1-12, P1-07) |
 | DR-D14 | What is the cross-fit design of the Layer-1 context model? | Statistical | Week-grouped folds keyed by play identity, with the fold map persisted; fold-wise ratings; explicit early stopping; `K = 5`; seed 0, recorded; a single-season frame (`layer1-credit.md` §4.4) | Proposed — awaiting Statistical owner | P1-12 |
-| DR-D15 | What is the operational definition of Layer-1′? | Statistical | Partial (`layer1-credit.md` §4.8): roles dropback (sacks and scrambles included), carry and target; each role event gets the full residual; every target is attributed to the receiver; no eligibility rule; `g′` frozen per season, fitted on S−3..S−1 with features `(s, δ^team)`; opponent `E_def` as of week `w − 1`. Per-event vs per-snap has no default: both are implemented behind an explicit enum and neither is promoted | Open — awaiting Statistical owner (partial defaults proposed) | P1-12 (Layer-1′), P1-03 (roles field) |
+| DR-D15 | What is the operational definition of Layer-1′? | Statistical | Partial (`layer1-credit.md` §4.8): roles dropback (sacks and scrambles included), carry and target; each role event gets the full residual; every target is attributed to the receiver; no eligibility rule; `g′` frozen per season, fitted on S−3..S−1 with features `(s, δ^team)`; opponent `E_def` as of week `w − 1`. Per-event vs per-snap has no default: both are implemented behind an explicit enum and neither is promoted | Open — awaiting Statistical owner (partial defaults proposed) | P1-12 (Layer-1′), P1-03 (roles field), P2-03 (Layer-1′ live) |
 | DR-D16 | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | None — open. Interim: a did-not-play predictive is never published as a forecast of an observation | Open — awaiting Statistical owner | P1-08, P1-12 |
 | DR-D17 | How does the state-space filter cross the offseason? | Statistical | None — open | Open — awaiting Statistical owner | P1-12, P2-03 |
 | DR-D18 | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | None — open | Open — awaiting Statistical owner | P1-12, P2-03 |
@@ -8750,7 +8807,7 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-D28 | How is the Rust generator proven exact without numpy streams? | Statistical | Option 3, draw-tape replay: the oracle exporter records each draw's result by wrapping the generator (`synth.py` is never edited); the Rust generator takes its randomness through an injectable draw source and, fed the tape, reproduces `plays`, `players`, `gt` and `college` exactly (S-2) | Proposed — awaiting Statistical owner | P1-12 (Rust-native generator) |
 | DR-D29 | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Option 1: one deterministic JSON manifest per case; one raw little-endian file per array; UTF-8 JSON arrays for strings; offsets + values for ragged lists; hash verification in a shell guard | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | DR-D30 | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Option 2: required for PRs that touch `reference/python/`, fixtures or parity tests, informational otherwise (§8.19). Interim: the job is not merge-authoritative while DR-A3 stands | Proposed — awaiting Security/Release owner and Product/Architecture owner | branch protection (no WP) |
-| DR-D31 | How is the oracle golden master made reproducible on CI hardware? Its Layer C reproduces only on CPython 3.11 with OpenBLAS AVX-512 kernels (KI-NEW-Z78) | Statistical, Security/Release | Option 1: pin `OPENBLAS_CORETYPE=Haswell` for every oracle run and regenerate the Layer C golden once under it as a correction-ledger entry; never loosen the tolerance | Proposed — awaiting Statistical owner and Security/Release owner | a green `reference-oracle` job; P1-12 parity fixtures |
+| DR-D31 | How is the oracle golden master made reproducible on CI hardware? The imported Layer C reproduced only on CPython 3.11 with OpenBLAS AVX-512 kernels (KI-NEW-Z78) | Statistical, Security/Release | Option 1: pin `OPENBLAS_CORETYPE=Haswell` for every oracle run and regenerate the Layer C golden once under it as a correction-ledger entry; never loosen the tolerance | Ratified 2026-10-08 — option 1 (owner's written approval in the implementing session); implemented in P0-01 as correction-ledger entry L0 | none remaining |
 
 ### F.2 Open parameters inside registered decisions
 
@@ -8802,13 +8859,14 @@ A–F of §6.1.
 | **Layer-2** | Participation RAPM (see *RAPM*). |
 | **Layer-3** | Market reconciliation: market pseudo-observations that anchor team net strength to market-implied strength. |
 | **Legacy generator, defender-fixed generator** | The *legacy* generator is `synth.py` as imported; it draws defenders from the offense team on every play (KI-NEW-Y0). The *defender-fixed* generator applies correction-ledger entry 1, so defenders come from the opposing team, and the corrected canonical world also plants net strength (`synthetic-world.md` §4.10; proposed — DR-B4). Values measured on the legacy generator are history only (§7.13.3). |
-| **Legacy oracle, corrected oracle** | The *legacy* oracle is the verbatim import of cautious-nevermore at `59bce1d`, known defects included; its status in `reference/python/PARITY.md` is `legacy-59bce1d`, and the proposed tag for the import commit is `oracle-legacy-59bce1d`. The *corrected* oracle is the legacy oracle plus the statistical-owner-approved correction-ledger commits (proposed — DR-B1). Rust targets the corrected oracle, and legacy goldens are kept for audit only (§1.7, §7.12.2). |
+| **Legacy oracle, corrected oracle** | The *legacy* oracle is the import of cautious-nevermore at `59bce1d`, known defects included, verbatim apart from patches P1 and P2 and ledger entry L0; its status in `reference/python/PARITY.md` is `legacy-59bce1d + L0` (the import plus ledger entry L0, a golden regeneration under the platform pin that leaves every defect in place), and the proposed tag for the import commit is `oracle-legacy-59bce1d`. The *corrected* oracle is the legacy oracle plus the statistical-owner-approved correction-ledger commits (proposed — DR-B1). Rust targets the corrected oracle, and legacy goldens are kept for audit only (§1.7, §7.12.2). |
 | **Lock** | The timestamp at which a projection is frozen for evaluation: the Thursday and Sunday locks of §7.2. A lock snapshot is immutable, and a later run is a new version. |
 | **Market pseudo-observations** | Rows appended to the ridge system. Each row's target is a team's market-implied net strength, derived from the line at lock, and its weight controls the strength of the anchor (proposed — DR-B5; scale: DR-D10). |
 | **Matchup grade** | The opponent-defense difficulty signal for Layer E: the opposing defense's `+E_def`, where higher means tougher (proposed — DR-B5). The oracle's grade carries the inverted sign (KI-NEW-A2). |
 | **Net strength** | A team's combined offensive and defensive quality, `N[t] = E_off[t] + E_def[t]`, built from gauge-invariant aggregates. It is the quantity a point spread prices, and it is the proposed team-strength estimand (proposed — DR-B5). The off − def (`[+1, −1]`) convention is rejected. |
 | **Oracle** | The Python GRID engine under `reference/python/`, imported from cautious-nevermore at `59bce1d`. It is an executable reference used to produce parity fixtures and recovery evidence. It is evidence, not specification, and never ships (§1.7). |
 | **Parity classes A, A′, B, C, D** | Tolerance classes for Rust-versus-oracle agreement on identical inputs (proposed — DR-B3; §7.12.5): **A**: element-wise closed forms, ≤ 1e-12 absolute. **A′**: dense linear solves, ≤ 1e-9 relative. **B**: CG solves, within 10 × the CG tolerance with `converged = true`. **C**: booster stages, `corr(dV) ≥ 0.999` and `\|ΔV\| ≤ 0.10` EP on supported cells. **D**: end-to-end recovery floors on the corrected synthetic world. Class C is unattainable even by the oracle against itself (KI-NEW-Z74), so the two booster stages are judged at the stage-specific criteria *C-V* and *C-L1* instead. |
+| **Platform pin (oracle)** | The numerical platform the oracle's golden master is frozen on: CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, single-threaded. Gradient-boosted Layer C outputs move with the BLAS kernel and the interpreter (KI-NEW-Z78), so `reference/python/tools/pytest_platform_pin.py` enforces the pin for every test run, and every oracle export runs under it (DR-D31, ratified 2026-10-08; correction-ledger entry L0, §1.7). |
 | **PB-MAE** | Position-Balanced Mean Absolute Error, the primary point-projection metric (§7.4): the mean over QB, RB, WR and TE of each position's MAE divided by a fixed position scale estimated only from the training period. |
 | **Planted truth** | The hidden quantities the synthetic generator draws before it generates play-by-play from them: player abilities, team strengths, a focus-QB talent trajectory with an injury, and a feeder league. The estimators are judged on recovering them (§6.9, §7.13). |
 | **Publication lag** | The delay between when a datum describes an event and when it is published. The as-of axis that admits data by publication time rather than occurrence time (§4.5). Participation for season `S` is published only after `S`'s postseason. |
@@ -9108,7 +9166,7 @@ document's numbering unless they name another document.
 | §9.4 | Partial data acceptance | §8.6.3; §8.6 | kept verbatim | — |
 | §9.5 | Failure states | §8.6.4; §8.6 | kept as a binding enum | 1 |
 | §9.6 | Catch-up behavior | §8.6.5; §8.6 | corrected | 2 |
-| §10 | Feature Engineering | §8.9 | kept verbatim with engine additions | — |
+| §10 | Feature Engineering | §8.9 | kept verbatim with engine additions; one phrase converted | 1 |
 | §11 | Statistical Engine | §6.4 | kept and amended as §6.4 (subsections §6.4.2–§6.4.9) | — |
 | §11.1 | Linear algebra | §6.4.2; §6.4 | kept verbatim | — |
 | §11.2 | Ridge Regression | §6.4.3; §6.4 | kept verbatim | 1 |
@@ -9150,7 +9208,7 @@ document's numbering unless they name another document.
 ### H.4 Dropped and converted items
 
 The dropped and materially converted items recorded while this specification was drafted, merged
-and deduplicated (256 items from 261 records), ordered by superseded section. Items kept
+and deduplicated (257 items from 262 records), ordered by superseded section. Items kept
 verbatim, or kept with only a renumbering, are not listed. Section signs in "Item" use the numbering
 of the document named in the first column; section signs in "Reason" use this document's numbering
 unless they name another document.
@@ -9366,6 +9424,7 @@ unless they name another document.
 | final-build-spec §9.5 | "The UI exposes the last successful update and the current error state." | converted | `grid status` plus a distinct exit code per terminal state (§8.6.4) |
 | final-build-spec §9.6 | `last_successful_update > configured_interval` predicate | converted | Corrected to `now − last_successful_update > configured_interval`; week-ordered catch-up (§8.6.5) |
 | final-build-spec §9.6 | Optional Windows Task Scheduler registration by the application | converted | Any OS scheduler, configured by the operator via runbook; the engine never self-registers |
+| final-build-spec §10 | "Feature generation operates from durable source data, not transient UI state." | converted | No UI (ADR-011). Feature generation operates from durable source data, never from transient in-memory state (§8.9). |
 | final-build-spec §11.2 | "For the sparse case: use conjugate gradient descent." | converted | The method is conjugate gradient (Jacobi-preconditioned), with a dense Cholesky reference solve (§6.4.3). |
 | final-build-spec §11.3 | "RAPM is a first-class production model" | converted | A first-class model of the offseason tier only; never a live dependency (§6.3, §6.4.4; proposed — DR-C1). |
 | final-build-spec §11.3 | The objective `argmin ‖y−Xβ‖² + λ‖β‖²` | converted | The generalized objective, with observation weights, a penalty mask, a prior mean and pseudo-observation rows. Plain ridge is a special case (§6.4.3). |
@@ -9386,7 +9445,7 @@ unless they name another document.
 | final-build-spec §12.1 | "Notify UI" | converted | Event, status and exit code |
 | final-build-spec §12.3 | Snapshot by copying model state before each update | converted | Pointer record over immutable versions; RAPM state added (§8.7.4) |
 | final-build-spec §12.3 | "flags the failure to the UI" | converted | `CandidateRejected` / `RollbackCompleted` events, `LEARNING_FAILURE` status and exit code |
-| final-build-spec §13 | State list order conflicting with the flow | converted | Explicit transitions (§8.8) |
+| final-build-spec §13 | State list order conflicting with the flow | converted | Explicit transitions (§8.8), including failed or aborted training (`TRAINING → REJECTED`) and rollback through the production pointers (`PRODUCTION ⇄ SUPERSEDED`) |
 | final-build-spec §14 | "build/application version" | converted | Engine crate version plus git SHA (§8.9) |
 | final-build-spec §16 | "Application crash", "Windows restart" | converted | Process crash or kill; host restart (§8.11) |
 | final-build-spec §17 L658 | "The UI displays the last successful update, current error state, and training progress" | converted | `grid status` (§8.12) |

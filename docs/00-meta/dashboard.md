@@ -17,7 +17,7 @@ SORT status ASC, file.name ASC
 | Scope | Engine only: Rust target, Python reference oracle in `reference/python/` (ADR-011, ADR-012, both Proposed) |
 | Active package | P0-01, engine-only consolidation: **Review**. Done only when merged with the owner's ratifications |
 | Rust engine | Pre-implementation: 11 crate stubs; `persistence` holds the SQLx scaffold and one migration |
-| Reference oracle | `legacy-59bce1d`, imported (105 files); its own suite passed on Linux at import. No correction applied |
+| Reference oracle | `legacy-59bce1d`, imported (105 files); its own suite passed on Linux at import (CPython 3.11.15). Its golden is pinned to CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, ratified 2026-10-08): correction-ledger entry L0 regenerated Layer C once under that platform, and 446 tests pass. No other correction applied |
 | Evidence level | "Experimental projections" (`engine-spec.md` §3.2, §3.3) |
 | Owner actions before the P0-01 merge | Ratify or override DR-A1, DR-A2, DR-A4 to DR-A9, DR-A11, DR-A12; accept or override ADR-011 and ADR-012; record the DR-A10 licence ruling on the PR |
 | Open decisions | Sections B, C and D of `decision-register.md` are proposed or open. They gate readiness of P1-01 onward |

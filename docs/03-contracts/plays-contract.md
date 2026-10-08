@@ -51,7 +51,7 @@ contract and is **not** part of `grid.plays` (§10).
 
 | Consumer (v0) | Reads | Where |
 |---|---|---|
-| Value model V(s), dV | `down, ydstogo, yardline_100, drive_points` (fit); `terminal, terminal_value, n_down, n_ydstogo, n_yardline_100` (dV) | `value.py:87,111-112,151-166` |
+| Value model V(s), dV | `down, ydstogo, yardline_100, drive_points` (fit); `terminal, terminal_value, n_down, n_ydstogo, n_yardline_100` (dV) | `value.py:49-54,89-104` |
 | Layer 2 RAPM design | `off_players, def_players, off_team, def_team`, plus the derived `dv`; `players.player_id, players.team` (and `players.position` for `lambda_by_pos` and the WR–CB interaction block) | `layers.py:226-344,362-428` |
 | Layer 3 market rows | `market[team]` | `layers.py:400-408`; `validation/backtest.py:101-112`; `pipeline/weekly_update.py:269-276` |
 | Layer 1 credit | `down, ydstogo, yardline_100, dv, week, off_players, def_players` | `layers.py:488-587` |
@@ -88,11 +88,11 @@ observed by running the code. The v1 type is the Rust canonical type (§11).
 | `yardline_100` | int64 / float64 (integral) | `u8` | Yards to the opponent goal line. Real 1..99. **Synth 1..104** (§8, D-9) | never | State s | `synth.py:188,239`; `nflverse_adapter.py:103` | V(s); `red_zone` |
 | `yards` | float64 (integral) / float64 (integral) | `i16` | Yards gained on the play. Synth clipped to [−8, 60] (observed −8..23); real `yards_gained` (2023: −24..92) | never | Play outcome | `synth.py:214-215`; `nflverse_adapter.py:136` | none downstream |
 | `points` | float64 / float64 | derived from `next` (§11) | {0, 3, 7} | never | `drive_points` on the terminal row, 0.0 elsewhere | `synth.py:221-237`; `nflverse_adapter.py:121` | none downstream |
-| `terminal` | bool / bool | derived from `next` | — | never | True on the **last modelled row of the drive** and only there | `synth.py:222-260`; `nflverse_adapter.py:114` | `compute_dv` (`value.py:157`) |
-| `terminal_value` | float64 / float64 | derived from `next` | {0, 3, 7} on terminal rows | **NaN on every non-terminal row** | Realized value of the absorbing state s′ | `synth.py:220-237,259`; `nflverse_adapter.py:120` | `compute_dv` reads terminal rows only (`value.py:159`) |
-| `n_down`, `n_ydstogo` | int64 / int64 | `NextState::Continue(PlayState)` | as `down`, `ydstogo`; **−1 sentinel on terminal rows** | never (sentinel instead) | State s′ = the next modelled row of the same drive | `synth.py:262-270`; `nflverse_adapter.py:110-117` | `compute_dv` non-terminal rows (`value.py:161-164`) |
+| `terminal` | bool / bool | derived from `next` | — | never | True on the **last modelled row of the drive** and only there | `synth.py:222-260`; `nflverse_adapter.py:114` | `compute_dv` (`value.py:95`) |
+| `terminal_value` | float64 / float64 | derived from `next` | {0, 3, 7} on terminal rows | **NaN on every non-terminal row** | Realized value of the absorbing state s′ | `synth.py:220-237,259`; `nflverse_adapter.py:120` | `compute_dv` reads terminal rows only (`value.py:97`) |
+| `n_down`, `n_ydstogo` | int64 / int64 | `NextState::Continue(PlayState)` | as `down`, `ydstogo`; **−1 sentinel on terminal rows** | never (sentinel instead) | State s′ = the next modelled row of the same drive | `synth.py:262-270`; `nflverse_adapter.py:110-117` | `compute_dv` non-terminal rows (`value.py:99-102`) |
 | `n_yardline_100` | int64 / float64 | as above | as `yardline_100`; −1 on terminal rows | never | as above | as above | as above |
-| `drive_points` | float64 / float64 | `DrivePoints` enum | {0, 3, 7}: Touchdown 7, Field goal 3, everything else 0 | never | The drive's eventual points, broadcast to every row of the drive. **This is the V(s) training label** | `synth.py:191,222-237,264`; `nflverse_adapter.py:36,106` | `fit_value_model` (`value.py:112`) |
+| `drive_points` | float64 / float64 | `DrivePoints` enum | {0, 3, 7}: Touchdown 7, Field goal 3, everything else 0 | never | The drive's eventual points, broadcast to every row of the drive. **This is the V(s) training label** | `synth.py:191,222-237,264`; `nflverse_adapter.py:36,106` | `fit_value_model` (`value.py:50`) |
 | `off_players` | tuple of int / tuple of str | `Participation` (§11) | Player ids. Synth: on-field QB, RB, WR, WR, TE. Real: participation `offense_players` **filtered to `{QB, RB, WR, TE, FB}`** through the roster position map (`nflverse_adapter.py:40,198-203`). OL never appears: the offense intercept absorbs it | `()` when participation is absent or the row is unmatched | On-field offensive estimands | `synth.py:246`; `nflverse_adapter.py:123-125,175-214` | `build_design`; Layer 1 masks; `AsOf.slice_pool`; coverage stats |
 | `def_players` | tuple of int / tuple of str | `Participation` | Synth: 7 ids — **drawn from the offense's own roster** (KI-NEW-Y0). Real: participation `defense_players`, kept as listed (2023: 11 ids on 35,451 of 35,474 rows) | `()` as above | On-field defenders | `synth.py:123-128,193,247`; `nflverse_adapter.py:210` | `build_design` (−1 entries); Layer 1 opponent rating sum (`layers.py:488-494`) |
 
@@ -102,7 +102,7 @@ These columns are attached by engine stages. They are not part of what a produce
 
 | Column | Attached by | Meaning |
 |---|---|---|
-| `dv` | `value.attach_dv` (`value.py:169-172`) | dV = V(s′) − V(s), offense perspective, expected-points units. `build_design` reads it as the response y (`layers.py:327`), and raises a bare `KeyError` when it is absent (KI-G12) |
+| `dv` | `value.attach_dv` (`value.py:107-110`) | dV = V(s′) − V(s), offense perspective, expected-points units. `build_design` reads it as the response y (`layers.py:327`), and raises a bare `KeyError` when it is absent (KI-G12) |
 | `season` | `verdict._load_snapshot` (`verdict.py:498-500`) | The season tag added when per-season snapshots are concatenated. **Not emitted by either producer.** `AsOf` switches to the season-aware tuple cutoff only when this column exists (`asof.py:41-55`). Without it the cutoff is week-only |
 | `_resid` | Layer 1 (`layers.py:531,576`) | The out-of-fold context residual. Internal; it is the Layer-1 injection point in parity fixtures |
 

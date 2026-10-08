@@ -28,11 +28,15 @@ projections* (`engine-spec.md` §3.2, §3.3).
 - **Rust engine: stubs.** The workspace has 11 crates. Only `persistence` has code and tests: the
   SQLx scaffold with one infrastructure migration. No engine computation exists yet.
 - **Python oracle: runs.** At import it passed its own suite on Linux: 446 tests, CPython 3.11.15,
-  threads pinned to 1, isolation guard clean (`reference/python/PARITY.md` §(a)).
+  threads pinned to 1, isolation guard clean (`reference/python/PARITY.md` §(a)). Its golden master
+  is frozen on a pinned numerical platform, CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, which any
+  x86-64 AVX2 CPU runs: correction-ledger entry L0 regenerated it there (KI-NEW-Z78; DR-D31, ratified by the owner on 2026-10-08), and `reference/python/tools/pytest_platform_pin.py` enforces it. It
+  passes 446 tests under the pin.
 - **Known defects are registered, not fixed.** The imported oracle has known defects, all recorded in
   `docs/00-meta/known-issues.md`. The most consequential is in the synthetic generator, which draws
   every play's defenders from the offense's own team (KI-NEW-Y0). Corrections are proposed through a
-  correction ledger (`reference/python/PARITY.md` §(b)); none has been applied.
+  correction ledger (`reference/python/PARITY.md` §(b)); none of the semantic corrections has been
+  applied. Only entry L0, the platform pin above, is applied, and it fixes no model defect.
 - **GRID has not cleared the Phase-1 gate on historical evidence.** The historical cautious-nevermore
   real-data results did not show GRID beating the stronger transparent baselines, and they rest on
   biased labels and too-narrow intervals. They are non-citable for this engine
@@ -57,19 +61,26 @@ powershell -ExecutionPolicy Bypass -File scripts/verify.ps1 -Scope Full   # merg
 The committed `.env` supplies `DATABASE_URL=sqlite:target/grid-dev.db` and `SQLX_OFFLINE=true`
 (ADR-002).
 
-Python reference oracle (Linux only):
+Python reference oracle (Linux only, CPython 3.11 + `OPENBLAS_CORETYPE=Haswell`; KI-NEW-Z78, DR-D31):
 
 ```bash
 cd reference/python
-python3 -m venv .venv && . .venv/bin/activate
+python3 -m venv .venv && . .venv/bin/activate   # python3 must be CPython 3.11 (the lock and the golden)
 pip install -r requirements.txt -c requirements.lock
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 python3 tools/verify_manifest.py    # imported files match MANIFEST.tsv
-python3 -m pytest                   # the oracle's own suite, with the isolation guard
+python3 -m pytest                   # the oracle's own suite, with the isolation guard and platform pin
 ```
 
-The oracle job (`reference-oracle` in `.github/workflows/alpha-ci.yml`) runs the same steps. It sits
-outside the frozen verify chain and is not merge-authoritative (`engine-spec.md` §8.19).
+Under pytest the platform pin sets `OPENBLAS_CORETYPE=Haswell` itself and refuses any other kernel or
+interpreter. For `run_demo.py`, the golden generator and `tools/investigations/`, export
+`OPENBLAS_CORETYPE=Haswell` and use CPython 3.11 yourself. Never loosen a tolerance to absorb a platform
+difference.
+
+The oracle job (`reference-oracle` in `.github/workflows/alpha-ci.yml`) runs the same steps on the
+runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and fails if that interpreter
+is absent. It is expected green (446 passed) on ordinary `ubuntu-latest` runners. It sits outside the
+frozen verify chain and is not merge-authoritative (`engine-spec.md` §8.19).
 
 ## Repository map
 

@@ -350,7 +350,7 @@ The engine emits **no VOR, tier or draft-ranking output** *(proposed — DR-C11)
   - Parquet follows §8 rule 2.
   - Serialization lives in the orchestration crate: `application` today, `pipeline` and
     `grid-cli` after DR-A8.
-- Query names follow engine-spec §8 (`get_week_projection_board`,
+- Query names follow engine-spec §8 (`get_week_projections`,
   `get_player_projection_detail`, `get_projection_distribution`, `get_projection_change_log`,
   `get_model_scorecard`, `get_benchmark_results`, `get_data_quality_report`, …), exposed through
   the CLI and the library API.

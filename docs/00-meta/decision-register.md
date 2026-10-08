@@ -115,13 +115,13 @@ several roles; all are currently held by the repository owner.
 | [DR-B2](#dr-b2-live-oracle-in-ci-vs-committed-fixtures) | Live oracle in CI, committed fixtures, or both? | Statistical, Product/Architecture (Security/Release for CI actions) | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | [DR-B3](#dr-b3-parity-tolerance-table) | What are the parity tolerances per stage class? | Statistical | Proposed — awaiting Statistical owner | P1-01, P1-06, P1-12 |
 | [DR-B4](#dr-b4-synthetic-world) | How is the synthetic world fixed and extended? | Statistical | Proposed — awaiting Statistical owner | P1-05, P1-07, P1-08, P1-12 |
-| [DR-B5](#dr-b5-team-strength-estimand-layer-3-rows-and-matchup-grade) | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Proposed — awaiting Statistical owner | P1-08, P1-12 |
+| [DR-B5](#dr-b5-team-strength-estimand-layer-3-rows-and-matchup-grade) | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Proposed — awaiting Statistical owner | P1-07 (real-data market inputs to Layer B), P1-08, P1-12 |
 | [DR-B6](#dr-b6-typed-failure-vs-faithful-port-of-oracle-failure-paths) | Port oracle failure paths faithfully, or fail with a typed error? | Statistical, Product/Architecture | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-02, P1-06, P1-12 |
 | [DR-C1](#dr-c1-rapm-and-participation-on-the-live-path) | How does participation-dependent RAPM relate to the live path? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-05, P1-09, P1-12 |
 | [DR-C2](#dr-c2-which-modeling-architecture-governs) | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-07, P1-08, P1-12 |
 | [DR-C3](#dr-c3-where-grid-talent-enters-layer-d) | Where does GRID talent enter Layer D? | Statistical | Proposed — awaiting Statistical owner | P1-07, P1-08 |
 | [DR-C4](#dr-c4-horizons) | Which projection horizons does the engine contract cover? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-01, P1-08, P1-09 |
-| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Proposed — awaiting Statistical owner | P1-06, P1-09, P2-03, P2-07 |
+| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Proposed — awaiting Statistical owner | P1-06, P1-07, P1-09, P1-11 (recovery), P1-12 (RAPM domain controls), P2-03, P2-07 |
 | [DR-C6](#dr-c6-three-season-window-for-stateful-components) | How do stateful components honour the three-season window? | Statistical | Proposed — awaiting Statistical owner | P1-05, P1-09, P1-12 |
 | [DR-C7](#dr-c7-gbm-on-grids-critical-path-and-the-vs-estimator) | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-06, P1-12 |
 | [DR-C8](#dr-c8-booster-backend) | Which booster backend? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-06 |
@@ -139,14 +139,14 @@ several roles; all are currently held by the repository owner.
 | [DR-D5](#dr-d5-historical-correction-approximation) | Is "corrected as retrieved" acceptable for the Phase 1 historical proof? | Statistical, Data/Licensing | Open — awaiting Statistical owner and Data/Licensing owner | P1-09 |
 | [DR-D6](#dr-d6-non-affine-scoring) | May scoring profiles contain non-affine rules such as threshold bonuses? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | custom profiles (P1-06, P1-10) |
 | [DR-D7](#dr-d7-stat-vector-asymmetry) | Is the superseded §5.1 stat-vector asymmetry intended? | Product/Architecture, Statistical | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 |
-| [DR-D8](#dr-d8-output-open-definitions) | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 |
+| [DR-D8](#dr-d8-output-open-definitions) | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 (distributions), P2-07 (change log) |
 | [DR-D9](#dr-d9-low-evidence-thresholds) | What are the §2.5 minimum NFL opportunity thresholds and weights? | Statistical | Open — awaiting Statistical owner | P1-07, P1-12 (priors) |
 | [DR-D10](#dr-d10-market-line-scale) | How does a spread at lock map to the market target in EP per play? | Statistical | Open — awaiting Statistical owner | P1-07 (Layer B), P1-12 (real data) |
 | [DR-D11](#dr-d11-fixed-point-reseed) | What are the fixed point's re-seed set, scale mapping and stopping rule? | Statistical | Open — awaiting Statistical owner | P1-12 |
 | [DR-D12](#dr-d12-rapm-real-data-penalty) | What are the RAPM penalties on the real scale, and how is QB identifiability handled? | Statistical | Open — awaiting Statistical owner | P1-12 (real data) |
 | [DR-D13](#dr-d13-layer1-estimand) | Is Layer-1 credit an on-field-unit or an individual quantity? | Statistical | Open — awaiting Statistical owner | RB/WR/TE credit as an individual signal (P1-12, P1-07) |
 | [DR-D14](#dr-d14-layer1-crossfit-design) | What is the cross-fit design of the Layer-1 context model? | Statistical | Proposed — awaiting Statistical owner | P1-12 |
-| [DR-D15](#dr-d15-layer1prime-definition) | What is the operational definition of Layer-1′? | Statistical | Open — awaiting Statistical owner (partial defaults proposed) | P1-12 (Layer-1′), P1-03 (roles field) |
+| [DR-D15](#dr-d15-layer1prime-definition) | What is the operational definition of Layer-1′? | Statistical | Open — awaiting Statistical owner (partial defaults proposed) | P1-12 (Layer-1′), P1-03 (roles field), P2-03 (Layer-1′ live) |
 | [DR-D16](#dr-d16-predictive-exposure-basis) | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | Open — awaiting Statistical owner | P1-08, P1-12 |
 | [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Open — awaiting Statistical owner | P1-12, P2-03 |
 | [DR-D18](#dr-d18-changepoint-semantics) | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Open — awaiting Statistical owner | P1-12, P2-03 |
@@ -162,7 +162,7 @@ several roles; all are currently held by the repository owner.
 | [DR-D28](#dr-d28-synth-draw-tape) | How is the Rust generator proven exact without numpy streams? | Statistical | Proposed — awaiting Statistical owner | P1-12 (Rust-native generator) |
 | [DR-D29](#dr-d29-parity-fixture-format) | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
 | [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Proposed — awaiting Security/Release owner and Product/Architecture owner | branch protection (no WP) |
-| [DR-D31](#dr-d31-oracle-golden-platform) | How is the oracle golden master made reproducible on CI hardware (KI-NEW-Z78)? | Statistical, Security/Release | Proposed — awaiting Statistical owner and Security/Release owner | `reference-oracle` green; P1-12 parity fixtures |
+| [DR-D31](#dr-d31-oracle-golden-platform) | How is the oracle golden master made reproducible on CI hardware (KI-NEW-Z78)? | Statistical, Security/Release | Ratified 2026-10-08 — option 1 (owner's written approval in the implementing session); implemented in P0-01 as correction-ledger entry L0 | none remaining |
 
 ---
 
@@ -292,7 +292,9 @@ several roles; all are currently held by the repository owner.
 - **Implementation check (2026-10-07).** P0-01 kept the default.
   - `windows-authoritative` and `linux-smoke` are byte-unchanged apart from comments.
   - The new `reference-oracle` job in `alpha-ci.yml` runs on Linux only, outside `verify.ps1` and
-    `windows-authoritative`. It uses the runner's `python3`, the lock, and threads pinned to 1.
+    `windows-authoritative`. It uses the runner image's tool-cache CPython 3.11 (since 2026-10-08;
+    KI-NEW-Z78), `OPENBLAS_CORETYPE=Haswell` (DR-D31, ratified 2026-10-08; ledger entry L0), the lock,
+    and threads pinned to 1.
   - Whether that job is a required check is DR-D30.
   - The follow-up ADR is still owed.
 
@@ -534,7 +536,8 @@ several roles; all are currently held by the repository owner.
 - **Where implemented.** After the ruling: the PR comment, ADR-012 citing it, and the provenance section of
   `reference/python/README.md`.
 - **Implementation check (2026-10-07).** Unchanged: the ruling is still owed. The import it covers is in the
-  worktree: `reference/python/MANIFEST.tsv` has 105 rows, 103 verbatim and 2 patched.
+  worktree: `reference/python/MANIFEST.tsv` has 105 rows, 103 verbatim and 2 patched. Since 2026-10-08 it
+  has 102 verbatim and 3 patched: correction-ledger entry L0 regenerated the golden snapshot (DR-D31).
 
 ### DR-A11 Fixture licensing policy
 
@@ -618,6 +621,11 @@ several roles; all are currently held by the repository owner.
   The synthetic defender bug (KI-NEW-Y0, critic G-1) makes uncorrected team and DEF parity meaningless.
   Every legacy parity table is "legacy synth". Other ledger inputs: KI-G1, KI-NEW-A1, KI-NEW-A2, KI-#15,
   KI-NEW-I1 to I4, KI-NEW-V0a.
+
+  Ledger entry **L0** (platform portability; KI-NEW-Z78) was applied in P0-01 ahead of this ledger, under
+  DR-D31 (ratified 2026-10-08). It regenerated the golden's Layer C arrays under a pinned BLAS kernel and
+  changed no generator, estimator, test or tolerance. It does not pre-empt this decision: the ordered
+  semantic corrections below, their approval and the choice of option are still DR-B1's.
 - **Options considered.**
   1. Never correct the oracle; Rust diverges through model specs (CF). Rejected: with KI-NEW-Y0, team and
      DEF parity would be meaningless.
@@ -669,7 +677,11 @@ several roles; all are currently held by the repository owner.
 - **Recommended default.** Both.
   - Committed, sha256-manifested stage fixtures, exported single-threaded, are the Rust contract.
   - A Linux-only oracle CI job proves they regenerate:
-    - `ubuntu-*`, using the runner's preinstalled `python3`;
+    - `ubuntu-*`, using the runner's preinstalled `python3`. P0-01 implements this with the runner image's
+      preinstalled tool-cache CPython 3.11 and fails if it is absent, because the image's default `python3`
+      (3.12) moves the golden (KI-NEW-Z78). The remaining kernel difference was settled by DR-D31
+      (ratified 2026-10-08): the job also pins `OPENBLAS_CORETYPE=Haswell`, and ledger entry L0 regenerated
+      the golden under that pin;
     - `pip install -r reference/python/requirements.txt -c reference/python/requirements.lock`;
     - `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` all set to 1.
   - The job is never wired into `verify.ps1` or `windows-authoritative`.
@@ -797,7 +809,8 @@ several roles; all are currently held by the repository owner.
   - Reject `[+1,−1]`.
   - Truth-anchored Layer-A tests on the defender-fixed synth.
 - **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-12; ledger positions 2 and 3; P1-08 (Layer E matchup context).
+- **Blocks.** P1-12; ledger positions 2 and 3; P1-08 (Layer E matchup context); P1-07 (real-data market
+  inputs to Layer B; `engine-spec.md` §9.5).
 - **Where implemented (when ratified).**
   - `docs/05-model-specs/rapm-attribution.md` and `synthetic-world.md`;
   - `engine-spec.md` §4.3 (market-line lock rule) and §6.2;
@@ -998,7 +1011,8 @@ several roles; all are currently held by the repository owner.
   - **Proposed in the engine-spec draft** (§8.7.3): fixed-lag smoothing ships as a primitive with its
     parity test in P1-06, and enters the live path in P2-03.
 - **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-09; P1-06 (fixed-lag `L`, EB estimator); P2-03; P2-07.
+- **Blocks.** P1-09; P1-06 (fixed-lag `L`, EB estimator); P1-07 (EB estimator); P1-11 (auto-rollback sanity
+  thresholds, for recovery); P1-12 (RAPM domain controls); P2-03; P2-07 (`engine-spec.md` §8.8, §9.5).
 - **Where implemented (when ratified).**
   - `engine-spec.md` §7.4, §8.8 and §9.4;
   - `docs/05-model-specs/evaluation-and-leakage.md`;
@@ -1287,7 +1301,8 @@ several roles; all are currently held by the repository owner.
 
 These decisions were raised by the engine-spec drafts, the contracts and the model specs written in this
 consolidation. They were first cited as `DR-NEW:<slug>`. They are renumbered DR-D1 to DR-D30, and each
-keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-point-scope`, which
+keeps its slug as its short name. DR-D31 was raised afterwards, from the first `reference-oracle` CI run
+(KI-NEW-Z78), and took the next free number; the owner ratified it on 2026-10-08. DR-D11 absorbed the duplicate slug `fixed-point-scope`, which
 `rapm-attribution.md` had used for the same decision as `fixed-point-reseed`.
 
 | Group | IDs |
@@ -1496,7 +1511,8 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
 - **Options considered.** No source records options.
 - **Recommended default.** None — open. Interim rule: each value is recorded per output version.
 - **Status.** Open — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** P1-01 (output-contract skeleton); P1-08 (distributions and the change log).
+- **Blocks.** P1-01 (output-contract skeleton); P1-08 (distributions); P2-07 (the change log; `engine-spec.md`
+  §5.6, §10.2.6).
 - **Where implemented (when decided).** `engine-output-contract.md` §3.6 and §6; the model spec that
   defines the change attribution.
 
@@ -1677,7 +1693,8 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
   The per-event vs per-snap choice has **no default**. Until it is decided, Rust implements both behind an
   explicit enum and promotes neither.
 - **Status.** Open — awaiting Statistical owner (partial defaults proposed).
-- **Blocks.** Layer-1′ in P1-12; the involvement-roles field of the plays contract (P1-03).
+- **Blocks.** Layer-1′ in P1-12; the involvement-roles field of the plays contract (P1-03); Layer-1′ in live
+  operation (P2-03).
 - **Where implemented (when decided).** `layer1-credit.md` §4.8; `engine-spec.md` §6.2 Component 6 and
   §6.3.
 
@@ -1992,9 +2009,13 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
   - P0-01 adds the job to `.github/workflows/alpha-ci.yml`. It is outside the frozen verify chain, and
     never wired into `verify.ps1` or `windows-authoritative` (engine-spec §8.19).
   - DR-A3 keeps Windows authoritative.
-  - The job uses the runner's preinstalled `python3`, while the lock was verified on CPython 3.11.15. If the
-    golden moves, the owner is escalated to and no tolerance is loosened. `actions/setup-python` needs
-    Security/Release approval.
+  - The job uses the runner image's tool-cache CPython 3.11, and fails if it is absent; the lock was verified
+    on CPython 3.11.15. If the golden moves, the owner is escalated to and no tolerance is loosened.
+    `actions/setup-python` needs Security/Release approval.
+  - Until 2026-10-08 the job was red on AVX2-only runners with the two Layer C golden failures of
+    KI-NEW-Z78, which a required check could not express. DR-D31 (ratified 2026-10-08) and ledger entry L0
+    removed that: the job pins `OPENBLAS_CORETYPE=Haswell` and is expected green (446 passed) on
+    `ubuntu-latest`.
 - **Options considered.**
   1. Always required.
   2. Required for PRs that touch `reference/python/`, fixtures or parity tests; informational otherwise.
@@ -2008,14 +2029,14 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
 
 ### DR-D31 oracle-golden-platform
 
-- **Question.** The imported golden master's Layer C reproduces only on CPython 3.11 with OpenBLAS
+- **Question.** The imported golden master's Layer C reproduced only on CPython 3.11 with OpenBLAS
   AVX-512 kernels (KI-NEW-Z78). How is the oracle made reproducible on the CI hardware?
 - **Owner roles.** Statistical owner (any golden regeneration); Security/Release owner (runner choice).
 - **Context and evidence.**
   - PR #4's first `reference-oracle` run failed 2 of 446 tests: the two Layer C golden tests, with Δ up
     to 1.4e-2 against rtol 1e-5. It was reproduced exactly with Python 3.12 + `OPENBLAS_CORETYPE=Zen`.
     The rest of the suite is unaffected.
-  - P0-01 switches the job to the runner's tool-cache CPython 3.11, to match the lock. That removes the
+  - P0-01 switched the job to the runner's tool-cache CPython 3.11, to match the lock. That removed the
     interpreter difference, but not the kernel difference on AMD (AVX2-only) runners.
   - Not allowed: loosening the tolerance; skipping or quarantining the tests; editing or regenerating the
     verbatim golden outside the correction ledger (reference/python/PARITY.md (b)).
@@ -2029,10 +2050,30 @@ keeps its slug as its short name. DR-D11 absorbed the duplicate slug `fixed-poin
      the goldens anyway.
 - **Recommended default.** Option 1: the golden becomes portable at the existing rtol, and the kernel
   pin is recorded in every fixture manifest.
-- **Status.** Proposed — awaiting Statistical owner and Security/Release owner.
-- **Blocks.** A green `reference-oracle` job; P1-12 parity fixtures exported from the oracle.
-- **Where implemented (when ratified).** `reference/python/PARITY.md` (b) and (f);
-  `.github/workflows/alpha-ci.yml`; `docs/03-contracts/parity-fixture-contract.md`.
+- **Status.** **Ratified (2026-10-08, the owner (all roles), in-session decision recorded in the P0-01 PR
+  description): option 1.** Ratified 2026-10-08 by the owner (who holds all roles), in writing in the implementing session: "I approve DR-D31 option 1: regenerate the Layer C golden under Python 3.11 with the Haswell pin, recorded as ledger entry LO" (L0). Earlier the same day the owner had answered the in-session
+  question "Which DR-D31 option should I implement for the reference-oracle golden?" with option 1;
+  recorded in the P0-01 PR description. The Statistical owner's choice is the approval of correction-ledger
+  entry L0. The Security/Release part (the runner choice) is moot: ordinary `ubuntu-latest` runners
+  suffice. This Status line was written by the implementing agent from the owner's answer; "How to ratify
+  or override" step 1 reserves that edit to the owner, who checks it when reviewing the P0-01 diff.
+- **Blocks.** None remaining.
+- **Where implemented.** In P0-01, as correction-ledger entry **L0**:
+  - `reference/python/tests/grid/golden/snapshot.npz`, regenerated once with
+    `python -m tests.grid.golden_master` under CPython 3.11.15, `OPENBLAS_CORETYPE=Haswell` and
+    threads = 1 (sha256 `caeda4fc5b1eb3331ab4d8c7164a5ad94ccdc2f34046289150ec5c71ccbad2c6` →
+    `1fbf3e8b3356816a794ccfb21d192df40b522b9f43b70e06db656b3ee9decc74`); only Layer C arrays changed;
+  - `reference/python/MANIFEST.tsv` (status `patched:L0`) and
+    `reference/python/patches/L0-golden-snapshot-haswell-regeneration.patch`;
+  - `reference/python/tools/pytest_platform_pin.py`, wired in `reference/python/pytest.ini`, which pins
+    the kernel and the interpreter for every test run and refuses any other;
+  - `.github/workflows/alpha-ci.yml` (`OPENBLAS_CORETYPE: "Haswell"` in the `reference-oracle` job);
+  - `reference/python/PARITY.md` (a), (b) entry L0 and (f); `reference/python/README.md`;
+    `docs/03-contracts/parity-fixture-contract.md` (the kernel recorded in every fixture manifest).
+- **Implementation check (2026-10-08).** 446 passed under the plugin-set Haswell kernel on CPython
+  3.11.15; `tools/verify_manifest.py` OK (105 rows: 102 verbatim, 3 patched), also with `--upstream`. The
+  new golden also passes under the `Zen` kernel, and fails under `SkylakeX` and under Python 3.12, which is
+  why the pin is enforced. The legacy golden stays in git history and in `cautious-nevermore@59bce1d`.
 
 ### Owner information request (not a decision)
 

@@ -42,17 +42,20 @@ Done (all in review, nothing merged):
 - ADR-011 (engine-only pivot) and ADR-012 (Python reference oracle), both Proposed. `engine-spec.md`
   drafted in parts to replace both superseded specs, which move verbatim to
   `docs/00-meta/specs/superseded/`.
-- Registers: decision register (DR-A1 to DR-A12, DR-B1 to DR-B6, DR-C1 to DR-C15, DR-D1 to DR-D30),
+- Registers: decision register (DR-A1 to DR-A12, DR-B1 to DR-B6, DR-C1 to DR-C15, DR-D1 to DR-D31),
   known-issues backlog, lessons learned. Three contracts, nflverse and CFBD provider documents, eight
   draft model specs and their index.
-- `reference/python/`: 105 cautious-nevermore files at `59bce1d` (103 verbatim, patches P1 and P2),
-  `MANIFEST.tsv`, `PARITY.md`. Its own suite passed on Linux: 446 tests, threads pinned to 1.
+- `reference/python/`: 105 cautious-nevermore files at `59bce1d` (102 verbatim; patches P1, P2 and
+  correction-ledger entry L0), `MANIFEST.tsv`, `PARITY.md`. Its own suite passes on its pinned platform
+  (CPython 3.11, `OPENBLAS_CORETYPE=Haswell`): 446 tests, threads pinned to 1.
 - `docs/07-archive/cautious-nevermore/`: deleted engine documents copied verbatim with a manifest.
 - Repository: `app/`, `crates/ffi/`, the Flutter pin, the FRB dependency and `test-ffi` removed (chain
   9 recipes / 16 commands → 8 / 15); traceability accepts `P[0-9]-[0-9]{2}`;
   `check-evidence-claims.sh` generalized; R4-1 and R4-2 guard fixes; guard suite 54 → 78 cases;
   `reference-oracle` CI job (Linux, outside the verify chain); `.gitattributes` keeps the verbatim
   trees byte-exact; entry docs rewritten for the engine.
+- `engine-spec.md` committed with its byte-identical mirror (`check-authority-sync`). `typos` excludes
+  the 22 verbatim records under `docs/` by exact path, never by directory, and they are never edited.
 
 Found on the way:
 
@@ -62,14 +65,18 @@ Found on the way:
   0.989–0.996. Replacement criteria C-V and C-L1 are proposed (DR-D27).
 - Tier-0 floors hold only for the canonical seed; ensemble gates proposed (DR-D26).
 - The historical real-data results rest on biased labels and iid intervals; non-citable.
+- PR #4's first `reference-oracle` run failed 2 of 446 tests, both Layer C golden-master tests: the
+  imported golden reproduces at rtol 1e-5 only on CPython 3.11 with OpenBLAS AVX-512 kernels
+  (KI-NEW-Z78). The owner ratified DR-D31 option 1 on 2026-10-08: the job runs the tool-cache CPython
+  3.11, every oracle run pins `OPENBLAS_CORETYPE=Haswell` (enforced by
+  `reference/python/tools/pytest_platform_pin.py`), and correction-ledger entry L0 regenerated the
+  Layer C golden once under that platform. No tolerance is loosened and no test is skipped.
 
 Open before merge:
 
-- `engine-spec.md` assembled and committed with its byte-identical mirror (`check-authority-sync`);
-  `typos` hits in verbatim records under `docs/`, to be allowlisted, never edited.
 - P0-01 evidence generated on the final commit; `ai-toolchain.lock` provenance for P0-01 unrecorded.
-- Windows chain and the runner's `python3` unproven until the first CI runs. `chacha20 0.10.1` yanked
-  while `cargo deny check` passes.
+- The Windows chain is unproven until its CI run on the final commit. `chacha20 0.10.1` yanked while
+  `cargo deny check` passes.
 - Fresh-context review.
 
 Owner decisions pending:
