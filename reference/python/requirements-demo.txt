@@ -1,0 +1,5 @@
+# Optional: plotting for run_demo.py only. Upstream never declared matplotlib.
+# Tests never need it, and tools/pytest_isolation_guard.py blocks it inside pytest.
+#   pip install -r requirements-demo.txt -c requirements.lock
+-r requirements.txt
+matplotlib>=3.7

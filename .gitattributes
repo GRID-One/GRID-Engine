@@ -1,0 +1,48 @@
+# Line-ending policy — see docs/02-adr/004-line-ending-policy.md
+#
+# Every file in the initial upload arrived with CRLF, which left scripts/verify.sh
+# unparsable by bash ("syntax error: unexpected end of file"). The alpha-spec.md 8.11
+# canonical Linux verification command could not run at all.
+#
+# Scope is deliberately narrow: shell scripts, where CRLF is FATAL. A blanket
+# `* text=auto` would renormalize Cargo.toml, the justfile and the docs on their next
+# edit, turning one-line changes into whole-file rewrites and destroying the review
+# trail that ADR-001 D5 depends on. Repo-wide normalization is deferred to P1-11.
+
+*.sh            text eol=lf
+
+# Data files the shell guards PARSE, not just read. secret-patterns.txt is one regex per line;
+# checked out CRLF under core.autocrlf=true (the GitHub Windows runner default) every pattern
+# gains a trailing \r and matches nothing. The scanner now strips it defensively, but the file
+# should not arrive broken in the first place. Same narrow scope as *.sh: these are executable
+# inputs, not prose.
+scripts/secret-patterns.txt  text eol=lf
+
+# PowerShell is Windows-native and its committed bytes are already CRLF. Marked -text so git
+# stores them verbatim: `text eol=crlf` would normalize the INDEX to LF, rewriting every line
+# of scripts/verify.ps1 in the diff for no functional gain (same reasoning as ADR-004's
+# rejection of blanket normalization). P1-11 may normalize deliberately.
+*.ps1           -text
+
+# Generated artifacts — reviewers see them collapsed, and never hand-edit them.
+.sqlx/**        linguist-generated=true
+Cargo.lock      linguist-generated=true
+
+# Verbatim, hash-manifested trees — P0-01, ADR-004 policy, ADR-012.
+#
+# These files are byte-for-byte copies whose sha256 values are recorded in a manifest, so their
+# committed bytes ARE the contract. Under core.autocrlf=true (the GitHub Windows runner default)
+# git would rewrite their line endings on checkout, and every recorded hash would stop matching:
+#   reference/python/                     MANIFEST.tsv dest_sha256, checked by tools/verify_manifest.py
+#                                         (ADR-012); some imported files already contain CR bytes
+#   docs/07-archive/cautious-nevermore/   cautious-nevermore/MANIFEST.md sha256 per archived copy (DR-A9)
+#   docs/06-sessions/                     imported records are byte-identical to their source
+#   docs/00-meta/specs/superseded/        the superseded specs, archived verbatim (DR-A1)
+# `-text` stores and checks out the bytes unchanged, with no normalization in either direction.
+# It is the same narrow, per-path choice ADR-004 made for *.ps1, not a repo-wide normalization
+# (deferred to P1-11). These rules come last so they win over *.sh / *.ps1 for paths inside the
+# trees.
+reference/python/**                     -text
+docs/07-archive/cautious-nevermore/**   -text
+docs/06-sessions/**                     -text
+docs/00-meta/specs/superseded/**        -text

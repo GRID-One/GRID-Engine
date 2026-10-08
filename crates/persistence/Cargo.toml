@@ -1,0 +1,11 @@
+[package]
+name = "grid-persistence"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# First use of an already-declared workspace dependency; not a new dependency.
+sqlx.workspace = true

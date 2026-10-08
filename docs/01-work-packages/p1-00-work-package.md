@@ -1,7 +1,17 @@
+---
+work-package-id: P1-00
+status: In Progress
+risk-class: Medium
+owner: Product/Architecture owner
+implementer: Claude Opus 5
+reviewer: Pending — fresh-context reviewer or human
+alpha-phase: 1
+---
+
 # P1-00 — Agent-Ready Repository, Authority Index, CI, Verification Scripts, and Work-Package Template
 
 ## Status
-Ready
+In Progress
 
 ## Ownership and risk
 - Owner: [Human Product Owner]
@@ -44,7 +54,7 @@ None — pure infrastructure and developer-experience foundation.
   - `.ai/evidence/P1-00/` (create — first evidence manifest)
   - `docs/CLAUDE.md` (refine — add canonical verification commands if missing, ensure module-level CLAUDE.md policy is explicit)
   - `CLAUDE.md` (repo root — refine if needed, but do not bloat)
-  - `docs/adr/001-repo-bootstrap-decisions.md` (create — ADR recording crate split, authority order, and tool choices)
+  - `docs/02-adr/001-repo-bootstrap-decisions.md` (create — ADR recording crate split, authority order, and tool choices)
 - Contracts consumed:
   - None (this is the foundational package; no upstream business contracts exist yet).
 - Contracts changed:
@@ -87,9 +97,9 @@ None — pure infrastructure and developer-experience foundation.
 - [ ] `.github/workflows/alpha-ci.yml` exists and defines two jobs: `linux-smoke` (runs `just verify` on `ubuntu-latest`) and `windows-authoritative` (runs `scripts/verify.ps1 -Scope Full` on `windows-latest`).
 - [ ] `scripts/check-migrations.sh` exists and returns 0 if no migration files have been deleted or modified (only additions allowed).
 - [ ] `scripts/check-secrets.sh` exists and returns non-zero if the diff contains patterns matching `ghp_`, `sk-ant-`, `CFBD_API_KEY`, or hardcoded database connection strings.
-- [ ] `scripts/check-traceability.sh` exists and returns non-zero if any non-trivial file change (excluding templates, lockfiles, and `.github/`) is not referenced in either `docs/adr/` or `docs/01-work-packages/` within the commit message or PR body.
+- [ ] `scripts/check-traceability.sh` exists and returns non-zero if any non-trivial file change (excluding templates, lockfiles, and `.github/`) is not referenced in either `docs/02-adr/` or `docs/01-work-packages/` within the commit message or PR body.
 - [ ] `scripts/generate-evidence-manifest.sh` has been refined to accept a `WORK_PACKAGE_ID` argument, emit valid JSON, and include the fields required by §8.12: work-package ID, commit SHA, model/harness identifier, environment, files changed, contracts/ADRs referenced, verification results, reviewer findings, human approvals, known limitations.
-- [ ] `docs/adr/001-repo-bootstrap-decisions.md` exists and records the crate boundary list, authority order, and the decision to use `just` over Make.
+- [ ] `docs/02-adr/001-repo-bootstrap-decisions.md` exists and records the crate boundary list, authority order, and the decision to use `just` over Make.
 - [ ] `docs/CLAUDE.md` (root) contains the canonical `just verify` and `scripts/verify.ps1 -Scope Full` commands as the single source of verification truth.
 - [ ] The `justfile` contains a `bootstrap` target that installs dev-only cargo tools (nextest, sqlx-cli, deny, audit, typos, just, hyperfine, mutants).
 - [ ] The repository passes `just verify` (format, lint, typos, audit) on Linux in the cloud environment. Since there is no Rust code beyond empty `lib.rs` files, `cargo test` and `cargo clippy` must pass trivially (no warnings).
@@ -115,7 +125,7 @@ test -x scripts/check-secrets.sh
 test -x scripts/check-traceability.sh
 test -x scripts/generate-evidence-manifest.sh
 echo "[P1-00] Checking ADR..."
-test -f docs/adr/001-repo-bootstrap-decisions.md
+test -f docs/02-adr/001-repo-bootstrap-decisions.md
 echo "[P1-00] Checking evidence..."
 test -f .ai/evidence/P1-00/manifest.json
 jq empty .ai/evidence/P1-00/manifest.json
@@ -128,7 +138,18 @@ just verify
 Not applicable.
 
 ## Migration and rollback
-Not applicable — no database schema changes.
+**Amended 2026-08-20.** This originally read "Not applicable — no database schema changes",
+which the package's own diff falsifies. Adversarial review of PR #1 caught it (finding M5).
+
+`migrations/0001_schema_meta.sql` adds one infrastructure-only key-value table. Forward path:
+`sqlx migrate run` against a blank database, covered by a test. Rollback: revert the branch —
+the database lives in gitignored `target/` and is recreated by `just bootstrap`. The directory
+is append-only from here, enforced by `scripts/check-migrations.sh`.
+
+No schema version is seeded. An earlier revision wrote `schema_version = '0001'` into the
+table, duplicating state SQLx already keeps in `_sqlx_migrations`; the literal would have gone
+stale at `0002` while the test asserting it kept passing. The applied version is now derived
+from the migrator. Whether a richer mechanism is needed is P1-02's decision.
 
 ## Evidence required
 - Terminal output of the verification commands above.
@@ -150,3 +171,39 @@ Not applicable — no database schema changes.
 - Dependency policy refinement: `cargo-deny` `deny.toml` configuration with explicit license whitelist and banned crate categories (deferred to P1-11).
 - Windows CI runner dependency caching: evaluate `Swatinem/rust-cache` and `subosito/flutter-action` caching (deferred to P1-11).
 - Obsidian vault sync automation: evaluate GitHub Action to validate that `docs/` frontmatter is well-formed (deferred to P1-11).
+
+---
+
+## Amendment note — 2026-08-20
+
+Recorded under `alpha-spec.md` §1.5: the product owner resolved the conflicts below during
+implementation. Rationale and alternatives are in `docs/02-adr/001-repo-bootstrap-decisions.md`.
+
+### Scope amended
+
+| Original | Amended to | Why |
+|---|---|---|
+| Non-goal: "No SQLx migrations beyond the empty `migrations/` directory (schema creation is P1-02)." | One infrastructure-only `schema_meta` migration. All **domain** schema remains P1-02. | The frozen `check-sqlx` recipe cannot pass against an empty workspace, and `cargo nextest run --workspace` exits 4 with no tests. See ADR-002. |
+| Follow-up: "ADR-002 … to be resolved in P1-02." | ADR-002 resolved in P1-00. | Same cause: the decision is a precondition for `check-sqlx` passing at all. |
+| Scope path: `docs/adr/001-repo-bootstrap-decisions.md` | `docs/02-adr/001-repo-bootstrap-decisions.md` | Numbered vault retained over the flat §8.7 tree (ADR-001 D3). |
+
+### Added, not in the original scope
+
+Each was found during implementation and escalated rather than worked around.
+
+| Addition | Cause |
+|---|---|
+| ADR-003 — sqlx 0.8 → 0.9 | `cargo audit` failed on RUSTSEC-2023-0071 (`rsa`, no fix available) reached via `sqlx-mysql`. Feature narrowing is ineffective; 0.9 removes it. Also resolves a library/CLI version skew. |
+| ADR-004 + `.gitattributes` + LF conversion of `scripts/*.sh` | Every committed file was CRLF, leaving `scripts/verify.sh` unparsable by bash. The §8.11 canonical Linux command could not run. |
+| `scripts/check-authority-sync.sh` | `alpha-spec.md` exists twice (root and vault mirror) with nothing preventing a fork. |
+| `scripts/check-verify-parity.sh` | The `justfile` and `scripts/verify.sh` duplicate all seven steps. D5 forbids unifying them, so drift is asserted against instead. |
+| `scripts/check-env-contract.sh` | The environment presets a stale `DATABASE_URL`; a committed `.env` cannot override it. Failure surfaced only as SQLite error code 14. |
+| `tests/guards/run.sh` | The guard scripts were the largest body of new logic with no committed tests. Both `check-secrets.sh` defects were found by ad-hoc testing that nothing re-ran. Added on review finding "minor 6"; it caught a real gap in the M3 fix on its first run. |
+| `toolchains/flutter.version` | §8.11 requires the Flutter/FRB toolchain be pinned through committed toolchain files; §8.7 names this path. Review finding M6. |
+| `docs/02-adr/006-deferred-deliverables.md` | §8.7/§9.2 items deferred without a recorded deviation. Review finding M7. |
+
+### Unchanged
+
+P1-02's substantive scope (domain schema, durable jobs, raw-data and version primitives) is
+untouched — only the SQLx **toolchain** bootstrap moved. Fixtures remain deferred to
+P1-03/P1-04, recorded in ADR-001 rather than accepted silently.

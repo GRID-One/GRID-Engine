@@ -1,0 +1,38 @@
+# Build output
+/target/
+**/*.rs.bk
+
+# The local development database lives at target/grid-dev.db and is therefore already
+# covered by /target/ above. It had its own redundant entry (second review, minor 7); the
+# location is documented here instead of re-ignored.
+
+# Ignored build/test output (alpha-spec 8.7)
+/artifacts/
+/mutants.out/
+
+# Raw and derived data — never committed
+/data/
+
+# Developer-local notes and overrides (alpha-spec 8.7)
+CLAUDE.local.md
+.env.local
+
+# Python reference oracle (reference/python/, ADR-012): interpreter caches, virtualenvs and run
+# outputs, never committed. Repository-wide on purpose, not only in reference/python/.gitignore:
+# check-traceability and check-secrets count UNTRACKED files, so one stray __pycache__/ from a
+# pytest run anywhere in the tree fails `just verify` (reproduced in the consolidation inventory:
+# 103 of 171 paths untraced). The Flutter/Dart block that stood here went with app/ (ADR-011).
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+/reference/python/data/
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# NOTE: Cargo.lock, .sqlx/ and .env ARE committed (alpha-spec 8.7, ADR-002).

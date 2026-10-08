@@ -1,0 +1,34 @@
+# Build-tooling pin (alpha-spec.md 8.11: "package dependency versions are pinned through
+# committed toolchain files and lockfiles").
+#
+# `cargo install <tool> --locked` pins the tool's DEPENDENCIES, not the tool. Without
+# --version every tool floats to whatever is latest the day CI runs. That is not theoretical
+# here: ADR-003 records an unpinned sqlx-cli resolving to 0.9 against a 0.8 library, and
+# deny.toml states its explicit `unmaintained`/`unsound` keys exist "so that a version bump of
+# the tool cannot silently relax the policy" -- a claim an unpinned cargo-deny cannot honour.
+# Second adversarial review, finding M4.
+#
+# These are the versions the canonical `just verify` passed against; both CI jobs echo their
+# resolved versions in a "Record resolved tool versions" step so a mismatch is visible in the
+# log rather than inferred.
+#
+# Consumed by:
+#   justfile                          `bootstrap`
+#   .github/workflows/alpha-ci.yml    linux-smoke, windows-authoritative
+# There is no mechanism that reads this file automatically -- `cargo install` has no lockfile.
+# Changing a version means changing it in all three places, in one commit.
+
+just=1.58.0
+cargo-nextest=0.9.143
+sqlx-cli=0.9.0
+cargo-deny=0.20.2
+cargo-audit=0.22.2
+typos-cli=1.49.0
+
+# sqlx-cli is installed --no-default-features --features sqlite,rustls everywhere. The default
+# feature set drags in the MySQL and Postgres drivers, which this project never uses (SQLite
+# only, final-build-spec.md 8) and which are pure build time and supply-chain surface.
+#
+# Not pinned here: hyperfine and cargo-mutants. Neither is used by any `verify` recipe or CI
+# job -- they belong to `just bootstrap-bench`, and pinning a benchmark tool would imply a
+# reproducibility guarantee that measurement tooling does not need.

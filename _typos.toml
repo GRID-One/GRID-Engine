@@ -1,0 +1,81 @@
+# Spell-check configuration for the frozen `typos` verify recipe.
+#
+# Additions require a real justification: this file must never be used to silence a genuine
+# misspelling in order to make `just verify` pass (alpha-spec.md 12.7).
+
+[default.extend-words]
+# PB-MAE decomposes into per-position Normalized MAE terms (NMAE_QB, NMAE_RB, ...).
+# alpha-spec.md 7.4. Otherwise corrected to "NAME".
+NMAE = "NMAE"
+
+# --- engine-spec.md and the model specs (P0-01, ADR-011) ---------------------------------
+# GAM = generalized additive model, a candidate Layer-1 context model (engine-spec §6.4.9,
+# docs/05-model-specs/layer1-credit.md; DR-C7). Otherwise corrected to "GAME".
+GAM = "GAM"
+# Rauch–Tung–Striebel, the RTS smoother's authors (engine-spec Appendix G). Otherwise "Tongue".
+Tung = "Tung"
+
+# --- reference/python/ (the Python reference oracle, ADR-012) -------------------------------
+# Imported byte-identical from cautious-nevermore@59bce1d and hash-pinned in MANIFEST.tsv, so
+# a flagged spelling there cannot be "fixed" in place. Allowlisted entry by entry rather than
+# excluding the tree (critic X-6): an exclusion would stop spell-checking ~17k lines and every
+# file added there later. Every entry below is a domain term or an identifier, not a typo.
+# VOR = Value Over Replacement (backend/scoring/vor.py, calculate_vor, the vor/VOR columns, the
+# file names vor.py and test_vor.py). 146 of the oracle's 161 hits. Otherwise "for".
+vor = "vor"
+# "a mis-slice surfaces as a LeakageError" (backend/validation/asof.py:220): the prefix "mis-",
+# hyphenated, not a misspelling of "miss". Otherwise "miss".
+mis = "mis"
+
+[default.extend-identifiers]
+# Identifiers, not words: allowlisted only as these exact names, so the same letters in prose
+# are still checked. All are in the byte-identical oracle tree (see the block above).
+# yhat: the conventional fitted-value name (tests/validation/test_verdict.py:336).
+yhat = "yhat"
+# ot_* = the "other (none of the above)" play bucket beside rz_*/pd_*/rd_*
+# (tests/pipeline/test_weekly_situations.py:98-104).
+ot_yl = "ot_yl"
+ot_dn = "ot_dn"
+ot_yds = "ot_yds"
+# fo_* = first_origin season/week (backend/validation/verdict.py:166).
+fo_s = "fo_s"
+fo_w = "fo_w"
+# pn = the paired row of r_none in `for p0, pn in zip(r0, r_none)` (tests/scoring/test_vor.py:238).
+pn = "pn"
+
+[files]
+extend-exclude = [
+    ".sqlx/",          # generated query cache
+    "Cargo.lock",      # generated
+    "target/",
+    # Verbatim records (P0-01, ADR-011; docs/CLAUDE.md "verbatim trees are never edited").
+    # They are byte-identical, hash-manifested copies, so a flagged spelling in them can never
+    # be corrected in place, and allowlisting their tokens (ot, fo, OT, PN, thr, ...) would hide
+    # the same letters as real typos everywhere else. Only the copies are excluded: each tree's
+    # maintained README, MANIFEST, HISTORY and results files stay spell-checked.
+    # Correction-ledger entry L0's binary git patch (DR-D31): base85-encoded bytes of the
+    # regenerated golden snapshot, not prose, so any "words" typos finds there are noise.
+    "reference/python/patches/L0-golden-snapshot-haswell-regeneration.patch",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/alpha-spec.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/final-build-spec.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/bootstrap-infra.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/python-closure.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/cn-docs.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/cn-issues.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/reconcile-code-first.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/reconcile-spec-first.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/critic.md",
+    "docs/07-archive/cautious-nevermore/docs/04-lessons-learned.md",
+    "docs/07-archive/cautious-nevermore/docs/07-brainstorming-whiteboard.md",
+    "docs/07-archive/cautious-nevermore/docs/08-phase-task-context.md",
+    "docs/07-archive/cautious-nevermore/docs/superpowers/plans/2026-06-22-fantasy-dashboard-phase4.md",
+    "docs/07-archive/cautious-nevermore/docs/superpowers/plans/2026-06-23-product-roadmap-to-alpha.md",
+    "docs/07-archive/cautious-nevermore/docs/superpowers/plans/2026-06-23-retrospective-validation-suite.md",
+    "docs/07-archive/cautious-nevermore/docs/superpowers/plans/2026-07-09-phase2c-verdict-and-ros-gap.md",
+    "docs/07-archive/cautious-nevermore/docs/superpowers/specs/2026-06-20-fantasy-football-dashboard-design.md",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/sdd/task-1-report.md",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/sdd/task-5-report.md",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/sdd/task-6-report.md",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/sdd/task-7-report.md",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/sdd/task-8-report.md",
+]

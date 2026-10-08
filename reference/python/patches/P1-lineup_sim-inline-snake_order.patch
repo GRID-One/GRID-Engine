@@ -1,0 +1,42 @@
+--- a/backend/validation/lineup_sim.py
++++ b/backend/validation/lineup_sim.py
+@@ -7,7 +7,7 @@
+ 
+ * **Synthetic rosters** — a deterministic VOR-greedy snake draft
+   (:func:`draft_rosters`, reusing :func:`~backend.scoring.vor.calculate_vor` and
+-  :func:`~backend.services.mock_draft.snake_order`) builds realistic
++  :func:`snake_order`) builds realistic
+   starters-plus-bench rosters from a *shared* projection, so roster construction
+   never favors either compared method.
+ * **One slot-filling rule** — :func:`set_lineup` is the single greedy
+@@ -29,12 +29,29 @@
+ from dataclasses import dataclass, field
+ 
+ from backend.scoring.vor import calculate_vor
+-from backend.services.mock_draft import snake_order
+ from backend.validation.metrics import BootstrapCI, bootstrap_ci
+ 
+ FLEX_ELIGIBLE = ("RB", "WR", "TE")
+ 
+ 
++def snake_order(num_teams: int, num_rounds: int) -> list[int]:
++    """Return list of team_slot (1-based) for every pick in a snake draft.
++
++    Reference-oracle patch P1: the function body is a verbatim copy of the
++    app-side ``backend.services.mock_draft.snake_order`` (cautious-nevermore
++    @ 59bce1d, mock_draft.py:38-46; only this docstring is extended). It is
++    inlined so the engine reference never imports the app-only
++    ``backend.services`` package. See reference/python/MANIFEST.tsv.
++    """
++    order = []
++    for r in range(num_rounds):
++        teams = list(range(1, num_teams + 1))
++        if r % 2 == 1:
++            teams = list(reversed(teams))
++        order.extend(teams)
++    return order
++
++
+ # --------------------------------------------------------------------------- #
+ # Roster construction                                                          #
+ # --------------------------------------------------------------------------- #
