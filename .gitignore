@@ -17,13 +17,17 @@
 CLAUDE.local.md
 .env.local
 
-# Flutter / Dart
-/app/build/
-/app/.dart_tool/
-/app/.flutter-plugins
-/app/.flutter-plugins-dependencies
-/app/windows/flutter/ephemeral/
-/app/linux/flutter/ephemeral/
+# Python reference oracle (reference/python/, ADR-012): interpreter caches, virtualenvs and run
+# outputs, never committed. Repository-wide on purpose, not only in reference/python/.gitignore:
+# check-traceability and check-secrets count UNTRACKED files, so one stray __pycache__/ from a
+# pytest run anywhere in the tree fails `just verify` (reproduced in the consolidation inventory:
+# 103 of 171 paths untraced). The Flutter/Dart block that stood here went with app/ (ADR-011).
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+/reference/python/data/
 
 # Editor / OS
 .DS_Store

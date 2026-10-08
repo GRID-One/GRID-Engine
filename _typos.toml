@@ -8,6 +8,34 @@
 # alpha-spec.md 7.4. Otherwise corrected to "NAME".
 NMAE = "NMAE"
 
+# --- reference/python/ (the Python reference oracle, ADR-012) -------------------------------
+# Imported byte-identical from cautious-nevermore@59bce1d and hash-pinned in MANIFEST.tsv, so
+# a flagged spelling there cannot be "fixed" in place. Allowlisted entry by entry rather than
+# excluding the tree (critic X-6): an exclusion would stop spell-checking ~17k lines and every
+# file added there later. Every entry below is a domain term or an identifier, not a typo.
+# VOR = Value Over Replacement (backend/scoring/vor.py, calculate_vor, the vor/VOR columns, the
+# file names vor.py and test_vor.py). 146 of the oracle's 161 hits. Otherwise "for".
+vor = "vor"
+# "a mis-slice surfaces as a LeakageError" (backend/validation/asof.py:220): the prefix "mis-",
+# hyphenated, not a misspelling of "miss". Otherwise "miss".
+mis = "mis"
+
+[default.extend-identifiers]
+# Identifiers, not words: allowlisted only as these exact names, so the same letters in prose
+# are still checked. All are in the byte-identical oracle tree (see the block above).
+# yhat: the conventional fitted-value name (tests/validation/test_verdict.py:336).
+yhat = "yhat"
+# ot_* = the "other (none of the above)" play bucket beside rz_*/pd_*/rd_*
+# (tests/pipeline/test_weekly_situations.py:98-104).
+ot_yl = "ot_yl"
+ot_dn = "ot_dn"
+ot_yds = "ot_yds"
+# fo_* = first_origin season/week (backend/validation/verdict.py:166).
+fo_s = "fo_s"
+fo_w = "fo_w"
+# pn = the paired row of r_none in `for p0, pn in zip(r0, r_none)` (tests/scoring/test_vor.py:238).
+pn = "pn"
+
 [files]
 extend-exclude = [
     ".sqlx/",          # generated query cache

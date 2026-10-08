@@ -62,24 +62,30 @@ if [[ ${#nontrivial[@]} -eq 0 ]]; then
 fi
 
 # Which authority documents does this change set cite?
+#
+# Bare work-package IDs are P<phase>-<NN>: P0-01 (the engine consolidation), P1-NN, P2-NN. The
+# pattern was P1-[0-9]{2} until P0-01, so the consolidation's own ID -- and every P2 package --
+# was not a reference at all (DR-A5, ADR-011). Widening the ID syntax changes which documents a
+# commit may CITE; it does not change what citing one buys. Coverage is still per path, against
+# the text of the documents that actually exist, through covered() below, which is unchanged.
 haystack="$(git log --format='%s%n%b' "$BASE"..HEAD 2>/dev/null || true)"
 haystack+=$'\n'"${PR_BODY:-}"
 [[ -n "${PR_BODY_FILE:-}" && -f "${PR_BODY_FILE:-}" ]] && haystack+=$'\n'"$(cat "$PR_BODY_FILE")"
 
 refs="$(printf '%s' "$haystack" \
-        | grep -oE 'docs/01-work-packages/[A-Za-z0-9._-]+\.md|docs/02-adr/[0-9]{3}[A-Za-z0-9._-]*\.md|P1-[0-9]{2}|ADR-[0-9]{3}' \
+        | grep -oE 'docs/01-work-packages/[A-Za-z0-9._-]+\.md|docs/02-adr/[0-9]{3}[A-Za-z0-9._-]*\.md|P[0-9]-[0-9]{2}|ADR-[0-9]{3}' \
         | sort -u || true)"
 [[ -n "$refs" ]] || die "no work-package or ADR reference found in the commit range or PR_BODY.
   Reference the governing document, e.g. \"P1-00: add authority index\".
   Required by alpha-spec.md 9.4 and 12.8."
 
-# Resolve bare IDs (P1-00, ADR-001) to the documents they name, then read them all.
+# Resolve bare IDs (P0-01, P1-00, ADR-001) to the documents they name, then read them all.
 docs=()
 while IFS= read -r r; do
     [[ -z "$r" ]] && continue
     case "$r" in
         docs/*) [[ -f "$r" ]] && docs+=("$r") ;;
-        P1-*)   for f in docs/01-work-packages/*"$(tr '[:upper:]' '[:lower:]' <<< "$r")"*; do
+        P[0-9]-*) for f in docs/01-work-packages/*"$(tr '[:upper:]' '[:lower:]' <<< "$r")"*; do
                     [[ -f "$f" ]] && docs+=("$f"); done ;;
         ADR-*)  for f in docs/02-adr/"${r#ADR-}"*.md; do [[ -f "$f" ]] && docs+=("$f"); done ;;
     esac

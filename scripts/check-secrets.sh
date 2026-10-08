@@ -38,6 +38,9 @@ plus() { grep -E '^\+' | grep -vE '^\+\+\+' || true; }   # added lines only; no 
 
 added=""
 scanned=0
+# Scratch file for an index blob (see scan_files). Removed on every exit path, including die.
+BLOB="$(mktemp)" || die "mktemp failed"
+trap 'rm -f "$BLOB"' EXIT
 
 # Append every readable text file in a newline-separated list to the scan corpus.
 #
@@ -57,7 +60,7 @@ scanned=0
 # skipped and the scan reports a clean corpus over content it never opened. That is the exact
 # mechanism that blinded the Windows merge gate.
 scan_files() {
-    local label="$1" list="$2" f
+    local label="$1" list="$2" f src unres=""
     local listed=0 excluded=0 skipped=0 opened=0
     while IFS= read -r f; do
         f="${f%$'\r'}"
@@ -67,27 +70,45 @@ scan_files() {
             scripts/check-secrets.sh|scripts/secret-patterns.txt)
                 excluded=$((excluded + 1)); continue ;;   # scanned separately, in full
         esac
-        [[ -f "$f" ]] || continue                          # UNRESOLVABLE -- not accounted for
-        if ! grep -Iq . "$f" 2>/dev/null; then
+        # A TRACKED path deleted in the worktree (an unstaged `rm`) is not unresolvable: the index
+        # still holds the content a commit of this tree would carry, so that is what is scanned.
+        # Only the full-tree pass lists tracked paths; an untracked path has no index entry, so a
+        # vanished or mangled untracked path still falls through to the unresolvable branch.
+        # Before R4-1 this case was skipped silently; after it, without this, it would be fatal.
+        src="$f"
+        if [[ ! -e "$f" ]] && git cat-file -e ":$f" 2>/dev/null; then
+            git cat-file blob ":$f" > "$BLOB" || die "$label: could not read the index copy of $f"
+            src="$BLOB"
+        fi
+        [[ -f "$src" ]] || { unres+="$f"$'\n'; continue; }  # UNRESOLVABLE -- counted below; fatal (R4-1)
+        if ! grep -Iq . "$src" 2>/dev/null; then
             skipped=$((skipped + 1)); continue             # binary or empty: deliberate
         fi
-        added+=$'\n'"$(sed 's/^/+/' "$f")"
+        added+=$'\n'"$(sed 's/^/+/' "$src")"
         opened=$((opened + 1))
         scanned=$((scanned + 1))
     done <<< "$list"
 
-    # Opening nothing is legitimate ONLY when every path handed in was a deliberate skip -- the
-    # detector's own two files, or binaries. A path that simply would not resolve is not
-    # accounted for, and if nothing at all was opened the scanner could not reach the content it
-    # was asked to examine. That is a broken scanner, not a clean corpus.
+    # Every listed path must be ACCOUNTED FOR: opened, or a deliberate skip -- the detector's own
+    # two files, or a binary/empty file. A path that simply would not resolve is neither, and the
+    # scanner could not reach content it was asked to examine.
     #
-    # Stated as "accounted for" rather than "scanned > 0" so an untracked set that is genuinely
-    # all-binary still passes, while the CR-on-every-path signature still dies.
-    local accounted=$((excluded + skipped))
-    if [[ "$listed" -gt 0 && "$opened" -eq 0 && "$accounted" -lt "$listed" ]]; then
-        die "$label: $listed path(s) listed, ZERO opened, only $accounted accounted for as
-       deliberate skips. The scanner could not reach $((listed - accounted)) path(s) it was
-       handed. Refusing to report OK over content that was never examined."
+    # R4-1 (round-4 adversarial review, major). This guard used to fire only when NOTHING was
+    # opened (`listed > 0 && opened == 0 && accounted < listed`), so a PARTIAL failure passed
+    # silently: two clean untracked files with one made unresolvable printed "OK ... 1 whole
+    # file(s)" and exited 0 with a path never read. A subset failing is the same shape as all of
+    # them failing -- a filename the loop mishandles, a file removed between listing and reading,
+    # a permission error -- so the guard is now on the count of unresolved paths, not on zero.
+    # The values were already in hand.
+    #
+    # Still stated as "accounted for" rather than "scanned > 0" so an untracked set that is
+    # genuinely all-binary passes, while the CR-on-every-path signature still dies.
+    local accounted=$((excluded + skipped)) unresolved=$((listed - excluded - skipped - opened))
+    if [[ "$unresolved" -gt 0 ]]; then
+        die "$label: $unresolved of $listed path(s) could not be opened and are not deliberate
+       skips ($opened opened, $accounted accounted for as deliberate skips$([[ "$opened" -eq 0 ]] && echo ", ZERO opened")).
+       Refusing to report OK over content that was never examined. First unopened path(s):
+$(printf '%s' "$unres" | head -5 | sed 's/^/         /')"
     fi
 }
 

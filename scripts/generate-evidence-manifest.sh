@@ -21,6 +21,13 @@ if [[ -z "$WP_ID" ]]; then
     exit 2
 fi
 shift
+# The ID becomes a directory below (.ai/evidence/<WP_ID>), so it is held to the work-package ID
+# scheme first: P<phase>-<NN>, e.g. P0-01 or P1-00 (DR-A5). check-evidence-claims.sh applies the
+# same rule, so a record this writes is always one that checker can select.
+if [[ ! "$WP_ID" =~ ^P[0-9]-[0-9]{2}$ ]]; then
+    echo "generate-evidence-manifest: '$WP_ID' is not a work-package ID (P<phase>-<NN>)" >&2
+    exit 2
+fi
 
 BASE="${BASE_REF:-origin/main}"
 INPUT=""
@@ -71,6 +78,10 @@ fi
 
 WP_FILE="$(ls docs/01-work-packages/*"$(tr '[:upper:]' '[:lower:]' <<< "$WP_ID")"* 2>/dev/null | head -1 || true)"
 ADRS="$(ls docs/02-adr/[0-9]*.md 2>/dev/null || true)"
+# Listed the same way as the ADRs: every document of the kind on disk, README excluded. These
+# were hard-coded [] while the directories were empty; P0-01 is the first package with any.
+CONTRACTS="$(ls docs/03-contracts/*.md 2>/dev/null | grep -v '/README\.md$' || true)"
+MODEL_SPECS="$(ls docs/05-model-specs/*.md 2>/dev/null | grep -v '/README\.md$' || true)"
 MIGRATIONS="$( { git diff --name-only "$BASE"...HEAD -- migrations 2>/dev/null || true
                  git diff --name-only -- migrations 2>/dev/null || true
                  git diff --cached --name-only -- migrations 2>/dev/null || true
@@ -106,6 +117,8 @@ jq -n \
   --arg cargo "$(cargo --version 2>/dev/null || echo unknown)" \
   --argjson files "$(printf '%s' "$FILES" | to_json_array)" \
   --argjson adrs "$(printf '%s' "$ADRS" | to_json_array)" \
+  --argjson contracts "$(printf '%s' "$CONTRACTS" | to_json_array)" \
+  --argjson model_specs "$(printf '%s' "$MODEL_SPECS" | to_json_array)" \
   --argjson migrations "$(printf '%s' "$MIGRATIONS" | to_json_array)" \
 '{
   schema: "grid-alpha/evidence-manifest/1",
@@ -123,7 +136,7 @@ jq -n \
   },
   environment: { os: $os, rustc: $rustc, cargo: $cargo },
   files_changed: $files,
-  contracts_and_adrs_referenced: { adrs: $adrs, contracts: [], model_specs: [] },
+  contracts_and_adrs_referenced: { adrs: $adrs, contracts: $contracts, model_specs: $model_specs },
   migrations_changed: $migrations,
   verification: {
     commands: [],

@@ -10,4 +10,4 @@ budget_policy:
   wall_clock_timeout_minutes: 120
   cost_ceiling_usd: null
 retention: zero-transcript-for-protected-branches
-repository: Seismic-Fate/GRID-Alpha
+repository: GRID-One/GRID-Engine

@@ -12,7 +12,6 @@ members = [
     "crates/evaluation",
     "crates/governance",
     "crates/application",
-    "crates/ffi",
 ]
 
 [workspace.package]
@@ -20,7 +19,7 @@ version = "0.1.0-alpha.1"
 edition = "2021"
 authors = ["GRID-Alpha Team"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Seismic-Fate/GRID-Alpha"
+repository = "https://github.com/GRID-One/GRID-Engine"
 
 [workspace.dependencies]
 tokio = { version = "1.40", features = ["full"] }
@@ -33,12 +32,6 @@ nalgebra = "0.33"
 sprs = "0.11"
 statrs = "0.17"
 rayon = "1.10"
-# Pinned EXACTLY (=). flutter_rust_bridge requires the Rust crate and the Dart package to
-# be the same version; app/pubspec.yaml pins 2.5.0 exactly, but a caret requirement here
-# would let the Rust side float to 2.9.x on any lockfile refresh and corrupt generated
-# bindings in P1-01, where it is most expensive to diagnose. alpha-spec.md 8.11 requires
-# FRB be pinned through committed files. Review finding M6.
-flutter_rust_bridge = "=2.5.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 tracing = "0.1"

@@ -30,7 +30,6 @@ verify:
     just check-sqlx
     just test-rust
     just test-doc
-    just test-ffi
     just audit
     just check-guards
     just check-typos
@@ -51,9 +50,6 @@ test-rust:
 # from going blind the moment P1-01 adds a doc example.
 test-doc:
     cargo test --workspace --doc
-
-test-ffi:
-    cargo test -p grid-ffi --features flutter-bridge-tests
 
 audit:
     cargo deny check
@@ -80,10 +76,6 @@ db-prepare:
 
 db-migrate:
     sqlx migrate run
-
-# Flutter (Linux desktop for cloud dev)
-serve-ui:
-    cd app && flutter run -d linux
 
 # Evidence manifest
 evidence WP_ID:

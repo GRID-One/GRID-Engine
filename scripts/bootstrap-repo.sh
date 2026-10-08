@@ -18,11 +18,10 @@ mk() { [[ -d "$1" ]] || { mkdir -p "$1"; echo "  + $1"; created=$((created+1)); 
 keep() { mk "$(dirname "$1")"; [[ -e "$1" ]] || { : > "$1"; echo "  + $1"; created=$((created+1)); }; }
 
 CRATES=(domain persistence ingestion identity features models simulation scoring
-        evaluation governance application ffi)
+        evaluation governance application)
 
 echo "[bootstrap-repo] crates"
 for c in "${CRATES[@]}"; do mk "crates/$c/src"; done
-mk crates/ffi/src/generated
 mk crates/application/src/bin
 
 # data/ is gitignored (raw and derived provider data is never committed), so a fresh clone
@@ -37,16 +36,18 @@ echo "[bootstrap-repo] docs (numbered vault — see ADR-001 D3, NOT the flat 8.7
 mk docs/00-meta/specs
 mk docs/01-work-packages
 mk docs/02-adr
-mk docs/03-contracts        # P1-01
+mk docs/03-contracts        # first populated by P0-01 (engine consolidation)
 mk docs/04-providers/nflverse
 mk docs/04-providers/cfbd
-mk docs/05-model-specs      # P1-06
+mk docs/05-model-specs      # first populated by P0-01 (engine consolidation)
 mk docs/06-sessions
+mk docs/07-archive          # non-authoritative history (P0-01)
 mk docs/99-templates
 
-echo "[bootstrap-repo] app and evidence"
-mk app/lib
-mk app/test
+# No app/ and no crates/ffi/: the engine-only pivot (ADR-011) removed the Flutter app and the
+# flutter_rust_bridge crate. reference/python/ is committed source (the Python reference
+# oracle, ADR-012), not scaffolding, so it is not created here either.
+echo "[bootstrap-repo] evidence"
 mk .ai/evidence
 
 if [[ "$created" -eq 0 ]]; then

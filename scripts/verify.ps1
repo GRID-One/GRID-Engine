@@ -48,10 +48,6 @@ if ($Scope -eq "Full" -or $Scope -eq "Changed") {
     cargo test --workspace --doc
     Assert-Ok "cargo test --doc"
 
-    Write-Host "[verify] FFI round-trip..."
-    cargo test -p grid-ffi --features flutter-bridge-tests
-    Assert-Ok "cargo test -p grid-ffi"
-
     Write-Host "[verify] Audit..."
     cargo deny check
     Assert-Ok "cargo deny check"

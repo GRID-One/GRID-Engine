@@ -33,9 +33,6 @@ if [[ "$SCOPE" == "full" || "$SCOPE" == "changed" ]]; then
     echo "[verify] Doctests..."
     cargo test --workspace --doc
 
-    echo "[verify] FFI round-trip..."
-    cargo test -p grid-ffi --features flutter-bridge-tests
-
     echo "[verify] Audit..."
     cargo deny check
     cargo audit

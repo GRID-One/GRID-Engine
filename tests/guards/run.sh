@@ -174,6 +174,37 @@ d="$(new_repo secrets-untracked-binary)"
 printf '\x00\x01\x02\x03binary\x00' > "$d/blob.bin"
 expect 0 "an all-binary untracked set is a deliberate skip, not a broken scan" "$d" ./scripts/check-secrets.sh no-such-base
 
+# R4-1 (round-4 adversarial review, major): the accounting guard fired only when NOTHING was
+# opened, so a PARTIAL unresolved set passed silently -- reproduced at 3823478 as "OK ... 1 whole
+# file(s)", exit 0, with one of two paths never read. No secret anywhere in this fixture, so the
+# guard is the only thing that can produce exit 1; the control proves the fixture is clean.
+d="$(new_repo secrets-partial-unresolved)"
+echo "clean a" > "$d/untracked_ok.txt"; echo "clean b" > "$d/broken_path.txt"
+expect 0 "control: two clean untracked files pass (R4-1)" "$d" ./scripts/check-secrets.sh
+# Break resolution for ONE of the two paths, after the scanner's own CR strip. awk with ENVIRON,
+# not sed or -v, so the inserted line lands verbatim (see the M1 table below for why).
+CRLINE="        f=\"\${f%\$'\\r'}\"" \
+INS='        case "$f" in broken_*) f="${f}.unresolvable" ;; esac' \
+    awk '{ print } $0 == ENVIRON["CRLINE"] { print ENVIRON["INS"] }' "$d/scripts/check-secrets.sh" > "$d/cs.tmp"
+mv "$d/cs.tmp" "$d/scripts/check-secrets.sh"; chmod +x "$d/scripts/check-secrets.sh"
+grep -Fqx '        case "$f" in broken_*) f="${f}.unresolvable" ;; esac' "$d/scripts/check-secrets.sh" \
+    || bad "partial-unresolved fixture did not apply" "awk did not patch the copied scanner"
+expect 1 "one of two untracked paths unresolvable fails closed (R4-1)" "$d" ./scripts/check-secrets.sh
+
+# The R4-1 edge the review left open: in full-tree mode a TRACKED file deleted in the worktree
+# (an unstaged rm) is listed by ls-files but is not on disk. It is read from the index, which
+# holds what a commit of this tree carries -- before R4-1 it was skipped silently, and with the
+# R4-1 guard alone it would be a false "could not be opened". Both directions are asserted.
+d="$(new_repo secrets-deleted-tracked)"
+plant_untracked_token "$d"; mv "$d/untracked_secret.rs" "$d/tracked_secret.rs"
+git -C "$d" add -A; git -C "$d" commit -qm "P1-00 a tracked file holding a token"
+rm "$d/tracked_secret.rs"
+expect 1 "full-tree mode: a token in a tracked file deleted in the worktree is still caught" "$d" ./scripts/check-secrets.sh no-such-base
+d="$(new_repo secrets-deleted-clean)"
+echo "clean" > "$d/gone.txt"; git -C "$d" add -A; git -C "$d" commit -qm "P1-00 a clean tracked file"
+rm "$d/gone.txt"
+expect 0 "full-tree mode: a clean tracked file deleted in the worktree is not unresolvable" "$d" ./scripts/check-secrets.sh no-such-base
+
 # minor 3: the deny patterns require realistic token lengths, so a truncated or short test
 # token sits in the gap. The warn tier reports it without failing the build.
 d="$(new_repo secrets-warn)"
@@ -224,12 +255,47 @@ echo "// y" > "$d/src/unmentioned.rs"
 git -C "$d" add -A; git -C "$d" commit -qm "P1-00 sneak"
 expect 1 "a path absent from every referenced doc fails (M3 regression)" "$d" ./scripts/check-traceability.sh base
 
+# P0-01 / DR-A5: bare IDs are P<phase>-<NN>, not only P1-NN. Before the widening, a commit citing
+# "P0-01" or "P2-03" carried NO reference at all and the guard died on "no work-package or ADR
+# reference found" -- so the consolidation could not trace its own paths by its own ID.
+# PR_BODY / PR_BODY_FILE are unset so the commit messages are the only possible source of a
+# reference, and each fixture's base excludes the "P1-00 seed" commit new_repo makes.
+trace_phase_repo() {   # trace_phase_repo <name> <id> <wp-file-stem> <covered-path>
+    local d; d="$(new_repo "$1")"; mkdir -p "$d/docs/01-work-packages" "$d/src"
+    printf '# %s\n\n## Scope\n- `%s`\n' "$2" "$4" > "$d/docs/01-work-packages/$3.md"
+    git -C "$d" add -A; git -C "$d" commit -qm "seed the work package"
+    git -C "$d" branch -q base HEAD
+    echo "// x" > "$d/$4"
+    git -C "$d" add -A; git -C "$d" commit -qm "$2: covered change"
+    echo "$d"
+}
+d="$(trace_phase_repo trace-p0 P0-01 p0-01-engine-consolidation src/p0.rs)"
+expect_env 0 "a P0-01 commit traces a path its work package names (DR-A5)" "$d" -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-traceability.sh base
+# Control: the widened ID still buys per-path coverage only. A path the P0-01 package does not
+# name fails exactly as it does under a P1-NN reference (covered() is unchanged).
+echo "// y" > "$d/src/unnamed.rs"
+git -C "$d" add -A; git -C "$d" commit -qm "P0-01: sneak a path past the package"
+expect_env 1 "control: a P0-01 commit with a path its package does not name still fails" "$d" -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-traceability.sh base
+
+d="$(trace_phase_repo trace-p2 P2-03 p2-03-some-engine-package src/p2.rs)"
+expect_env 0 "a P2-03 commit traces a path its work package names (DR-A5)" "$d" -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-traceability.sh base
+# Control: a well-formed ID that resolves to no document is not a reference to anything.
+d="$(trace_phase_repo trace-p3-missing P3-07 p2-99-not-the-cited-package src/p3.rs)"
+expect_env 1 "control: a P3-07 citation with no p3-07 document on disk fails" "$d" -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-traceability.sh base
+
 echo "check-authority-sync"
+# P0-01 (ADR-011): the guarded pair is engine-spec.md and its vault mirror. The old alpha-spec.md
+# pair was archived as single copies under docs/00-meta/specs/superseded/.
 d="$(new_repo authsync)"; mkdir -p "$d/docs/00-meta/specs"
-printf 'spec\n' > "$d/alpha-spec.md"; printf 'spec\n' > "$d/docs/00-meta/specs/alpha-spec.md"
+printf 'spec\n' > "$d/engine-spec.md"; printf 'spec\n' > "$d/docs/00-meta/specs/engine-spec.md"
 expect 0 "identical spec copies pass" "$d" ./scripts/check-authority-sync.sh
-printf 'spec drifted\n' > "$d/docs/00-meta/specs/alpha-spec.md"
+printf 'spec drifted\n' > "$d/docs/00-meta/specs/engine-spec.md"
 expect 1 "a one-line fork is caught" "$d" ./scripts/check-authority-sync.sh
+# A missing mirror must fail closed, not pass over nothing. Note that a guard still pointed at
+# the OLD names would also exit 1 here (and on the fork case above), on "missing"; what proves
+# the guard reads the new names is the identical-copies case, which only they can pass.
+rm "$d/docs/00-meta/specs/engine-spec.md"
+expect 1 "a missing mirror fails closed" "$d" ./scripts/check-authority-sync.sh
 
 # The base-ref SKIP path. Both guards degrade to "NOT VERIFIED, exit 0" when the base cannot be
 # resolved -- correct for a shallow local checkout, and fail-open in CI, where the second
@@ -299,6 +365,104 @@ printf 'if ($true) {\n    cargo fmt --all -- --check\n    Assert-Ok "fmt"\n}\n' 
 git -C "$d" add -A; git -C "$d" commit -qm "P1-00 empty recipes"
 expect 1 "an extraction yielding zero commands fails rather than passing" "$d" ./scripts/check-verify-parity.sh
 
+# R4-2, parity side. The extractor shared the unanchored Write-Host / Assert-Ok skips, so a step
+# added to verify.ps1 alone in either of these forms vanished from the comparison: parity read
+# 2 = 2 = 2 and passed while verify.ps1 ran a third command nobody compared.
+d="$(new_repo parity-r42-writehost)";  mk_parity "$d" "" 'cargo sbom generate; Write-Host "done"'
+expect 1 "R4-2: a ps1-only step sharing its line with Write-Host is not invisible to parity" "$d" ./scripts/check-verify-parity.sh
+d="$(new_repo parity-r42-assertok)";   mk_parity "$d" "" 'typos --config Assert-Ok.toml'
+expect 1 "R4-2: a ps1-only step whose argument names Assert-Ok is not invisible to parity" "$d" ./scripts/check-verify-parity.sh
+# The joined form identical in all three implementations: parity agrees, and must still refuse,
+# because one exit status vouches for two commands (ps1 $LASTEXITCODE; just runs bash -cu, no -e).
+d="$(new_repo parity-r42-joined)"; mk_parity "$d" "cargo a; cargo b" "cargo a; cargo b"
+printf 'check-c:\n    cargo a; cargo b\n' >> "$d/justfile"
+sed -i 's|^    just check-b$|    just check-b\n    just check-c|' "$d/justfile"
+git -C "$d" add -A; git -C "$d" commit -qm "P1-00 joined step in all three"
+expect 1 "R4-2: a ;-joined step present identically in all three is refused" "$d" ./scripts/check-verify-parity.sh
+# Control: a quoted separator joins nothing. Same three-file shape, the ; and || are in strings.
+d="$(new_repo parity-r42-quoted)"; mk_parity "$d" "cargo x --arg \"a;b\" 'c||d'" "cargo x --arg \"a;b\" 'c||d'"
+printf 'check-c:\n    cargo x --arg "a;b" \x27c||d\x27\n' >> "$d/justfile"
+sed -i 's|^    just check-b$|    just check-b\n    just check-c|' "$d/justfile"
+git -C "$d" add -A; git -C "$d" commit -qm "P1-00 quoted separators"
+expect 0 "R4-2 control: a ; or || inside a quoted argument is not a joined step" "$d" ./scripts/check-verify-parity.sh
+
+# check-evidence-claims hard-coded WP="P1-00" and the literal "/16" until P0-01, so it could only
+# re-derive P1-00's record -- against any tree -- and could never check the record of the change
+# set in front of it. These fixtures keep every counted fact small and known: 2 parity steps,
+# 2 recipes, 2 Assert-Ok calls, 3 crates, and a stub suite that reports 7 cases (the stub also
+# stops the checker re-running this real suite recursively). A record states those numbers and
+# passes only if every one of them is re-derived from the fixture.
+echo "check-evidence-claims (P0-01 generalisation)"
+ev_fixture() {
+    local d; d="$(new_repo "$1")"
+    mk_parity "$d"
+    mkdir -p "$d/tests/guards" "$d/docs/01-work-packages" "$d/src"
+    printf '#!/bin/sh\necho "7 passed, 0 failed"\n' > "$d/tests/guards/run.sh"; chmod +x "$d/tests/guards/run.sh"
+    printf '[[package]]\nname = "a"\n\n[[package]]\nname = "b"\n\n[[package]]\nname = "c"\n' > "$d/Cargo.lock"
+    printf '# P0-01\n\n## Scope\n- `src/engine.rs`\n' > "$d/docs/01-work-packages/p0-01-engine-consolidation.md"
+    git -C "$d" add -A; git -C "$d" commit -qm "seed the evidence fixture"
+    echo "$d"
+}
+# ev_record <dir> <WP> <steps> <cases> <recipes> <crates> <asserts> <traced>: write a record whose
+# manifest attests to HEAD, quoting the claim hooks check-evidence-claims.sh extracts.
+ev_record() {
+    local d="$1" e="$1/.ai/evidence/$2" sha h; mkdir -p "$e"
+    sha="$(git -C "$d" rev-parse HEAD)"
+    printf '{"commit": "%s", "known_limitations": ["All %s non-trivial paths traced"]}\n' "$sha" "$8" > "$e/manifest.json"
+    h="$(sha256sum "$e/manifest.json" | cut -d' ' -f1)"
+    { printf 'Final commit: %s\n' "${sha:0:12}"
+      printf 'The implementations agree at **%s steps**.\n' "$3"
+      printf 'The suite carries %s committed behaviour cases.\n' "$4"
+      printf '`verify` runs **%s recipes**.\n' "$5"
+      printf '`Cargo.lock` resolves %s crates.\n' "$6"
+      printf 'Every native command is followed by an `Assert-Ok` (%s/%s).\n' "$7" "$3"
+      printf 'Evidence manifest hash: sha256:%s\n' "$h"; } > "$e/PR-BODY.md"
+}
+# P1-00's own numbers, which are false against every fixture below: a checker still hard-wired to
+# P1-00 fails each positive case, which is what proves those cases test the selection.
+p100_record() { ev_record "$1" P1-00 16 54 9 172 16 68; }
+
+d="$(ev_fixture ev-own)"
+p100_record "$d"; git -C "$d" add -A; git -C "$d" commit -qm "P1-00: historical evidence, already in the base"
+git -C "$d" branch -q base HEAD
+echo "// engine" > "$d/src/engine.rs"; git -C "$d" add -A; git -C "$d" commit -qm "P0-01: engine change"
+ev_record "$d" P0-01 2 7 2 3 2 1
+expect_env 0 "the change set's own P0-01 record is selected and verified, (2/2) included" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base
+# Control: the selected record is still held to every number. One false count fails it.
+sed -i 's/agree at \*\*2 steps\*\*/agree at **3 steps**/' "$d/.ai/evidence/P0-01/PR-BODY.md"
+grep -q 'agree at \*\*3 steps\*\*' "$d/.ai/evidence/P0-01/PR-BODY.md" || bad "evidence control fixture did not apply" "sed did not patch the record"
+expect_env 1 "control: one false count in the selected P0-01 record fails" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base
+
+# The consolidation branch's real shape when PR #1 is unmerged: P1-00's record is ADDED inside the
+# range too, by an earlier commit. The newest record is the change set's own.
+d="$(ev_fixture ev-stacked)"
+git -C "$d" branch -q base HEAD
+p100_record "$d"; git -C "$d" add -A; git -C "$d" commit -qm "P1-00: evidence on the stacked branch"
+echo "// engine" > "$d/src/engine.rs"; git -C "$d" add -A; git -C "$d" commit -qm "P0-01: engine change"
+ev_record "$d" P0-01 2 7 2 3 2 1; git -C "$d" add -A; git -C "$d" commit -qm "P0-01: evidence"
+expect_env 0 "a stacked range carrying P1-00's record too checks the newest record, P0-01" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base
+
+# A record the base already holds is history. Rewriting it -- here, making P1-00's record true
+# of a later tree, with no record of the change set's own -- must fail even though every claim
+# in the rewrite now matches. Only the rule can fail it: with the rule removed, selection picks
+# the touched record and every claim in it matches.
+d="$(ev_fixture ev-rewrite)"
+p100_record "$d"; git -C "$d" add -A; git -C "$d" commit -qm "P1-00: historical evidence, already in the base"
+git -C "$d" branch -q base HEAD
+echo "// engine" > "$d/src/engine.rs"; git -C "$d" add -A; git -C "$d" commit -qm "P0-01: engine change"
+ev_record "$d" P1-00 2 7 2 3 2 1
+expect_env 1 "rewriting an evidence record the base holds fails, even when the rewrite is true" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base
+
+# Two records with nothing to order them is ambiguous: refuse rather than pick one.
+d="$(ev_fixture ev-ambiguous)"
+git -C "$d" branch -q base HEAD
+echo "// engine" > "$d/src/engine.rs"; git -C "$d" add -A; git -C "$d" commit -qm "P0-01: engine change"
+ev_record "$d" P0-01 2 7 2 3 2 1; ev_record "$d" P1-01 2 7 2 3 2 1
+expect_env 1 "two uncommitted evidence records are ambiguous and fail" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base
+expect_env 0 "naming the record (second argument) resolves the ambiguity" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base P0-01
+# The ID becomes a path, so anything outside the P<phase>-<NN> scheme is refused before use.
+expect_env 1 "a WP argument outside the ID scheme is refused" "$d" -u EVIDENCE_WP -u PR_BODY -u PR_BODY_FILE -- ./scripts/check-evidence-claims.sh base ../P0-01
+
 # check-env-contract had no tests either, and its SQLX_OFFLINE half is what blocker C2 turned on.
 echo "check-env-contract"
 mk_env() {
@@ -348,20 +512,32 @@ echo "verify.ps1 exit-code coverage (ADR-009 regression)"
 # boundary (gawk spells it \y; mawk, which Ubuntu runners use, has neither). Writing \b here
 # silently matched nothing and turned `param(` and `if (...)` into false positives. Measured,
 # not assumed: this runner is mawk 1.3.4.
+#
+# R4-2 (round-4 adversarial review, minor): three residual evasions, all reproduced at 3823478.
+# The Write-Host and Assert-Ok skips matched ANYWHERE in the line, so `cargo sbom; Write-Host x`
+# and `typos --config Assert-Ok.toml` were skipped whole -- the same over-broad-skip shape as M1.
+# And `cargo a; cargo b` before one Assert-Ok was CERTIFIED guarded, though $LASTEXITCODE after
+# `a; b` is b's alone. Now: both skips are anchored to the start of the line (with the same
+# keyword boundary as the constructs), and any line joining commands with `;` or `||` outside a
+# quoted string is reported JOINED before any skip can hide it -- one exit code cannot vouch for
+# two commands, whichever of them comes first. check-verify-parity.sh carries the same rules for
+# its verify.ps1 extractor (ADR-010: the shape, not the instance).
 ps1_unguarded() {
     awk '
       { sub(/\r$/, "") }
       /^[[:space:]]*(#|$)/ { next }
+      { bare = $0; gsub(/"[^"]*"/, "", bare); gsub(/\047[^\047]*\047/, "", bare)
+        if (bare ~ /;|\|\|/) { print "JOINED:" $0; bad++; next } }
       /^[[:space:]]*(if|elseif|else|switch|foreach|for|while|do|try|catch|finally|function|param|return|throw|break|continue|begin|process|end)([^[:alnum:]_-]|$)/ { next }
       /^[[:space:]]*[{}]/ { next }
       /^[[:space:]]*\[/   { next }
       /^[[:space:]]*\)/   { next }
       /^[[:space:]]*\$/   { next }
-      /Write-Host/ { next }
-      /Assert-Ok/  { next }
+      /^[[:space:]]*Write-Host([^[:alnum:]_-]|$)/ { next }
+      /^[[:space:]]*Assert-Ok([^[:alnum:]_-]|$)/  { next }
       {
           cmd = $0
-          if ((getline nxt) <= 0 || nxt !~ /Assert-Ok/) { print "UNGUARDED:" cmd; bad++ } else { n++ }
+          if ((getline nxt) <= 0 || nxt !~ /^[[:space:]]*Assert-Ok([^[:alnum:]_-]|$)/) { print "UNGUARDED:" cmd; bad++ } else { n++ }
           next
       }
       END { printf "%d guarded, %d unguarded\n", n, bad+0; exit (bad+0) > 0 }
@@ -456,6 +632,43 @@ $v = 1
 }
 CONSTRUCTS
 [[ "$ps1_fp" -eq 0 ]] && ok "PowerShell constructs are not misread as commands (no false positives)"
+
+# R4-2: the three evasions the round-4 review reproduced, each inserted after a complete
+# command/Assert-Ok pair exactly like the M1 table. A third field, when present, is inserted on
+# the next line -- the joined form is "certified" only when an Assert-Ok follows it, so the case
+# must supply one or it would be caught for the wrong reason (no Assert-Ok at all).
+while IFS='|' read -r label l1 l2; do
+    [[ -z "$label" ]] && continue
+    m="$TMP/verify.ps1.r42"
+    INS1="$l1" INS2="$l2" awk '
+        { print }
+        /Assert-Ok "cargo fmt --all -- --check"/ && !done {
+            print ENVIRON["INS1"]; if (ENVIRON["INS2"] != "") print ENVIRON["INS2"]; done = 1 }
+    ' "$ps1_plain" > "$m"
+    if ! grep -Fqx -- "$l1" "$m" || { [[ -n "$l2" ]] && ! grep -Fqx -- "$l2" "$m"; }; then
+        bad "the R4-2 $label fixture was not inserted verbatim" "wanted: [$l1] [$l2]"; continue
+    fi
+    if out="$(ps1_unguarded "$m" 2>&1)"; then
+        bad "R4-2: $label is certified clean" "$out"
+    elif ! printf '%s\n' "$out" | grep -E '^(UNGUARDED|JOINED):' | grep -Fq -- "${l1#    }"; then
+        bad "R4-2: $label fails, but not on the inserted line" "$out"
+    else
+        ok "R4-2: $label is detected"
+    fi
+done <<'R42'
+a command sharing its line with a trailing Write-Host|    cargo sbom generate; Write-Host "done"
+a command whose argument names Assert-Ok|    typos --config Assert-Ok.toml
+two ;-joined commands behind one Assert-Ok|    cargo a; cargo b|    Assert-Ok "a then b"
+R42
+# The inverse: the anchored skips and the join rule must not misread ordinary lines. A `;` inside
+# a quoted string joins nothing, and Write-Host / Assert-Ok at the start of a line are still skips.
+m="$TMP/verify.ps1.r42fp"
+printf '    Write-Host "[verify] one; two"\n    cargo x --arg "a;b" \x27c||d\x27\n    Assert-Ok "cargo x; quoted"\n' > "$m"
+if out="$(ps1_unguarded "$m" 2>&1)" && [[ "$out" == "1 guarded, 0 unguarded" ]]; then
+    ok "R4-2: a quoted ; or || and start-of-line Write-Host/Assert-Ok are not misread ($out)"
+else
+    bad "R4-2: the anchored skips or the join rule misread an ordinary line" "$out"
+fi
 
 # Round 3 M3. The CI self-test asserts on the SPECIFIC Assert-Ok message, so it is coupled to
 # the first and last labels in verify.ps1: it stubs cargo to fail and expects

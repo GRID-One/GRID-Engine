@@ -70,6 +70,13 @@ sh_cmds="$(grep -vE '^[[:space:]]*(#|$)' "$VERIFY_SH" \
 # Assert-Ok coverage: a line is a command UNLESS it is a recognised PowerShell construct. A
 # "looks like a command" pattern misses `& $tool`, `.\tool.exe` and column 0 (round 3, M1), and
 # a parity check that cannot see a step is a parity check that will not notice it going missing.
+#
+# R4-2 (round-4 adversarial review, minor). The Write-Host and Assert-Ok skips used to match
+# ANYWHERE in the line, so `cargo sbom generate; Write-Host "done"` or `typos --config
+# Assert-Ok.toml` vanished from this list entirely: a step verify.ps1 runs that the comparison
+# could not see. Both skips are now anchored to the start of the line. The finding was raised
+# against the Assert-Ok analysis in tests/guards/run.sh; the same rules live here, so the fix is
+# applied to both (ADR-010).
 ps1_cmds="$(awk '
     { sub(/\r$/, "") }
     /^[[:space:]]*(#|$)/ { next }
@@ -78,10 +85,34 @@ ps1_cmds="$(awk '
     /^[[:space:]]*\[/   { next }
     /^[[:space:]]*\)/   { next }
     /^[[:space:]]*\$/   { next }
-    /Write-Host/ { next }
-    /Assert-Ok/  { next }
+    /^[[:space:]]*Write-Host([^[:alnum:]_-]|$)/ { next }
+    /^[[:space:]]*Assert-Ok([^[:alnum:]_-]|$)/  { next }
     { print }
 ' "$VERIFY_PS1" | norm || true)"
+
+# R4-2, the third evasion: two commands joined on one line share ONE exit status. In verify.ps1
+# $LASTEXITCODE after `cargo a; cargo b` is b's alone, so one Assert-Ok "guards" both and a's
+# failure is invisible; the justfile runs each recipe line under `bash -cu` (no -e), where
+# `a; b` and `a || b` hide a's failure the same way. Parity cannot catch this -- the joined text
+# is identical in all three files -- so a joined verification step is refused outright, in the
+# two implementations where it masks a failure. verify.sh runs under `set -e`, which already
+# stops on `a`. Separators inside a quoted string join nothing and are ignored.
+joined() {   # joined <label> : read lines on stdin, print "<label>: <line>" for each joined one
+    awk -v label="$1" '
+        { sub(/\r$/, "") }
+        /^[[:space:]]*(#|$)/ { next }
+        { bare = $0; gsub(/"[^"]*"/, "", bare); gsub(/\047[^\047]*\047/, "", bare)
+          if (bare ~ /;|\|\|/) print label ": " $0 }
+    '
+}
+joined_steps="$( { printf '%s\n' "$just_cmds" | joined "$JUSTFILE"; joined "$VERIFY_PS1" < "$VERIFY_PS1"; } || true)"
+if [[ -n "$joined_steps" ]]; then
+    echo "check-verify-parity: FAIL a verification step joins commands with ';' or '||' (R4-2):" >&2
+    printf '%s\n' "$joined_steps" | sed 's/^/    /' >&2
+    echo "  One exit status cannot vouch for two commands. Put each command on its own line" >&2
+    echo "  (in verify.ps1, each followed by its own Assert-Ok)." >&2
+    exit 1
+fi
 
 # Windows cannot execute a .sh directly, so verify.ps1 spells the seven guard steps
 # `bash ./scripts/x.sh` where verify.sh spells them `./scripts/x.sh`. That prefix is a platform

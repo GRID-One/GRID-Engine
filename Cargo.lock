@@ -424,10 +424,6 @@ name = "grid-features"
 version = "0.1.0-alpha.1"
 
 [[package]]
-name = "grid-ffi"
-version = "0.1.0-alpha.1"
-
-[[package]]
 name = "grid-governance"
 version = "0.1.0-alpha.1"
 
