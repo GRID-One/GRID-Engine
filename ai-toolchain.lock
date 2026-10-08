@@ -1,7 +1,10 @@
-project_alias: claude-opus-5
-harness: claude-code-desktop-cloud
-harness_version: "2026-08-19"
-model_public_id: claude-opus-5-20251401
+# P0-01: model and harness-version identity are left "unrecorded". The implementing agent's
+# harness policy forbids writing model identifiers into repository artifacts; the owner may
+# record the real values (engine-spec section 8.20). P1-00's values remain in its evidence record.
+project_alias: unrecorded
+harness: claude-code-on-the-web
+harness_version: unrecorded
+model_public_id: unrecorded
 permission_profile: least-privilege
 max_concurrent_writers: 1
 file_ownership_policy: serialized_migrations_and_dtos

@@ -8,6 +8,13 @@
 # alpha-spec.md 7.4. Otherwise corrected to "NAME".
 NMAE = "NMAE"
 
+# --- engine-spec.md and the model specs (P0-01, ADR-011) ---------------------------------
+# GAM = generalized additive model, a candidate Layer-1 context model (engine-spec §6.4.9,
+# docs/05-model-specs/layer1-credit.md; DR-C7). Otherwise corrected to "GAME".
+GAM = "GAM"
+# Rauch–Tung–Striebel, the RTS smoother's authors (engine-spec Appendix G). Otherwise "Tongue".
+Tung = "Tung"
+
 # --- reference/python/ (the Python reference oracle, ADR-012) -------------------------------
 # Imported byte-identical from cautious-nevermore@59bce1d and hash-pinned in MANIFEST.tsv, so
 # a flagged spelling there cannot be "fixed" in place. Allowlisted entry by entry rather than
@@ -41,4 +48,20 @@ extend-exclude = [
     ".sqlx/",          # generated query cache
     "Cargo.lock",      # generated
     "target/",
+    # Verbatim records (P0-01, ADR-011; docs/CLAUDE.md "verbatim trees are never edited").
+    # They are byte-identical, hash-manifested copies, so a flagged spelling in them can never
+    # be corrected in place, and allowlisting their tokens (ot, fo, OT, PN, thr, ...) would hide
+    # the same letters as real typos everywhere else. Only the copies are excluded: each tree's
+    # maintained README, MANIFEST, HISTORY and results files stay spell-checked.
+    "docs/06-sessions/2026-10-01-consolidation-inventory/alpha-spec.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/final-build-spec.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/bootstrap-infra.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/python-closure.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/cn-docs.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/cn-issues.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/reconcile-code-first.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/reconcile-spec-first.md",
+    "docs/06-sessions/2026-10-01-consolidation-inventory/critic.md",
+    "docs/07-archive/cautious-nevermore/docs/",
+    "docs/07-archive/cautious-nevermore/dot-superpowers/",
 ]
