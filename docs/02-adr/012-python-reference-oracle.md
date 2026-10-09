@@ -13,12 +13,14 @@ superseded-by:
 
 **Proposed** 2026-10-07 under work package P0-01, as the companion to ADR-011. It is not accepted.
 
-- **What it adopts.** DR-A2 (oracle placement), DR-A11 and DR-A12, subject to owner ratification at the
-  merge of the P0-01 pull request.
-- **DR-A10 is not adopted here.** It needs the Data/Licensing owner's ruling, recorded on the pull
-  request, before merge (§8).
-- **What it does not decide.** Every B, C and D decision it mentions remains proposed or open. The
-  correction-ledger policy (DR-B1) in particular is **not part of this ADR**.
+- **What it adopts.** DR-A2 (oracle placement), DR-A11 and DR-A12, which the owner ratified on
+  2026-10-08 in the decision interview and names again at the merge of the P0-01 pull request.
+- **DR-A10 is not adopted here.** The owner chose option 1 on 2026-10-08, but the Data/Licensing
+  owner's ruling must still be posted on the pull request before merge (§8).
+- **What it does not decide.** No B, C or D decision it mentions is decided by this ADR. The owner
+  settled most of them, in full or in part, in the decision interview of 2026-10-08/09, and the register
+  records each status. The correction-ledger policy (DR-B1, ratified 2026-10-08) in particular is
+  **not part of this ADR**.
 
 ## Context
 
@@ -54,7 +56,7 @@ superseded-by:
 These modules are in the oracle scope and **not** in the port scope:
 
 - the scoring format registry;
-- VOR and tier outputs (VOR survives only inside the evaluation lineup simulation, proposed — DR-C11);
+- VOR and tier outputs (VOR survives only inside the evaluation lineup simulation, DR-C11);
 - `compute_valuations`;
 - the box-score `data_pipeline` (labels are re-derived, `engine-spec.md` §4.7);
 - `health_check`;
@@ -158,13 +160,14 @@ timeout, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `MKL_NUM_THREADS` all set
 **Why threads = 1.** The determinism-sensitive tests pin themselves. Without the environment variables,
 OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
 
-**Still open.**
+**Related decisions.**
 
-- Whether this job is a required merge check is **DR-D30**.
+- Whether this job is a required merge check was **DR-D30**. The owner decided on 2026-10-09 that it is
+  required for every pull request to `main`, applied in branch protection after PR #4 merges, with no
+  workflow edit. Being a required check does not wire it into the frozen verify chain.
 - How its golden master is made reproducible on CI hardware was **DR-D31** (KI-NEW-Z78). It is no longer
   open: the owner ratified option 1 on 2026-10-08, and P0-01 implements it as ledger entry L0.
-- The fixture-regeneration and hash-drift step arrives with the first parity package (proposed —
-  DR-B2).
+- The fixture-regeneration and hash-drift step arrives with the first parity package (DR-B2).
 
 ### 5. Legacy status; the correction-ledger policy is not decided here
 
@@ -172,9 +175,10 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
   proposes the tag `oracle-legacy-59bce1d` for the import commit. Creating the tag is an owner action.
 - **Freeze rule.** While KI-NEW-Y0 stands, no legacy output is frozen as a Rust parity target for any
   quantity that a ledger correction would change.
-- **The ledger policy is DR-B1**, proposed and awaiting the Statistical owner. Under it, each correction
-  is made in Python as its own approved commit, with a failing test first, regenerated goldens with a
-  model-spec note, and an entry in `PARITY.md`. The proposed order is:
+- **The ledger policy is DR-B1**, ratified by the Statistical owner on 2026-10-08 in the decision
+  interview, outside this ADR. Under it, each correction is made in Python as its own approved commit,
+  with a failing test first, regenerated goldens with a model-spec note, and an entry in `PARITY.md`.
+  The ratified order is:
   1. the synthetic defenders;
   2. the team-strength estimand and the Layer-3 rows;
   3. the matchup-grade sign;
@@ -185,8 +189,8 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
   under CPython 3.11 and `OPENBLAS_CORETYPE=Haswell`, with only Layer C arrays changed and no generator,
   estimator, test or tolerance touched (`MANIFEST.tsv` status `patched:L0`;
   `patches/L0-golden-snapshot-haswell-regeneration.patch`). It sits ahead of the DR-B1 ledger and does
-  not pre-empt it. Entries 1 to 5 are proposed and not applied; if DR-B1 is ratified, they are a separate
-  work package.
+  not pre-empt it. Entries 1 to 5 are not applied. They are a separate work package, and each needs its
+  own Statistical-owner approval as its commit lands (DR-B1).
 
 ### 6. Parity regime
 
@@ -197,20 +201,31 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
   - synthetic-only data.
 
   Rust tests read the committed files and never invoke Python.
-- **Live oracle and fixtures together** is DR-B2 (proposed).
-- **The tolerance classes** A, A′, B, C and D are DR-B3 (proposed). Further items are raised and open:
-  - **DR-D27**, a V(s) parity envelope in place of Class C;
-  - **DR-D26**, seed-ensemble statistics for Class D recovery gates;
-  - **DR-D28**, a draw tape that proves a Rust generator implements the oracle model;
-  - **DR-D29**, the on-disk fixture format;
-  - a Layer-1 criterion proposed in `docs/05-model-specs/layer1-credit.md`.
-- **No Rust parity test exists in P0-01.** The first parity package (P1-01) is not Ready until DR-B1,
-  DR-B2 and DR-B3 are ratified (`engine-spec.md` §8.16.1).
+- **Live oracle and fixtures together** is DR-B2 (ratified 2026-10-08).
+- **The tolerance classes** are DR-B3, which the owner overrode on 2026-10-09 with the amended table:
+  A, A′, B (with the amended convergence criterion of `docs/05-model-specs/rapm-attribution.md` §10.3)
+  and D (floors re-set on the defender-fixed world and gated over a seed ensemble). Class C, which is
+  unattainable for both booster stages (KI-NEW-Z74), is replaced by stage-specific criteria. The Class D
+  floor values stay open: they are set once, after ledger entries 2 and 4, on the DR-D26 ensemble. The
+  related items:
+  - **DR-D27**, C-V, the V(s) criterion in place of Class C: its two numeric limits are pre-registered,
+    and its parts 3 and 4 stay open;
+  - **DR-D26**, the Class D statistic: the median over a declared seed set, plus a required low
+    quantile; the seed set, quantile and margins are pre-registered when the floors are re-set;
+  - **DR-D28**, a draw tape that proves a Rust generator implements the oracle model (ratified
+    2026-10-09);
+  - **DR-D29**, the on-disk fixture format (ratified 2026-10-08);
+  - C-L1, the Layer-1 context-model criterion of `docs/05-model-specs/layer1-credit.md` §10.3, adopted
+    through DR-B3.
+- **No Rust parity test exists in P0-01.** The first parity package (P1-01) needed DR-B1, DR-B2 and
+  DR-B3 settled. The owner settled them on 2026-10-08 and 2026-10-09, apart from DR-B3's Class D floor
+  values, which gate P1-12 only (`engine-spec.md` §8.16.1). P1-01's other preconditions are listed in
+  `docs/01-work-packages/README.md`.
 
-### 7. Typed-failure divergences (DR-B6, proposed)
+### 7. Typed-failure divergences (DR-B6)
 
-Where the oracle degrades silently, the proposed engine behaviour is a typed failure. The oracle stays
-unchanged, and parity is defined on the healthy path only. The paths are:
+Where the oracle degrades silently, the engine behaviour is a typed failure (DR-B6, ratified in part on
+2026-10-08). The oracle stays unchanged, and parity is defined on the healthy path only. The paths are:
 
 - the `lstsq` fallback on an ill-conditioned solve;
 - re-initialization on corrupt state;
@@ -222,7 +237,9 @@ They are listed in `PARITY.md` section (e).
 
 The `lstsq` fallback was a **deliberate** earlier decision, cautious-nevermore PR #53 audit item C3. The
 ADR that adopts the typed failure for ill-conditioning MUST cite PR #53 C3 as the decision it reverses.
-This ADR records that requirement. It does not adopt the policy.
+This ADR records that requirement. It does not adopt the policy. The owner ratified the policy under
+DR-B6 on 2026-10-08, and a new ADR is to record it. The numeric ill-conditioning threshold stays open
+until a model spec proposes it, before P1-06's solver failure semantics are final.
 
 ### 8. Licence (DR-A10): owner action required before merge
 
@@ -233,7 +250,7 @@ cautious-nevermore has no LICENSE file. Its visible history has these authors:
 - one `posthog[bot]` commit, which touched only `backend/api/*`, `.env.example` and `requirements.txt`.
   None of those paths is imported, and `reference/python/requirements.txt` is a new engine-only file.
 
-The recommended default:
+The recommended default, which the owner chose on 2026-10-08 (option 1, decision interview):
 
 - **The ruling.** The Data/Licensing owner records a ruling **on the P0-01 pull request** bringing
   `reference/python/` under `MIT OR Apache-2.0`. It takes the same form as GRID-Engine PR #1 comment
@@ -288,8 +305,10 @@ The recommended default:
   not removed: under another kernel or Python 3.12 the Layer C tests would fail again.
 - **Defects must not leak into Rust.** Every known oracle defect has to be tracked so that it is never
   ported, and every legacy number has to carry its generator label.
-- **Most parity work waits.** DR-B1 to DR-B3 and DR-D26 to DR-D29 are open, so the parity packages
-  (P1-01, P1-06, P1-12) are not Ready.
+- **Some parity work still waits.** The owner settled DR-B1 to DR-B3 and DR-D26 to DR-D29 in full or in
+  part on 2026-10-08 and 2026-10-09. The parity packages consume the corrected oracle, whose ledger
+  entries are each approved as their commits land (DR-B1), and the open parts (the Class D floor values;
+  DR-D26's seed set, quantile and margins; DR-D27's parts 3 and 4) keep P1-12 from being Ready.
 - **The merge waits on a licence ruling**, outside the implementer's control.
 - **`.env` leaks into the oracle.** `backend/db/connection.py` calls `load_dotenv()`, which walks up to
   the repository-root `.env`. That file's `DATABASE_URL` and `SQLX_OFFLINE` therefore enter the Python
@@ -336,7 +355,7 @@ The recommended default:
   - Rust cannot reproduce numpy streams in any case, so the Rust contract has to be committed fixtures.
 - **Commit fixtures only, with no oracle in the repository.** Rejected:
   - fixtures could never be regenerated or re-proved;
-  - the correction ledger (DR-B1, if ratified) would have nothing to correct;
+  - the correction ledger (DR-B1) would have nothing to correct;
   - known defects could not be demonstrated;
   - a fixture whose generator is gone becomes unreviewable. This is the "Rust only, Python folded into
     documentation" option the owner declined.

@@ -10,7 +10,7 @@ WHERE file.name != "README"
 SORT status ASC, file.name ASC
 ```
 
-## Status (2026-10-08)
+## Status (2026-10-09)
 
 | Item | State |
 |---|---|
@@ -19,8 +19,8 @@ SORT status ASC, file.name ASC
 | Rust engine | Pre-implementation: 11 crate stubs; `persistence` holds the SQLx scaffold and one migration |
 | Reference oracle | `legacy-59bce1d`, imported (105 files); its own suite passed on Linux at import (CPython 3.11.15). Its golden is pinned to CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, ratified 2026-10-08): correction-ledger entry L0 regenerated Layer C once under that platform, and 446 tests pass. No other correction applied |
 | Evidence level | "Experimental projections" (`engine-spec.md` §3.2, §3.3) |
-| Owner actions before the P0-01 merge | Ratify or override DR-A1, DR-A2, DR-A4 to DR-A9, DR-A11, DR-A12; accept or override ADR-011 and ADR-012; record the DR-A10 licence ruling on the PR |
-| Open decisions | Sections B, C and D of `decision-register.md` are proposed or open. They gate readiness of P1-01 onward |
+| Owner actions around the P0-01 merge | Before: in the merge comment, name again DR-A1, DR-A2, DR-A4 to DR-A9, DR-A11 and DR-A12 (ratified 2026-10-08 in the decision interview) and confirm the interview record; accept or override ADR-011 and ADR-012; post the DR-A10 licence ruling (option 1, chosen 2026-10-08) on the PR. After: make `reference-oracle` a required status check in branch protection (DR-D30) |
+| Owner decisions | The decision interview (2026-10-08/09) settled most B, C and D decisions in full or in part; the rest stay proposed or open (`decision-register.md`). An unsettled decision, or an unsettled part of one, gates readiness of the packages it blocks |
 
 ## Sequence (engine-spec.md §9.5)
 

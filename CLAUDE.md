@@ -25,8 +25,8 @@ The oracle never overrides the spec. A disagreement between oracle behaviour and
 is a decision request; oracle behaviour is never a reason to weaken a rule. The superseded specs
 (`docs/00-meta/specs/superseded/`), `docs/07-archive/` and `docs/06-sessions/` are history only.
 Registers in `docs/00-meta/` change requirements only once carried into the spec, an accepted ADR
-or a model spec. This order is DR-A2: adopted by P0-01, in force once the owner's merge comment
-ratifies it (`docs/02-adr/README.md`).
+or a model spec. This order is DR-A2: adopted by P0-01, ratified by the owner on 2026-10-08 (decision
+interview), and in force once the P0-01 merge comment names it again (`docs/02-adr/README.md`).
 
 ## Commands
 

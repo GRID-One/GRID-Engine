@@ -184,7 +184,7 @@ engine-spec §4.5).
 | Missing team | **Three different behaviours:** `run_rapm` raises `KeyError` (`layers.py:406`); `backtest.solve_rapm` skips the team (`backtest.py:104-106`); `weekly_update` anchors the team to **0.0** (`weekly_update.py:274`), a false zero prior |
 | Real producer | none |
 
-**v1 (proposed — DR-B5).** The market anchors **net** team strength (offense plus defense
+**v1 (DR-B5).** The market anchors **net** team strength (offense plus defense
 quality). It uses the quote **as published at or before the projection lock**. That is the
 market-line lock rule of engine-spec §4.3: a closing line is post-lock for any game after the
 lock. A team with no eligible quote gets **no** anchor row. A 0.0 default is forbidden
@@ -206,7 +206,8 @@ provider is selected. Mapping a spread or total to the intercept scale is a mode
 Synthetic `make_college()` gives **every** player a feeder season, using RNG seed
 `cfg.seed + 99` (`synth.py:308`). `build_priors` optionally reads caller-named `age` and
 `draft_round` columns (`priors.py:129-147`), where draft round 0 means undrafted and an absent
-value means unknown. Those step functions are not ported as-is (proposed — DR-C9).
+value means unknown. Those step functions are not ported; they go back to the Statistical owner
+(DR-C9).
 
 ### 6.1 Synthetic truth bundle (`gt`)
 
@@ -221,7 +222,7 @@ contract; it exists only for validation:
 - `players` (the players frame).
 
 The [synthetic-world spec](../05-model-specs/synthetic-world.md) defines the corrected planted
-net strength (proposed — DR-B4, DR-B5).
+net strength (DR-B4, DR-B5).
 
 ### 6.2 Invariants verified on the canonical synthetic world (v0)
 
@@ -276,13 +277,13 @@ alpha-spec Appendix D #8).
 1. Rows within a drive are chronological. `next` is the following row of the same drive, or
    `Terminal`.
 2. Exactly one terminal row per drive, and it is the last row.
-3. `drive_points` is constant within a drive and in the v1 vocabulary {0, 3, 7} *(proposed —
-   DR-C13)*. On the terminal row, `points` and `terminal_value` equal it.
+3. `drive_points` is constant within a drive and in the v1 vocabulary {0, 3, 7} *(DR-C13)*. On
+   the terminal row, `points` and `terminal_value` equal it.
 4. `off_team ≠ def_team`. `off_team` and `def_team` are constant within a drive.
 5. `down ∈ 1..=4`, `ydstogo ≥ 1`, `yardline_100 ≥ 1`.
 6. Every `off_team`/`def_team` value is in `players.team`. Every participant id is in
-   `players.player_id`, or the frame fails with `UnknownParticipant { count }`. Dropping unknown
-   ids is allowed only under an explicit, logged run policy *(proposed — DR-B6)*.
+   `players.player_id`, or the frame fails with `UnknownParticipant { count }` (DR-B6). Dropping
+   unknown ids is allowed only under an explicit, logged run policy *(proposed — DR-B6)*.
 7. Keys are unique: `player_id` within `players`; `(game_id, play_id)` within `plays`.
 
 **Real-data profile (nflverse and the corrected synthetic world):**
@@ -304,9 +305,9 @@ The **legacy synthetic profile** (v0 fixtures) is exempt from real-data rules 1�
 
 | # | Defect (v0) | Evidence | v1 disposition |
 |---|---|---|---|
-| D-1 | **`two_minute` depends on a column the contract never carries.** `situations.py:23,57-60` reads `quarter_seconds_remaining`, which neither producer emits, so the mask is always absent and only a warning is logged. The definition also ignores the quarter, so it would include the ends of Q1 and Q3 (KI-NEW-A4). On real 2023 pass/run rows, `quarter_seconds_remaining ≤ 120` marks 6,227 rows and `half_seconds_remaining ≤ 120` marks 4,111 | critic.md C-13; KI-NEW-A4 | The adapter MUST emit `qtr` and `half_seconds_remaining` (`GameClock`). `two_minute := half_seconds_remaining ≤ 120` *(proposed — DR-C13)*. Synthetic frames have no clock, so `two_minute` is reported as `Unavailable`, never silently omitted. The change from the oracle's definition is a `PARITY.md` divergence |
-| D-2 | No `season_type`, so postseason rows enter V(s), RAPM and the walk-forward | KI-NEW-V0a (1,638 rows in 2023) | `season_type` is required. Engine policy is regular season only for training labels, and the plays-side policy is stated in the model specs *(proposed — DR-C12)* |
-| D-3 (KI-NEW-Z46) | 7/3/0 vocabulary: defensive scores and safeties count 0; an unknown `fixed_drive_result` becomes 0 | KI-NEW-V0b; `nflverse_adapter.py:106` | Keep 7/3/0 for v1 *(proposed — DR-C13)*. Map `fixed_drive_result` through a **closed** table in the nflverse normalization map; an unknown value is a typed `SchemaDrift` error. A signed-EP label would be a v2 major change |
+| D-1 | **`two_minute` depends on a column the contract never carries.** `situations.py:23,57-60` reads `quarter_seconds_remaining`, which neither producer emits, so the mask is always absent and only a warning is logged. The definition also ignores the quarter, so it would include the ends of Q1 and Q3 (KI-NEW-A4). On real 2023 pass/run rows, `quarter_seconds_remaining ≤ 120` marks 6,227 rows and `half_seconds_remaining ≤ 120` marks 4,111 | critic.md C-13; KI-NEW-A4 | The adapter MUST emit `qtr` and `half_seconds_remaining` (`GameClock`). `two_minute := half_seconds_remaining ≤ 120` *(DR-C13)*. Synthetic frames have no clock, so `two_minute` is reported as `Unavailable`, never silently omitted. The change from the oracle's definition is a `PARITY.md` divergence. Every other mask of the canonical set (DR-C13: `red_zone`, `passing_downs`, `rushing_downs`, `goal_line`, `goal_line_wr`, `third_and_long`, `fourth_down`) reads only `down`, `ydstogo` and `yardline_100` |
+| D-2 | No `season_type`, so postseason rows enter V(s), RAPM and the walk-forward | KI-NEW-V0a (1,638 rows in 2023) | `season_type` is required. Engine policy is regular season only: for training labels (DR-C12) and for the plays that feed V(s), RAPM and features (DR-D4) |
+| D-3 (KI-NEW-Z46) | 7/3/0 vocabulary: defensive scores and safeties count 0; an unknown `fixed_drive_result` becomes 0 | KI-NEW-V0b; `nflverse_adapter.py:106` | Keep 7/3/0 for v1 *(DR-C13)*. Map `fixed_drive_result` through a **closed** table in the nflverse normalization map; an unknown value is a typed `SchemaDrift` error. A signed-EP label would be a v2 major change |
 | D-4 (KI-NEW-Z47) | A `fixed_drive` can span a change of possession; the adapter chains next-state across offenses and broadcasts one result to both | §6.3 (2023, one drive). **Not in the inventories; reported as new** | MUST NOT chain next-state across an `off_team` change. Such a drive is quarantined (excluded from V(s) and RAPM and listed in the data-quality report) unless the nflverse normalization map defines a reliable split *(proposed — P1-03 decision)* |
 | D-5 (KI-NEW-Z48) | "Participation unavailable" is indistinguishable from "empty": absent participation or an unmatched row yields `()`, and RAPM then fits a team-intercept-only design without error. `run_situation_rapm` checks only that the columns exist (`layers.py:469-473`) | `nflverse_adapter.py:183-186,211-213` | `Participation::{Listed, Unmatched, NotAvailable}` plus frame-level availability (§9). Participation-dependent stages reject frames whose participation is not available as of the lock (DR-C1) |
 | D-6 | Duplicate participation keys raise an ambiguous-truth error | KI-NEW-V0d | Typed `DuplicateKey` error |
@@ -314,7 +315,7 @@ The **legacy synthetic profile** (v0 fixtures) is exempt from real-data rules 1�
 | D-8 (KI-NEW-Z38) | The synthetic generator emits duplicated ids in `off_players` (245 plays). The planted yards count the player's ability twice, and `build_design` sums the duplicate COO entries into a **+2** design value | §6.2. **New** | Rust parity on legacy fixtures MUST treat participation as a **multiset** (sum duplicates) to reproduce v0. The real-data profile forbids duplicates. The corrected generator SHOULD not produce them (DR-B4) |
 | D-9 (KI-NEW-Z39) | The synthetic state space leaves football: `yardline_100` up to 104, `ydstogo > yardline_100`, no safeties | §6.2. **New** | V(s) state support differs between synthetic and real data; [value-model.md](../05-model-specs/value-model.md) states the support. The legacy profile is exempt from validation |
 | D-10 | Synthetic defenders are drawn from the offense's own team | KI-NEW-Y0 (critic.md G-1) | Fixed in the corrected synthetic world (correction #1 in `reference/python/PARITY.md`, DR-B1). Real-data rule 3 enforces the invariant |
-| D-11 | `market` units, estimand and missing-team behaviour are inconsistent (§5) | KI-G1, KI-NEW-A1; reconcile-code-first.md §3 | §5 v1 rules *(proposed — DR-B5)* |
+| D-11 | `market` units, estimand and missing-team behaviour are inconsistent (§5) | KI-G1, KI-NEW-A1; reconcile-code-first.md §3 | §5 v1 rules *(DR-B5)* |
 | D-12 (KI-NEW-Z49) | Producer dtypes drift: `play_id`/`yardline_100` are float in real data and int in synthetic; ids are str in real and int in synthetic; `drive_id` is str vs int. Position vocabularies differ (`DEF` vs nflverse positions). After a Parquet round-trip participation cells become arrays, which breaks `AsOf.slice_pool` | KI-V8; §2.1 | v1 canonical types (§11). Position enum and synthetic↔real mapping are owned by [rapm-attribution.md](../05-model-specs/rapm-attribution.md) (open) |
 | D-13 (KI-NEW-Z40) | Truth columns (`ability`, `is_starter`) live in the input frame | §4 | `SyntheticTruth` is a separate type that estimator code cannot reach |
 | D-14 | V(s) is fitted on the whole season's plays in `weekly_update` | KI-NEW-W4 (`weekly_update.py:210-214`) | Consumers fit only on the as-of view (§9) |
@@ -329,7 +330,7 @@ v0 has no notion of *when* a row became knowable. `AsOf` filters on `(season, we
 therefore folds current-season FTN participation into RAPM at every origin. That participation
 is published **only after the postseason**
 ([nflverse/README.md](../04-providers/nflverse/README.md)), so this is a train/serve skew.
-v1 adds the following *(proposed — DR-C1)*.
+v1 adds the following *(DR-C1)*.
 
 **Row-level (required):**
 
@@ -366,7 +367,7 @@ exposes a row's outcome columns only if both hold:
 The same view exposes participation for season *s* only if
 `participation_availability(s) = Published { at ≤ lock_at }`. In-season participation is
 therefore unavailable at every in-season lock. The live path uses the participation-free
-Layer-1′ signal *(proposed — DR-C1; engine-spec §6.3)*.
+Layer-1′ signal *(DR-C1; engine-spec §6.3)*.
 
 Pre-game inputs (market quotes, interventions, availability) are admitted by their own
 `quoted_at`/`observed_at ≤ lock_at`. A record with no timestamp is a typed error, as the oracle
@@ -391,9 +392,14 @@ td_type, fumble, interception, td_player_id, complete_pass`. Despite its name it
   contract (cn-docs.md §2.2). They are not.
 
 v1 does **not** port this shape. Training labels come from official nflverse weekly player
-statistics, regular-season weeks only, with official stat definitions *(proposed — DR-C12;
-engine-spec §4.7)*. PBP-derived aggregates may appear only as features or cross-checks, under
-their own contract (`grid.stat_events`, not yet written). They never extend `grid.plays`.
+statistics, regular-season weeks only, with official stat definitions and two-point conversions
+included *(DR-C12; engine-spec §4.7)*. The engine's own play-by-play rebuild of those statistics
+is a required reconciliation source: it is compared with the official figures for every
+player-week, every disagreement is recorded, and a disagreement above a threshold (set in the
+P1-03 ingestion spec) is flagged for review. The official figure is always the label; the
+rebuild never changes one (DR-C12). PBP-derived aggregates may also appear as features. The
+rebuild and those features live under their own contract (`grid.stat_events`, not yet written).
+They never extend `grid.plays`.
 
 ---
 
@@ -414,7 +420,7 @@ pub struct UtcInstant(pub i64);                       // seconds since the Unix 
 pub enum SeasonType { Regular, Post }
 
 pub struct PlayState { pub down: u8, pub ydstogo: u8, pub yardline_100: u8 }
-pub enum DrivePoints { Zero, FieldGoal, Touchdown }   // 0 / 3 / 7 (proposed — DR-C13)
+pub enum DrivePoints { Zero, FieldGoal, Touchdown }   // 0 / 3 / 7 (DR-C13)
 pub enum NextState { Continue(PlayState), Terminal }  // replaces terminal, n_*, the -1 sentinels
 pub struct GameClock { pub qtr: u8, pub half_seconds_remaining: u16 }
 pub enum Participation {

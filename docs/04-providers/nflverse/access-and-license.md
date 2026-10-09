@@ -5,7 +5,7 @@ contract-version: 1
 status: Draft            # Draft | Approved | Superseded
 data-licensing-owner: repository owner (holds every human role; docs/00-meta/authority-index.md)
 verified-on: 2026-10-01
-pending-rulings: DR-A11 (fixture licensing policy); per-dataset terms for pbp, rosters, player stats, schedules, snap counts
+pending-rulings: real-data provider fixtures under fixtures/third-party/nflverse/ (form set by DR-A11, ratified 2026-10-08); ShareAlike status of participation-derived outputs (DR-D3, open); per-dataset terms for pbp, rosters, player stats, schedules, snap counts
 ---
 
 # nflverse — access, licence, attribution and redistribution
@@ -13,7 +13,7 @@ pending-rulings: DR-A11 (fixture licensing policy); per-dataset terms for pbp, r
 **Status: Draft.** This document records what was **verified** on 2026-10-01 and marks
 everything else as requiring a ruling by the Data/Licensing owner. It is required before the
 P1-03 adapter is Ready ([README.md](README.md)) and implements critic.md G-5 and owner decision
-DR-A11 (adopted by the P0-01 consolidation, subject to ratification).
+DR-A11 (ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment).
 
 Nothing here is legal advice. Where a question turns on interpreting a licence, this document
 names the question and leaves the answer to the Data/Licensing owner.
@@ -24,7 +24,7 @@ names the question and leaves the answer to the Data/Licensing owner.
 |---|---|
 | Host | `github.com`, release assets of `nflverse/nflverse-data`, over HTTPS |
 | Authentication | none |
-| Engine fetch budget | at most once per local calendar day per source *(proposed — DR-C14)* |
+| Engine fetch budget | at most once per local calendar day per source (DR-C14) |
 | Robots and scraping | Release assets are a published download channel. Restricted pages are never scraped to fill a gap (superseded alpha-spec §4.3) |
 | Credentials in code, logs or fixtures | none exist for this provider; none may be introduced |
 
@@ -68,8 +68,10 @@ Notes:
 
    Whether model outputs further downstream are "Adapted Material" is **open**. Examples are
    projections that use participation-based priors, and aggregate metrics. It is a
-   Data/Licensing ruling under DR-A11. Until the ruling, every such output is treated as
-   possibly ShareAlike-bound and is **not published or redistributed**.
+   Data/Licensing ruling under DR-D3, which the owner keeps open until a first public release is
+   actually planned; the full ruling and the NFL/FTN rights review happen then. Until the ruling,
+   every such output is treated as possibly ShareAlike-bound and is **not published or
+   redistributed**, and attribution is carried (DR-D3 interim rule, confirmed 2026-10-09).
 3. **The reference oracle carries no nflverse data.**
    - Its tests mock every fetch, and its isolation guard blocks the network.
    - The licence ruling for `reference/python/` code (DR-A10) is therefore separate from data
@@ -145,13 +147,18 @@ documentation quoting real-data numbers.
 
 ## 7. Open items for the Data/Licensing owner
 
-1. **DR-A11.**
-   - Ratify the synthetic-only parity fixture rule.
-   - Decide whether any real-data provider fixture may be committed, and in what form.
-   - Decide the ShareAlike status of engine outputs derived from participation (§3.2).
+1. **DR-A11 and DR-D3.**
+   - The synthetic-only parity fixture rule and the licence-segregated form of §4 were ratified
+     on 2026-10-08 (DR-A11).
+   - Decide whether any real-data provider fixture may be committed under
+     `fixtures/third-party/nflverse/`. None may be until that ruling.
+   - Decide the ShareAlike status of engine outputs derived from participation (§3.2; DR-D3,
+     open until a first public release is actually planned).
 2. **Per-dataset terms.** Verify the terms for play-by-play, player and team stats, rosters,
    players, schedules, depth charts and NGS (repository-level CC-BY-4.0 or otherwise), and for
-   the PFR-sourced snap counts and advanced stats. Fix the attribution wording for each.
+   the PFR-sourced snap counts and advanced stats. Fix the attribution wording for each. The
+   player-stats and play-by-play terms are the open Data/Licensing half of DR-C12, needed before
+   P1-03.
 3. **Injury feed.** Re-verify its availability for 2025 and later; the evidence conflicts
    ([README.md](README.md) "Freshness").
 4. **Re-verification.** Record a date and owner for re-checking this document, at least once per

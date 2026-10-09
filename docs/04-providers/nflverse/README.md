@@ -66,14 +66,14 @@ verified in code.
 
 | Dataset | Engine use | In-season availability | Oracle use | Notes |
 |---|---|---|---|---|
-| Play-by-play | Situation, pace, EPA, play type, air yards, red zone, game script, opponent; the **GRID plays contract** | yes | **yes**: `play_by_play_{year}.parquet` (`nflverse_loader.py:5-8`) | Core source. Retain raw |
-| Player weekly stats | **Training labels**, after the stat-correction window | yes | **no.** The oracle sums its own stats from pbp, with confirmed biases (KI-NEW-I1 to KI-NEW-I5) | Official definitions are the label source *(proposed — DR-C12; engine-spec §4.7)*. The inventory compared two downloaded files: `player_stats_2023.parquet` (sha256 `94673091…c9`) and `stats_player_week_2023.parquet` (`ac776fbd…bc`). Which release is canonical, and its correction window, is a P1-03 item |
+| Play-by-play | Situation, pace, EPA-type features from GRID dV only (nflverse `ep`/`epa` never enter features; DR-D22), play type, air yards, red zone, game script, opponent; the **GRID plays contract** | yes | **yes**: `play_by_play_{year}.parquet` (`nflverse_loader.py:5-8`) | Core source. Retain raw |
+| Player weekly stats | **Training labels**, after the stat-correction window | yes | **no.** The oracle sums its own stats from pbp, with confirmed biases (KI-NEW-I1 to KI-NEW-I5) | Official definitions are the label source (DR-C12; engine-spec §4.7), reconciled against the engine's play-by-play rebuild for every player-week; the official figure always wins. The inventory compared two downloaded files: `player_stats_2023.parquet` (sha256 `94673091…c9`) and `stats_player_week_2023.parquet` (`ac776fbd…bc`). Which release is canonical, and its correction window, is a P1-03 item |
 | Team weekly stats | Game-environment models (Layer B) | yes | no | — |
-| Schedules and games | Opponent, venue, kickoff, spread and total when present | yes | no. The missing schedule/opponent table is KI-#31 | Version every schedule snapshot. A spread/total used as a market anchor follows the line-at-lock rule (engine-spec §4.3; DR-B5) |
+| Schedules and games | Opponent, venue, kickoff, spread and total when present | yes | no. The missing schedule/opponent table is KI-#31 | Version every schedule snapshot. A spread/total used as a market anchor follows the line-at-lock rule (engine-spec §4.3; DR-B5). P1-03 documents what these fields represent and when they were captured. Until a timestamped pre-lock source is approved, historical backtests treat market inputs as unavailable, with a missingness indicator, and never substitute closing lines (DR-D2, open; interim rule confirmed 2026-10-09) |
 | Players | GSIS identity, cross-source ids, college, draft | yes | no | Canonical registry (engine-spec §4.4) |
 | Rosters, weekly rosters | Team membership, status, positions; the RAPM player universe | yes | **yes**: `roster_{year}.parquet` (`nflverse_loader.py:9-12`). The weekly-roster URL tried earlier returned 404 (cautious-nevermore PR #68) | Timestamped snapshots. `gsis_id` matches participation ids |
 | Depth charts | Role priors, starter hierarchy | yes, with timestamp semantics | no | From 2025, use the source timestamp rather than assuming a week field (superseded alpha-spec §4.1) |
-| Snap counts | Playing time and role change; Kalman observation precision | yes | no. The oracle derives "snaps" by counting participation rows. Its incremental path hard-codes 1 (KI-#24) | Source is Pro Football Reference, from 2012, keyed by `pfr_player_id` / `pfr_game_id` (nflreadr `load_snap_counts`). It needs a PFR→GSIS crosswalk |
+| Snap counts | Playing time and role change; Layer C opportunity allocation and played flags. Not the Kalman observation precision, which comes from per-role-event counts, not snaps (DR-D15) | yes | no. The oracle derives "snaps" by counting participation rows. Its incremental path hard-codes 1 (KI-#24) | Source is Pro Football Reference, from 2012, keyed by `pfr_player_id` / `pfr_game_id` (nflreadr `load_snap_counts`). It needs a PFR→GSIS crosswalk |
 | Next Gen Stats | Rushing, receiving and passing efficiency | yes | no | Values are missing below qualification thresholds; model that explicitly |
 | PFR advanced stats | Supplemental efficiency | usually | no | Never assume every field exists every week |
 | FTN charting | Play-level charting | delayed | no | Available from 2022; "charted within 48 hours following each game" (nflreadr `load_ftn_charting`). CC-BY-SA |
@@ -101,7 +101,7 @@ in `source-manifest.yaml` from the nflverse-data release index. They are never g
 
 **Cadence and budget.** The engine fetches each source **at most once per local calendar day**,
 with catch-up on invocation after a missed interval. The engine itself enforces this cap. There
-is no continuous polling (engine-spec §1; *proposed — DR-C14*). No nflverse-specific rate limit
+is no continuous polling (engine-spec §1; DR-C14). No nflverse-specific rate limit
 was found; GitHub's own download limits apply, and P1-03 records them in `source-manifest.yaml`.
 
 **Content-addressed raw retention.** Every downloaded file is stored unmodified with:
@@ -110,7 +110,7 @@ was found; GitHub's own download limits apply, and P1-03 records them in `source
 - the source timestamp, when one is exposed.
 
 Re-running a projection never re-downloads unchanged history, and the engine can run offline
-from the raw cache *(proposed — DR-C14)*.
+from the raw cache (DR-C14).
 
 **Credentials.** None. Never add a token to a URL, a log or a fixture.
 
@@ -133,7 +133,7 @@ Source: the nflreadr article "nflverse data schedule".
 
 **Consequence for the engine.** Season *S* participation does not exist at any in-season lock in
 *S*. Participation-dependent RAPM is therefore an **offseason** product. The live path uses the
-participation-free Layer-1′ signal *(proposed — DR-C1; engine-spec §6.3)*. The as-of layer
+participation-free Layer-1′ signal (DR-C1; engine-spec §6.3). The as-of layer
 models publication as an event with a timestamp (`participation_availability`,
 [plays-contract.md](../../03-contracts/plays-contract.md) §9). The Python oracle's walk-forward
 violates this rule: it folds current-season participation into RAPM at every origin
@@ -221,8 +221,8 @@ The full map is `normalization-map.md` (P1-03). Its GRID plays-contract part is 
 | `season`, `season_type`, `week` | same | `season_type ∈ {REG, POST}` |
 | `down`, `ydstogo`, `yardline_100` | `PlayState` | exact integral cast |
 | `yards_gained` | `yards: i16` | exact integral cast |
-| `fixed_drive_result` | `DrivePoints` | **Closed table**: Touchdown → 7, Field goal → 3, every other listed 2023 value → 0 *(proposed — DR-C13)*. An unlisted value is a typed `SchemaDrift` |
-| `qtr`, `half_seconds_remaining` | `GameClock` | `two_minute := half_seconds_remaining ≤ 120` *(proposed — DR-C13)* |
+| `fixed_drive_result` | `DrivePoints` | **Closed table**: Touchdown → 7, Field goal → 3, every other listed 2023 value → 0 (DR-C13). An unlisted value is a typed `SchemaDrift` |
+| `qtr`, `half_seconds_remaining` | `GameClock` | `two_minute := half_seconds_remaining ≤ 120` (DR-C13) |
 | participation `nflverse_game_id` (fallback `old_game_id`), `play_id` | join key `(game_id, play_id)` | Normalized on both sides. The float/int mismatch once dropped every row |
 | participation `offense_players`, `defense_players` | `Participation::Listed` | Split on `;`. Missing cells map to an explicit state, never an empty list (plays-contract D-5). Offense is filtered to `{QB, RB, WR, TE, FB}` |
 | roster `gsis_id`, `full_name`, `team`, `position` | `PlayerKey::Gsis`, registry fields | Engine-spec §4.4 |
@@ -269,9 +269,14 @@ inputs are not committed (DR-A11).
 
 **Labels and features.**
 
-- Labels come from official weekly player stats *(proposed — DR-C12)*.
-- PBP aggregates may be features or cross-checks only, under their own contract, never extending
-  the GRID plays contract ([plays-contract.md](../../03-contracts/plays-contract.md) §10).
+- Labels come from official weekly player stats, REG weeks only, with two-point conversions
+  included. A stat correction creates a new data version and never overwrites one (DR-C12).
+- The engine's play-by-play rebuild of the same stats is a required reconciliation source
+  (DR-C12). It is compared with the official figure for every player-week; every disagreement
+  is recorded, and disagreements above a threshold, set in the P1-03 ingestion spec, are flagged
+  for review. It never changes a label: the official figure always wins.
+- PBP aggregates, the rebuild included, may also be features, under their own contract, never
+  extending the GRID plays contract ([plays-contract.md](../../03-contracts/plays-contract.md) §10).
 - The definitions to use:
   - fumbles lost = sack + rushing + receiving fumbles lost;
   - passing and rushing TDs from `pass_touchdown` / `rush_touchdown` and `td_player_id`;
@@ -298,7 +303,7 @@ import.
 ## Retention rules
 
 Raw files are retained **unmodified and content-addressed** (sha256), registered in SQLite with
-their provenance (*proposed — DR-C15*). They are kept for:
+their provenance (DR-C15). They are kept for:
 
 - reproducibility, and rebuilding every derived artifact offline;
 - debugging;

@@ -5,9 +5,9 @@ priority number wins.
 
 > **Replaced in P0-01.** The previous revision ranked `final-build-spec.md` and `alpha-spec.md` at
 > levels 1 and 2. ADR-011 replaces both with `engine-spec.md` and archives them as superseded
-> (DR-A1, DR-A2). The order below is adopted by P0-01 and is in force once the owner's P0-01 merge
-> comment ratifies DR-A2; until then the superseded `alpha-spec.md` §1.5 order applies
-> (`docs/02-adr/README.md`).
+> (DR-A1, DR-A2). The order below is adopted by P0-01. The owner ratified DR-A2 on 2026-10-08 in the
+> decision interview; the order is in force once the P0-01 merge comment names it again, and until then
+> the superseded `alpha-spec.md` §1.5 order applies (`docs/02-adr/README.md`).
 
 ## Order of authority (engine-spec.md §1.5)
 
@@ -85,7 +85,9 @@ just bootstrap                                                            # once
 - **Windows is merge-authoritative pending DR-A3.** `verify.ps1 -Scope Full` and the
   `windows-authoritative` CI job stay the merge gate. The old rationale ("the production target is
   Windows") no longer holds; Windows authority is kept only to avoid reducing coverage during the
-  pivot. A follow-up ADR is due before P1-11 (engine-spec §8.19).
+  pivot. A follow-up ADR is due before P1-11 (engine-spec §8.19). Its direction was ratified on
+  2026-10-08: Linux becomes merge- and release-authoritative, with Windows kept as a matrix job. Until
+  that ADR is accepted, Windows stays the merge gate.
 - **`just verify` is the Linux smoke check.** It does not replace the merge gate.
 - **The frozen verify chain** is 8 recipes and 15 commands, identical in the `justfile`,
   `scripts/verify.sh` and `scripts/verify.ps1` (`scripts/check-verify-parity.sh`). Recipes are a
@@ -94,8 +96,9 @@ just bootstrap                                                            # once
   in `.github/workflows/alpha-ci.yml` checks `reference/python/` against `MANIFEST.tsv` and runs the
   oracle suite with threads pinned to 1, on the runner image's tool-cache CPython 3.11 (the job fails
   if that interpreter is absent) and with `OPENBLAS_CORETYPE=Haswell`. It is never wired into
-  `verify.ps1`, `just verify` or `windows-authoritative`, and whether it becomes a required merge check
-  is open (DR-D30). The oracle's golden is frozen on that pinned platform (KI-NEW-Z78; DR-D31, ratified 2026-10-08; correction-ledger entry L0), `reference/python/tools/pytest_platform_pin.py` enforces it,
+  `verify.ps1`, `just verify` or `windows-authoritative`. The owner decided on 2026-10-09 that it
+  becomes a required status check for every pull request, applied in branch protection after P0-01
+  merges (DR-D30). The oracle's golden is frozen on that pinned platform (KI-NEW-Z78; DR-D31, ratified 2026-10-08; correction-ledger entry L0), `reference/python/tools/pytest_platform_pin.py` enforces it,
   and the job is expected green. Never loosen a tolerance to absorb a platform difference.
 
 ## Active work

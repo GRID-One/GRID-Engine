@@ -13,14 +13,16 @@ superseded-by:
 
 **Proposed** 2026-10-07 under work package P0-01 (`docs/01-work-packages/p0-01-engine-consolidation.md`).
 It is not accepted. The owner accepts or overrides it at the merge of the P0-01 pull request, in the
-review or comment that ratifies the DR-A decisions by ID (`docs/00-meta/decision-register.md`, "How to
-ratify or override", step 3). A merge alone does not ratify a DR that the comment does not name.
+review or comment that names the DR-A decisions by ID (`docs/00-meta/decision-register.md`, "How to
+ratify or override", step 3). The owner ratified those decisions on 2026-10-08 in the decision interview
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the merge comment names them again and
+confirms that record. A merge alone does not ratify a DR that the comment does not name.
 
 **Where this decision gets its force.** It replaces the two documents that outranked every ADR
 (`alpha-spec.md` §1.5, superseded). An ADR cannot do that on its own rank. ADR-001 D3 set the precedent:
 a deviation from a specification is ratified by the owner directly. The force here comes from the
-owner's request of 2026-10-01, the owner's choice of option, and ratification at merge. This ADR is the
-record of all three.
+owner's request of 2026-10-01, the owner's choice of option, and the owner's ratification (the decision
+interview of 2026-10-08, named again at merge). This ADR is the record of all three.
 
 ## Context
 
@@ -230,8 +232,11 @@ changes, and the decision does not.**
   that rationale no longer holds.
 - Windows authority is retained only because removing it would reduce coverage without its own ADR
   (ADR-007, ADR-009).
-- A follow-up ADR (Product/Architecture owner and Security/Release owner) should land before P1-11. It
-  may make Linux authoritative, with Windows as a matrix job.
+- A follow-up ADR (Product/Architecture owner and Security/Release owner) should land before P1-11. The
+  owners ratified its direction on 2026-10-08 (DR-A3): Linux becomes the merge- and release-authoritative
+  platform, with Windows kept as an additional (matrix) job. The ADR must justify the reduced Windows
+  gating that ADR-007, ADR-008 and ADR-009 otherwise refuse. Until it is accepted, Windows stays the
+  merge gate.
 - Either way, the Python oracle job is Linux-only (ADR-012).
 
 ### D9 — Work-package numbering (DR-A5)
@@ -253,7 +258,7 @@ changes, and the decision does not.**
   - repository-wide line-ending normalization (ADR-004);
   - CI caching (ADR-007);
   - runbooks and model cards (ADR-006 item 4);
-  - `toolchains/native-dependencies.lock`, now only if a native booster is adopted (DR-C8, proposed).
+  - `toolchains/native-dependencies.lock`, now only if a native booster is adopted (DR-C8).
 
 ### D10 — PR #1 merge semantics (DR-A6, adapted)
 
@@ -338,10 +343,11 @@ ADR's front matter reads "proposed" (`docs/02-adr/README.md`, "Partial supersess
 - **Windows authority stays without its original rationale** until the follow-up ADR.
 - **Review load.** One pull request carries about 260 non-trivial paths, most of them new documents
   and the verbatim oracle tree.
-- **Most decisions are only proposed.** Every B, C and D decision is proposed or open, so most
-  Phase 1 packages are not Ready until the owner rules (`engine-spec.md` §8.16.1).
-- **Ratification can change the PR.** The A-decisions are implemented before ratification. If the owner
-  overrides one, the PR changes before merge.
+- **Some decisions stay open.** The owner settled most B, C and D decisions, in full or in part, in the
+  decision interview of 2026-10-08/09. A Phase 1 package is not Ready while a decision it depends on, or
+  a still-open part of one, is unsettled (`engine-spec.md` §8.16.1).
+- **Ratification can change the PR.** The A-decisions were implemented before ratification, and the
+  owner ratified them on 2026-10-08. If the merge comment overrides one, the PR changes before merge.
 
 **Inherited.** Every later package inherits the engine-only scope, the six-level order, the `P<phase>-NN`
 scheme, the 8-recipe chain and the 11-crate workspace. An error here propagates to all of them.

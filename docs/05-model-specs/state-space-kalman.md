@@ -66,8 +66,9 @@ is separated **by timescale and persistence** into three components
 The observation is `y_w = τ_w + f_w + s_w + noise`, with noise variance scaled by exposure (snaps).
 
 **What the layer may estimate.** Per-player efficiency in the GRID value currency: dV, expected
-drive points per on-field offensive snap. It produces three products, and they MUST NOT be
-aliased for one another (`reference/python/backend/projection/features.py:9-18`):
+drive points per on-field offensive snap (per role event on the in-season Layer-1′ path, DR-D15). It
+produces three products, and they MUST NOT be aliased for one another
+(`reference/python/backend/projection/features.py:9-18`):
 
 1. **Filtered state** (data through week w). This is the real-time grade, and it is causal.
 2. **One-step predictive** `N(H·x⁻_w, S_w)`, with `S_w` including the observation noise R. This is the honest forecast
@@ -80,7 +81,7 @@ aliased for one another (`reference/python/backend/projection/features.py:9-18`)
 **What the layer treats as nuisance or leaves to other layers.**
 
 - **Volume and opportunity** belong to Layer C. Exposure enters only as measurement precision
-  (`R = r_scale/snaps`).
+  (`R = r_scale/snaps`; on the in-season Layer-1′ path the role-event count replaces snaps, DR-D15).
 - **Availability** belongs to Layer A. A week the player did not play is **missing data**, not a zero: the filter
   predicts without updating, so uncertainty grows during an absence
   (`reference/python/backend/grid/statespace.py:20-21`).
@@ -107,13 +108,13 @@ validated estimands until `synthetic-world.md` plants them and §10.3 class-D ga
 
 | Aspect | Content |
 |---|---|
-| Engine-spec layer | §6.1 Layer D (efficiency latent). GRID is a signal provider, not the projection (proposed — DR-C2). GRID talent enters Layer D as role-specific covariates in EB-shrunk rate models (proposed — DR-C3) |
+| Engine-spec layer | §6.1 Layer D (efficiency latent). GRID is a signal provider, not the projection (DR-C2). GRID talent enters Layer D as role-specific covariates in EB-shrunk rate models, and this layer's state splits by role: one state-space track per player and role (dropback, carry, target; DR-C3) |
 | Signal stack | §6.2 GRID signal stack: V(s) → dV → Layer-1 weekly credit → **this layer** → features. Offseason RAPM is not this layer's observation (§3.1) |
-| Live vs offseason | §6.3. The validated observation (Layer-1 credit) is participation-dependent. In-season it MUST be replaced by a participation-free Layer-1′ credit (proposed — DR-C1) |
+| Live vs offseason | §6.3. The validated observation (Layer-1 credit) is participation-dependent. In-season it MUST be replaced by a participation-free Layer-1′ credit, measured per role event (DR-C1, DR-D15) |
 | Statistical methods | §6.4 Kalman filtering, full RTS and fixed-lag RTS (fixed-lag is not in the oracle, §6.4 below) |
 | Priors | §6.5. `cross-league-priors.md` supplies `x0`/`P0` for low-evidence players. **Not wired in the oracle** (KI-#15) |
 | Ensemble | §6.6 member "Kalman latent-state model" (superseded alpha-spec §6.4 item 3). It has not been scored on real data as a forecast; see §7.4 |
-| Upstream | `value-model.md` (dV), `layer1-credit.md` (weekly credit y and snaps), `cross-league-priors.md` (x0, P0), interventions (Layer A injury return; coaching-change provider; changepoint detector §4.6) |
+| Upstream | `value-model.md` (dV), `layer1-credit.md` (weekly credit y and its exposure: snaps, or role events for Layer-1′, DR-D15), `cross-league-priors.md` (x0, P0), interventions (Layer A injury return; coaching-change provider; changepoint detector §4.6) |
 | Downstream | `projection-stack.md` (`smoothed_talent`, filtered talent/form features), `docs/03-contracts/engine-output-contract.md` (trajectory and predictive band, engine-spec §5.5), `evaluation-and-leakage.md` (NIS, PIT, PICP, as-of rules) |
 | Contracts | `docs/03-contracts/plays-contract.md` (indirectly, via credit), `engine-output-contract.md`, `parity-fixture-contract.md` |
 
@@ -144,7 +145,8 @@ This is the observation of the **validated** paths: the goldens, Tier 0, calibra
 The incremental production path feeds a different quantity: the cumulative season-to-date RAPM
 coefficient, with `snaps = 1` (`reference/python/backend/pipeline/weekly_update.py:307-309`). That is a
 defect (KI-NEW-W3, KI-#24; critic X-13 adjudicates against final-build-spec's reading). The engine
-observation MUST be weekly credit with real exposure (proposed — DR-C10).
+observation MUST be weekly credit with real exposure (DR-C10). In season that is the participation-free
+Layer-1′ credit of each role track, with the role-event count as exposure (DR-C1, DR-C3, DR-D15).
 
 ### 3.2 Inputs
 
@@ -185,7 +187,7 @@ leading-absence RB's smoothed talent from 1.012 to 0.959 (PR #91 round 2; cn-doc
 - **Publication lag.** Layer-1 credit as implemented needs participation: `off_players` selects the
   player's snaps, and `def_players` builds the opponent sum (`reference/python/backend/grid/layers.py:488-495, 532, 581`).
   nflverse participation is published once, after the postseason (critic G-5). On the live path the
-  observation therefore MUST be the participation-free Layer-1′ credit (proposed — DR-C1).
+  observation therefore MUST be the participation-free Layer-1′ credit (DR-C1).
   Participation-dependent credit is admissible only for completed, published seasons. Backtests
   MUST NOT use current-season participation before its publication timestamp.
 - **Interventions are pre-game signals.** An intervention dated week W is usable for week W
@@ -193,7 +195,7 @@ leading-absence RB's smoothed talent from 1.012 to 0.959 (PR #91 round 2; cn-doc
   Coaching changes are keyed by `week_effective`
   (`reference/python/backend/pipeline/weekly_update.py:321-330`). That is the effective week, not
   the time the change became known. The engine MUST carry a knowledge timestamp per intervention record
-  (engine-spec §4.3 coaching changes; §4.5 publication lag).
+  (engine-spec §4.3 coaching changes; §4.5 publication lag; DR-D1).
 - **Changepoint flags are outcome-derived.** They are computed from `y_w` itself (§4.6), so they
   are not pre-game signals (see §8.2 D-8).
 
@@ -221,8 +223,9 @@ Incremental outputs: the updated `KalmanState`, plus `pred_var` float[n] (`S_i`)
 ### 3.5 Explanation fields
 
 The component contributes the following to the per-player explanation payload (engine-spec §6.7).
-Field names are fixed by `docs/03-contracts/engine-output-contract.md`. Values are in dV per snap, and
-positive means above league-average efficiency.
+Field names are fixed by `docs/03-contracts/engine-output-contract.md`. Values are in dV per snap
+(per role event on the in-season Layer-1′ tracks, DR-D15), and positive means above league-average
+efficiency.
 
 - Filtered talent, form and scheme_fit, plus the predictive mean and `S`. These feed "recent NFL
   evidence contribution" and "uncertainty drivers".
@@ -265,7 +268,7 @@ Only `P[0,0]` is divided by d. The talent cross-covariances `P[0,1]` and `P[0,2]
 implied talent process-noise variance is `P⁻[0,0]·(1/d − 1)`. It is multiplicative in the current
 talent variance, so during an absence the talent variance grows geometrically by `1/d` per
 predict step: QB ×1.0526, RB ×1.1765, WR/TE/default ×1.1111. The engine spec states the discount
-exactly as implemented (proposed — DR-C10; reconcile-code-first C17). Any switch to the full-P form
+exactly as implemented (DR-C10; reconcile-code-first C17). Any switch to the full-P form
 is a model change and requires recalibration.
 
 ### 4.3 One-step predictive (`reference/python/backend/grid/statespace.py:206-219`)
@@ -283,7 +286,10 @@ In the golden, `var_total_pred` is 0.404 and 0.406 at the two injury weeks, agai
 elsewhere. §8.2 D-9 covers this.
 
 `S_w` uses the **realized** `snaps_w`, so it is the predictive **conditional on realized exposure**.
-An ex-ante forecast needs projected exposure (§9, DR-D16).
+The engine's published pre-game predictive is instead conditioned on the exposure that Layer C
+projects, and is graded against realized exposure afterwards; calibration reports show both the
+known- and the forecast-exposure views (DR-D16). The exact definition waits for Layer C's projected
+exposure (open — DR-D16; P1-07).
 
 ### 4.4 Update step (`reference/python/backend/grid/statespace.py:221-233`)
 
@@ -428,7 +434,7 @@ PR #53 W7. Any label not in the table silently gets the defaults.
 
 All scale constants (P0, q's, r_scale, `scheme_reset_var`) are in **synthetic** dV units. On real
 2023 data, RAPM rating SD is about 0.04 at every position, against 0.26 for QBs on synth (KI-NEW-P4).
-They MUST be re-derived per data version before any real-data use (proposed — DR-B4, DR-C10).
+They MUST be re-derived per data version before any real-data use (DR-B4, DR-C10).
 
 ### 4.9 Constraints (oracle validates none of them)
 
@@ -564,7 +570,7 @@ are identical until the intervention week, then diverge:
 
 The divergence is scenario-dependent. On the canonical trajectory it is about 0.06 dV/snap.
 
-### 6.4 Required engine behaviour (proposed — DR-C10)
+### 6.4 Required engine behaviour (DR-C10)
 
 1. **One filter core.** Batch filtering MUST be a left fold of the incremental step, and
    `games_since_event` MUST be part of the persisted per-player state. The **batch semantics**
@@ -576,7 +582,7 @@ The divergence is scenario-dependent. On the canonical trajectory it is about 0.
    of the same series.
 4. **State record.** The persisted state is keyed by (player, season, week). It holds
    `x`, `P`, `games_since_event`, the `SSParams` version, the prior provenance and the input-data version.
-   Storage is SQLite with bulk artifacts registered in a manifest (proposed — DR-C15). Writes MUST be
+   Storage is SQLite with bulk artifacts registered in a manifest (DR-C15). Writes MUST be
    atomic: a new version, never an in-place overwrite (final-build-spec §12.3, §12.4 (superseded)).
 5. **Time index.**
    - The filter advances exactly one predict step per NFL game-week slot on the player's timeline.
@@ -586,7 +592,7 @@ The divergence is scenario-dependent. On the canonical trajectory it is about 0.
    - Bye weeks and absences are predict-only slots.
    - Catch-up MUST process each missed week in order.
 6. **Player universe.** A player leaving the as-of universe MUST NOT lose his state. State is carried
-   forward and simply not updated.
+   forward within the season and simply not updated; season boundaries follow §6.6.
 7. **Corrections.** A corrected observation for an earlier week MUST trigger a recompute from that
    week forward (KI-A9). In production this is bounded by fixed-lag smoothing (§6.4.1).
 
@@ -599,7 +605,7 @@ This holds exactly, because the backward recursion uses only the stored `x⁺`, 
 Indices `< t−L` keep the smoothed value last computed while inside the window (`x^s_{k|k+L}`).
 L is a hyperparameter to be fixed in this spec before P2-03 starts (open — DR-C5). Parity is in §10.3.
 
-### 6.5 Initial state from priors (engine form; proposed — DR-C10, DR-C9)
+### 6.5 Initial state from priors (engine form; DR-C10, DR-C9; open parts tagged below)
 
 ```text
 x0 = [μ_prior, 0, 0]
@@ -609,7 +615,9 @@ P0 = diag(σ²_prior, P0_form, P0_scheme)
 - `(μ_prior, σ²_prior)` come from `cross-league-priors.md` for players eligible for a feeder
   prior.
 - Otherwise they come from a position/draft population prior estimated as-of from the window
-  (superseded alpha-spec §6.3 `θ_position_draft_prior`).
+  (superseded alpha-spec §6.3 `θ_position_draft_prior`; its form is still open — DR-C9).
+- The filter is seeded this way at the player's first slot in the window and again at every season
+  boundary, in production and backtest replay alike (§6.6; DR-D17).
 
 This makes the update the dynamic form of alpha-spec §6.3's EB posterior with `n0 = R/σ²_prior`
 (reconcile-spec-first R40).
@@ -619,12 +627,14 @@ Two facts constrain the choice:
 - **Scale.** The equivalency target in the oracle is the RAPM **rating**. The Kalman state is on the
   **Layer-1 credit** scale. These are not the same scale. On the legacy synth the per-position slope of
   season credit on rating is 1.19–1.40, with credit SD 1.3–1.8× rating SD (§7.3). The prior MUST
-  be expressed on the Kalman state's scale (DR-D19).
+  be expressed on the Kalman state's scale: the feeder translation is fitted directly against the
+  tracker's own end-of-season smoothed talent, computed without the college prior so that the prior
+  never trains on itself, with no separate scale map (DR-D19).
 - **Washout speed.** `P0_form` and `P0_scheme` (oracle 0.02 and 0.01) dominate how fast a talent prior
-  washes out. They are statistical-owner parameters, not defaults
-  (`cross-league-priors.md` §4.5).
+  washes out. They are statistical-owner parameters, not defaults, and stay open until P1-12's washout
+  and calibration measurements (open — DR-D19; `cross-league-priors.md` §4.5).
 
-### 6.6 Three-season window (proposed — DR-C6)
+### 6.6 Three-season window (DR-C6, DR-D17)
 
 Engine-spec §2.4 (superseded alpha-spec §2.4) limits evidence to S−2…S (W > 1) or S−3…S−1
 (preseason and week 1).
@@ -637,14 +647,15 @@ Engine-spec §2.4 (superseded alpha-spec §2.4) limits evidence to S−2…S (W 
   **one ordinary predict step**, with no offseason transition.
 - The production state carries indefinitely, with no window and no season key.
 
-**Proposed default (DR-C6).** In production the Kalman carries forward with its discount. On
-backtest replay it is re-initialised from the windowed prior.
+**Engine rule (DR-C6, DR-D17; decided 2026-10-09).** At every season boundary, in both live
+production and backtest replay, each player's filter restarts from the prior built on the new
+three-season window (§6.5). There are no offseason predict steps and no offseason discount. This
+replaces the earlier default, under which production carried the state forward with its discount and
+only replay re-initialised.
 
-Whatever is ratified, production and replay MUST produce the same state for the same as-of
-(two-path equivalence; `evaluation-and-leakage.md`). Under the proposed default that holds only if
-production also re-initialises at the same boundary. The season-boundary transition itself is
-undefined: the number of predict steps across the offseason, or a separate offseason discount
-(DR-D17).
+Production and replay MUST produce the same state for the same as-of (two-path equivalence;
+`evaluation-and-leakage.md`). Both restart from the same windowed prior at the same boundary, so they
+agree by construction.
 
 ---
 
@@ -747,12 +758,12 @@ Two inconsistencies in the oracle's own comments:
 | KI-NEW-W3 | `weekly_update` observes cumulative RAPM for every player, including non-players | MUST NOT reproduce. Weekly credit, NaN for non-play |
 | KI-#24 | `snaps = 1` makes R 30–60× too large on real scale, so changepoints never fire | MUST NOT reproduce. R from real exposure |
 | KI-NEW-W1 | No season key on state or accumulators | State keyed by (season, week) |
-| KI-A8 | 1-D state gives `IndexError`. Unknown width returns `None`, and the caller silently re-initialises (deliberate per PR #56) | Typed `StateSchemaMismatch` / `StateCorrupt`; no silent re-init (proposed — DR-B6). The ADR records that it reverses PR #56's "corrupt → reinit" design |
+| KI-A8 | 1-D state gives `IndexError`. Unknown width returns `None`, and the caller silently re-initialises (deliberate per PR #56) | Typed `StateSchemaMismatch` / `StateCorrupt`; no silent re-init (DR-B6). The ADR records that it reverses PR #56's "corrupt → reinit" design |
 | KI-G4 | RTS `P^s` PSD not guaranteed; no symmetrization | Symmetrize every stored covariance. A typed `NonPsdCovariance` if the minimum eigenvalue is below −1e-12 relative to the trace |
 | KI-NEW-S2 | Tier-0 and golden use `SSParams()` for the focus QB. The NIS gate (≤ 10) is far from calibrated | Re-gate on the fixed synth with the parameters actually shipped (DR-B4) |
 | KI-NEW-P4 | Scale constants are synth-unit, 4–5× too wide for real data | Data-derived scale per data version, recorded with the model version |
 | KI-NEW-Y0 | QB `r_scale = 0.55` and the NIS bands were calibrated on the defender-bug synth | Recalibrate on the fixed synth before freezing (DR-B4) |
-| KI-NEW-D1 | `backend/db/data/coaching_changes_2025.json` holds wrong or implausible rows | Never a fixture or provider input. Coaching changes come from a sourced provider contract with knowledge timestamps (engine-spec §4.3) |
+| KI-NEW-D1 | `backend/db/data/coaching_changes_2025.json` holds wrong or implausible rows | Never a fixture or provider input. Coaching changes come from a sourced provider contract with knowledge timestamps (engine-spec §4.3; DR-D1) |
 | KI-NEW-P3 | The `__main__` self-test uses bare `from synth import …` and fails under `python -m` (`statespace.py:419-448`) | DROP; not ported |
 | KI-#46 | R and d are not time-varying (enhancement) | Research backlog. Do KI-NEW-S1 and KI-NEW-S2 first |
 
@@ -767,11 +778,11 @@ Two inconsistencies in the oracle's own comments:
 | D-5 (KI-NEW-Z20) | No input or parameter validation (§4.9); `W = 0` gives `IndexError` | Typed `InvalidParams`, `EmptySeries` |
 | D-6 (KI-NEW-Z21) | Scheme reset overwrites (does not add to) the intervention's scheme inflation (§4.6 item 3). The test name says "additive" | Specify explicitly in the engine. Default to the oracle semantics: the reset sets `Σ[2,2] = scheme_reset_var` |
 | D-7 (KI-NEW-Z22) | Intervention inflation is computed as `/d_steady·(d_steady/d_spike)` incrementally and `/d_spike` in batch, which is not bitwise equal | One core computes `/d_w` once |
-| D-8 (KI-NEW-Z17) | Auto-detected changepoints are applied in the **same** week, so the persisted predictive `S` for that week (`pred_var`, written to the trajectory) is computed **after** looking at `y_w`. The band is inflated exactly when \|z\| > 3, which biases NIS and coverage. Dormant on real data because of KI-#24 | The published one-step predictive for week w MUST be the pre-detection `(m_w, S_w)`. Whether a detected changepoint alters the week-w update or only week w+1 is open (DR-D18) |
-| D-9 (KI-NEW-Z23) | Predictive `S` on did-not-play weeks uses `R = r_scale` from the snaps floor (golden 0.404/0.406) | Do not publish a predictive for a did-not-play week as if it were a forecast of an observation. Mark it not-applicable, or condition on projected exposure (DR-D16) |
+| D-8 (KI-NEW-Z17) | Auto-detected changepoints are applied in the **same** week, so the persisted predictive `S` for that week (`pred_var`, written to the trajectory) is computed **after** looking at `y_w`. The band is inflated exactly when \|z\| > 3, which biases NIS and coverage. Dormant on real data because of KI-#24 | The published one-step predictive for week w MUST be the pre-detection `(m_w, S_w)`. A changepoint flagged from week w's result takes effect from week w+1 only; it never changes week w's own update (DR-D18). `z_thresh` and the precision/recall gate stay open until a synthetic world plants changepoints; until then flags are informational and never trigger production adjustments (open — DR-D18) |
+| D-9 (KI-NEW-Z23) | Predictive `S` on did-not-play weeks uses `R = r_scale` from the snaps floor (golden 0.404/0.406) | Do not publish a predictive for a did-not-play week as if it were a forecast of an observation. Report it as not applicable, never as the floor-based range (DR-D16) |
 | D-10 (KI-NEW-Z26) | The washout narrative "wide prior → fast washout" is computed with a conjugate one-component formula and an obs variance (`run_demo.py:91`, 0.12²) that is inconsistent with `SSParams`. The actual filter washes out the talent prior far more slowly for RB/WR/TE (`cross-league-priors.md` §4.5) | Diagnostic derived from the actual filter |
 
-### 8.3 Typed failures (proposed — DR-B6)
+### 8.3 Typed failures (DR-B6)
 
 The Rust component MUST return typed errors and MUST NOT fall back silently:
 
@@ -791,25 +802,27 @@ from the oracle, listed in `reference/python/PARITY.md`.
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Proposed default | Effect on this spec |
+| Decision | Outcome (decision interview) | Effect on this spec |
 |---|---|---|
-| DR-C10 Kalman semantics bundle | Weekly credit observation with real exposure; one core with persisted `games_since_event`; prior-based `x0`/`P0`; state keyed by (season, week); component discount documented as implemented | §3.1, §4.2, §6.4, §6.5 (proposed) |
-| DR-C1 Live observation | Participation-free Layer-1′ credit in-season. Participation RAPM offseason only | §3.3 |
-| DR-C2 / DR-C3 Role of GRID | Signal provider. Role-specific talent as Layer-D covariates | §2. Whether the scalar state splits by role (dropback / carry / target) is open under DR-C3 |
-| DR-C6 Three-season window | Carry with discount in production; re-initialise from the windowed prior on replay | §6.6, plus the two-path equivalence requirement |
-| DR-C5 Gates and open parameters | PB-MAE primary. FB's open parameters (fixed-lag L, auto-rollback thresholds) set in model specs before code | §6.4.1 L; NIS bands |
-| DR-C9 Prior form | `cross-league-priors.md` | §6.5 |
-| DR-C15 Storage | SQLite source of truth plus a manifest of bulk artifacts | §6.4 item 4 |
-| DR-B1 Oracle correction ledger | Synth defenders → convention → grade sign → **causal Kalman init** → ingest | Legacy goldens are audit-only (§10.3) |
-| DR-B3 Parity tolerances | Classes A / A′ / B / C / D | §10.3 |
-| DR-B4 Synthetic world | Fix defenders, re-calibrate QB NIS bands, plant τ/f/s separately, add a "realistic" profile | §7, §1 caveat |
-| DR-B6 Typed failures vs faithful port | Typed failure; oracle unchanged; divergences in `PARITY.md` | §8.3 |
-| **DR-D17** | — (open) | Transition across the offseason: number of predict steps, an offseason discount, or re-init (§6.6) |
-| **DR-D16** | — (open) | Which `S` is published ex-ante (projected snaps) vs scored ex-post (realized snaps); conditional vs unconditional calibration (validation plan §7) |
-| **DR-D18** | — (open) | Same-week vs next-week application; `z_thresh`; precision/recall gate; pre-detection predictive (D-8) |
-| **DR-D19** | — (open) | Prior expressed on the Kalman credit scale; `P0_form` / `P0_scheme` for prior-seeded players (§6.5) |
+| DR-C10 Kalman semantics bundle | Ratified 2026-10-09: weekly credit observation with real exposure; one core with persisted `games_since_event`; prior-based `x0`/`P0`; state keyed by (season, week); component discount documented as implemented | §3.1, §4.2, §6.4, §6.5 |
+| DR-C1 Live observation | Ratified in part 2026-10-09: participation-free Layer-1′ credit in-season; participation RAPM offseason only. Open: the snap-count source (KI-NEW-Z50) | §2, §3.3 |
+| DR-C2 / DR-C3 Role of GRID | Ratified 2026-10-09: signal provider; role-specific talent as Layer-D covariates; the state splits by role, one track per player and role (dropback, carry, target) | §2 |
+| DR-D15 Layer-1′ observation | Decided in part 2026-10-09: exposure per role event, not per snap. Open: penalty-play handling; the snap-count source; recovery evidence on the stat-vector world | §1, §2, §3.1, §3.5 |
+| DR-C6 Three-season window | Overridden in part 2026-10-09: the Kalman clause is replaced through DR-D17 (restart from the windowed prior at every season boundary, in production and replay) | §6.6, plus the two-path equivalence requirement |
+| DR-C5 Gates and open parameters | Ratified in part 2026-10-09: PB-MAE primary; FB's open parameters set in model specs before code. Open: fixed-lag L, auto-rollback thresholds, the NIS bands (re-set under DR-B4) | §6.4.1 L; NIS bands |
+| DR-C9 Prior form | Ratified in part 2026-10-09 (`cross-league-priors.md` §9). Open: `q`, the position/draft baseline, the influence cap, exposure weighting, the college-rating source | §6.5 |
+| DR-C15 Storage | Ratified 2026-10-08: SQLite source of truth plus a manifest of bulk artifacts | §6.4 item 4 |
+| DR-D1 Coaching-change source | Ratified in part 2026-10-09: hand-entered, versioned, sourced records with an announced-at timestamp kept separate from the effective week; undated records rejected. Open: the public sources and their terms; which roles count as a scheme change (this spec) | §3.3, §8.1 KI-NEW-D1 |
+| DR-B1 Oracle correction ledger | Ratified 2026-10-08: synth defenders → convention → grade sign → **causal Kalman init** → ingest. Open: each entry's own approval as its commit lands | Legacy goldens are audit-only (§10.3) |
+| DR-B3 Parity tolerances | Overridden 2026-10-09: classes A / A′ / B, C-V and C-L1 in place of C, and D over a seed ensemble (DR-D26). Open: the Class D floor values | §10.3 |
+| DR-B4 Synthetic world | Ratified 2026-10-09: fix defenders, plant net strength, regenerate the goldens and re-calibrate the QB NIS bands now; a stat-vector world and a "realistic" profile before Layers A–F. Open: the recalibrated `r_scale`, NIS bands and Tier-0 floors | §7, §1 caveat |
+| DR-B6 Typed failures vs faithful port | Ratified in part 2026-10-08: typed failure; oracle unchanged; divergences in `PARITY.md`. Open: the condition-number threshold | §8.3 |
+| **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount | §6.6 |
+| **DR-D16** | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the published pre-game predictive is conditioned on Layer C's projected exposure and graded against realized exposure, with calibration shown in both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (P1-07) | §4.3, §8.2 D-9 |
+| **DR-D18** | Decided in part 2026-10-09: next-week application; a changepoint flagged from week w's result takes effect from week w+1, and the published week-w predictive is the pre-detection one. Open: `z_thresh` and the precision/recall gate; flags stay informational until then | §4.6, §8.2 D-8 |
+| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Open: `P0_form` / `P0_scheme` for prior-seeded players (P1-12 measurements) | §6.5 |
 
 ---
 
@@ -842,7 +855,7 @@ state exists.
 
 ### 10.3 Parity class and concrete targets
 
-Classes are per `docs/03-contracts/parity-fixture-contract.md` (proposed — DR-B3). Inputs are
+Classes are per `docs/03-contracts/parity-fixture-contract.md` (DR-B3). Inputs are
 stage-isolated: Rust receives **Python-exported weekly credit series**, so no booster sits on the
 Kalman parity path.
 
@@ -864,7 +877,7 @@ explicit `x0`. Rust therefore never implements the look-ahead.
 | PF-SS-05 | Incremental sequences: `test_incremental.py` seeds 77/99, `test_coaching_changes.py` two-player states (reset, intervention, both), changepoint states from `test_changepoint.py` | μ, Σ, `pred_var`, flag sets and z | **A** (flags exact) |
 | PF-SS-06 | `kparity` series with and without an intervention | Rust batch == Rust fold(step) == oracle **batch** (`kalman_two_component`) | **A**. The oracle `kalman_step` with an intervention is NOT a target (KI-NEW-S1) |
 | PF-SS-07 | Fixed-lag L ∈ {1, 2, 4} over PF-SS-01..03 at every t | fixed-lag vs Rust full RTS over 0…t, indices t−L…t | **A** (internal consistency; no oracle counterpart) |
-| PF-SS-08 | Tier-0 focus QB and QB calibration pool on the **defender-fixed** synth after DR-B4 | total_smooth / tau_smooth recovery; variance widening; NIS, PIT and PICP bands | **D** (floors re-set on the fixed synth, calibrate-below-observed). Current fixed values: 0.976 / 0.6538 / 0.00233→0.00738; pooled NIS 1.829 fails today |
+| PF-SS-08 | Tier-0 focus QB and QB calibration pool on the **defender-fixed** synth after DR-B4 | total_smooth / tau_smooth recovery; variance widening; NIS, PIT and PICP bands | **D** (floors re-set on the fixed synth, calibrated below observed values and gated over the DR-D26 seed ensemble: the median and a declared low quantile; the floor values are open — DR-B3, DR-D26). Current fixed values: 0.976 / 0.6538 / 0.00233→0.00738; pooled NIS 1.829 fails today |
 
 **Not targets.**
 
@@ -915,7 +928,7 @@ Sections cited as "alpha-spec §x (superseded)" or "final-build-spec §x (supers
 | alpha-spec §6.4 (superseded), ensemble member 3 | Latent state exists | Not a validated forecast component on real data (§7.4) |
 | alpha-spec §6.5 (superseded) explainability | Talent, form, uncertainty and regime flags (§3.5) | Prior contribution not computed in the oracle |
 | alpha-spec §6.6 (superseded) rules 1–8 | This spec; typed failures in §8.3 | Rule 4 is violated by the oracle (§5.4) |
-| alpha-spec §2.4 (superseded) three-season rule | — | Production state carries indefinitely; DR-C6 |
+| alpha-spec §2.4 (superseded) three-season rule | — | Production state carries indefinitely. The engine restarts each filter from the windowed prior at every season boundary (§6.6; DR-C6, DR-D17) |
 | alpha-spec §2.5 (superseded) low-evidence decay | A continuous Kalman washout, in principle | Prior not wired |
 | alpha-spec §4.5 (superseded) leakage | Missing-week semantics, as-of interventions | Look-ahead `x0` (KI-#15); same-week changepoint predictive (D-8) |
 | alpha-spec §12.1–§12.3 (superseded) tests | Unit (Joseph, RTS), golden, as-of | Golden embeds legacy defects; leakage test for intervention knowledge time missing |

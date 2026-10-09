@@ -32,16 +32,19 @@ No criterion is claimed as passing here. Each is to be run against the final com
   - imports 105 files whose licence ruling is still pending (DR-A10);
   - lands as one pull request of about 260 non-trivial paths.
 - **Required human approvals:**
-  1. **Product/Architecture owner.** In one merge review or comment that names each DR ID, ratify or
-     override DR-A1, DR-A2, DR-A4, DR-A5, DR-A6, DR-A8, DR-A9 and DR-A12, and accept or override ADR-011
-     and ADR-012 (`docs/00-meta/decision-register.md`, "How to ratify or override", step 3).
+  1. **Product/Architecture owner.** In one merge review or comment that names each DR ID, name again
+     DR-A1, DR-A2, DR-A4, DR-A5, DR-A6, DR-A8, DR-A9 and DR-A12, which the owner ratified on 2026-10-08
+     in the decision interview; confirm the interview record
+     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); and accept or override ADR-011 and
+     ADR-012 (`docs/00-meta/decision-register.md`, "How to ratify or override", steps 1 and 3).
   2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1.
   3. **Security/Release owner.** DR-A7 and the guard changes (ADR-011 D7). Also the design of the
      `reference-oracle` job: the runner image's tool-cache CPython 3.11, failing if it is absent, and no
      `actions/setup-python` (ADR-012 §4). DR-D31 (how the job turns green, KI-NEW-Z78) was ratified by
      the owner on 2026-10-08 (option 1) and is implemented here as correction-ledger entry L0.
-  4. **Data/Licensing owner.** The DR-A10 licence ruling, **recorded on the pull request before merge**
-     in the form of GRID-Engine PR #1 comment 5357318508. Also DR-A11.
+  4. **Data/Licensing owner.** The DR-A10 licence ruling (option 1, chosen on 2026-10-08 in the decision
+     interview), **posted by the owner on the pull request before merge** in the form of GRID-Engine
+     PR #1 comment 5357318508. Also DR-A11, ratified on 2026-10-08 and named again in the merge comment.
   5. **Merge reviewer.** A merge commit, never a squash (DR-A6, ADR-011 D10).
 - **Agent budget (engine-spec §8.18.1).** Not declared in advance. §8.18.1 is introduced by this package.
   This is recorded under Known limitations.
@@ -63,30 +66,34 @@ No criterion is claimed as passing here. Each is to be run against the final com
 
 ## Owner decisions depended on
 
-**Adopted by this package, pending owner ratification at merge.** This package is gated on its own
-A-decisions being ratified at its merge (engine-spec §9.5), not on Ready.
+**Adopted by this package, and ratified by the owner on 2026-10-08 in the decision interview**
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). This package is gated on its own
+A-decisions being ratified (engine-spec §9.5), not on Ready; the owner names them again in the merge
+comment.
 
 | DR | Decision | Owner role | Status | Recorded in |
 |---|---|---|---|---|
-| DR-A1 | One `engine-spec.md` plus a mirror; originals archived verbatim | Product/Architecture | Adopted — pending ratification at merge | ADR-011 D3 |
-| DR-A2 | Six-level authority order; oracle fixtures at level 5, oracle source at level 6 | Product/Architecture, Statistical | Adopted — pending ratification at merge | ADR-011 D4, ADR-012 §2 |
-| DR-A3 | Authoritative CI platform | Product/Architecture, Security/Release | **Default kept (Windows authoritative); follow-up ADR required** before P1-11 | ADR-011 D8 |
-| DR-A4 | Keep the AI-governance apparatus | Product/Architecture | Adopted — pending ratification at merge | ADR-011 D5 |
-| DR-A5 | `P<phase>-NN` IDs; P1-10 and P1-11 re-scoped; new P1-12 and P2-09; traceability regex | Product/Architecture | Adopted — pending ratification at merge | ADR-011 D7, D9 |
-| DR-A6 | PR #1 carried as a fast-forward and merged with a merge commit; PRs #2 and #3 closed | Product/Architecture | Adopted (adapted) — pending ratification at merge | ADR-011 D10 |
-| DR-A7 | Fix R4-1 and R4-2 in this PR | Security/Release | Adopted — pending ratification at merge | ADR-011 D7 |
-| DR-A8 | Drop only `ffi` now; P1-01 restructures | Product/Architecture | Adopted — pending ratification at merge | ADR-011 D11 |
-| DR-A9 | `docs/07-archive/cautious-nevermore/` as non-authoritative history | Product/Architecture | Adopted — pending ratification at merge | ADR-011 D12 |
-| DR-A10 | Licence for `reference/python/` | Data/Licensing | **Needs owner action: record licence ruling for reference/python/ on the PR.** Merge-blocking | ADR-012 §8 |
-| DR-A11 | Parity fixtures synthetic-only; no real data committed | Data/Licensing | Adopted — pending ratification at merge | ADR-012 §9 |
-| DR-A12 | Frozen CI oracle until parity and Phase 2 live evidence; review at P2-09 | Product/Architecture | Adopted — pending ratification at merge | ADR-012 §10 |
+| DR-A1 | One `engine-spec.md` plus a mirror; originals archived verbatim | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D3 |
+| DR-A2 | Six-level authority order; oracle fixtures at level 5, oracle source at level 6 | Product/Architecture, Statistical | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D4, ADR-012 §2 |
+| DR-A3 | Authoritative CI platform | Product/Architecture, Security/Release | **Default kept (Windows authoritative); follow-up ADR required** before P1-11. Direction ratified 2026-10-08: Linux authoritative, Windows a matrix job | ADR-011 D8 |
+| DR-A4 | Keep the AI-governance apparatus | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D5 |
+| DR-A5 | `P<phase>-NN` IDs; P1-10 and P1-11 re-scoped; new P1-12 and P2-09; traceability regex | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D7, D9 |
+| DR-A6 | PR #1 carried as a fast-forward and merged with a merge commit; PRs #2 and #3 closed | Product/Architecture | Adopted (adapted); ratified 2026-10-08 (decision interview) | ADR-011 D10 |
+| DR-A7 | Fix R4-1 and R4-2 in this PR | Security/Release | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D7 |
+| DR-A8 | Drop only `ffi` now; P1-01 restructures | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D11 |
+| DR-A9 | `docs/07-archive/cautious-nevermore/` as non-authoritative history | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D12 |
+| DR-A10 | Licence for `reference/python/` | Data/Licensing | **Needs owner action: post the licence ruling for reference/python/ on the PR** (option 1 chosen 2026-10-08, decision interview). Merge-blocking | ADR-012 §8 |
+| DR-A11 | Parity fixtures synthetic-only; no real data committed | Data/Licensing | Adopted; ratified 2026-10-08 (decision interview) | ADR-012 §9 |
+| DR-A12 | Frozen CI oracle until parity and Phase 2 live evidence; review at P2-09 | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-012 §10 |
 
-### Decisions raised but not decided
+### Decisions raised by the consolidation
 
-P0-01 decides none of these. Each B and C item stays **proposed**, and each D item stays proposed or
-open, as its register entry says. Every work package they block is not Ready until the named owner rules
-(engine-spec §8.16.1). The blocked packages are listed in `docs/01-work-packages/README.md`.
-`docs/00-meta/decision-register.md` is authoritative for status, owner and Blocks.
+P0-01 decides none of these itself. The owner settled most of them, in full or in part, in the decision
+interview of 2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the rest stay
+proposed or open, as each register entry says. A work package that depends on an unsettled decision, or
+on an unsettled part of one, is not Ready until the named owner rules (engine-spec §8.16.1). The blocked
+packages are listed in `docs/01-work-packages/README.md`. `docs/00-meta/decision-register.md` is
+authoritative for status, owner and Blocks.
 
 | DR | Question | Owner role |
 |---|---|---|
@@ -162,7 +169,8 @@ At the P0-01 merge commit, the repository is engine-only and consistent with its
   `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, correction-ledger entry L0), locally and in CI;
 - no application artifacts;
 - every verification gate passing;
-- every owner decision either adopted for ratification at merge or registered as open.
+- every owner decision either adopted and ratified (2026-10-08), or registered with its status in
+  `docs/00-meta/decision-register.md`.
 
 ## Observable outcome
 None for engine consumers, because no engine code changes. A maintainer can observe:
@@ -292,8 +300,9 @@ commit messages cite.
 ## Non-goals
 - **No Rust engine code.** No new crate and no crate rename; P1-01 does those (DR-A8).
 - **No Rust parity tests** and no committed parity fixtures. Those start at P1-01.
-- **No oracle correction.** The ledger in `reference/python/PARITY.md` is proposed, not applied
-  (DR-B1). Oracle source changes are limited to patches P1 and P2.
+- **No oracle correction.** The correction policy is ratified (DR-B1, 2026-10-08), but no semantic
+  entry of the ledger in `reference/python/PARITY.md` is applied: each needs its own Statistical-owner
+  approval as its commit lands. Oracle source changes are limited to patches P1 and P2.
 - **No change to Windows merge authority** (DR-A3).
 - **No dependency changes.** No new production dependency, no `cargo update`, and no change to
   `rust-toolchain.toml`.
@@ -326,7 +335,7 @@ commit messages cite.
 - CPython 3.11.15, threads pinned to 1, 2026-10-01 (`reference/python/PARITY.md` section (a)).
 
 **The oracle is legacy.** Its synthetic numbers are legacy-generator values (KI-NEW-Y0), and none is a
-parity target until ledger entry 1 has run (DR-B1, proposed).
+parity target until ledger entry 1 has run (DR-B1).
 
 ## Implementation constraints
 - **Frozen recipes.** The verify recipes are frozen (ADR-001 D5). The only amendment is the `test-ffi`
@@ -354,7 +363,8 @@ parity target until ledger entry 1 has run (DR-B1, proposed).
   manual invocation only, never in CI.
 - **CI security boundary.** No third-party action is added. `actions/setup-python` would need
   Security/Release approval.
-- **Licence.** `reference/python/` is pending DR-A10, and that is merge-blocking. As ADR-001 D4 noted,
+- **Licence.** `reference/python/` is pending DR-A10, and that is merge-blocking: the owner chose
+  option 1 on 2026-10-08 and still has to post the ruling on the pull request. As ADR-001 D4 noted,
   publishing code permissively is not cleanly reversible once third parties can rely on it.
 - **Provider terms.**
   - nflverse participation is CC-BY-SA 4.0, and no real data is committed (DR-A11).
@@ -543,8 +553,8 @@ must then be added to "Paths affected" here and in ADR-011.
 
 | # | Item | Owner | Risk if deferred |
 |---|---|---|---|
-| 1 | Oracle correction-ledger work package, once DR-B1 is ratified, starting with ledger entry 1 (KI-NEW-Y0) | Statistical | Team, DEF and matchup parity stay meaningless, and P1-12 stays blocked |
-| 2 | ADR on the authoritative platform (DR-A3), before P1-11 | Product/Architecture, Security/Release | The release platform and the reference machine stay undefined |
+| 1 | Oracle correction-ledger work package under DR-B1 (ratified 2026-10-08), starting with ledger entry 1 (KI-NEW-Y0); each entry needs its own Statistical-owner approval as its commit lands | Statistical | Team, DEF and matchup parity stay meaningless, and P1-12 stays blocked |
+| 2 | ADR on the authoritative platform (DR-A3), before P1-11. Its direction was ratified on 2026-10-08: Linux merge- and release-authoritative, Windows an additional (matrix) job; the ADR must justify the reduced Windows gating that ADR-007, ADR-008 and ADR-009 otherwise refuse | Product/Architecture, Security/Release | The release platform and the reference machine stay undefined |
 | 3 | A `Bash(python3 -m pytest:*)` rule in `.claude/settings.json` | Security/Release | Agent sessions keep prompting before running the oracle suite |
 | 4 | `cargo audit` reports `chacha20 0.10.1` yanked, while `deny.toml` sets `yanked = "deny"` and `cargo deny check` passes | Security/Release | A dependency policy that is not enforced as written |
 | 5 | Pin the runner image (or approve `actions/setup-python`) for `reference-oracle`, so the tool-cache CPython 3.11 patch level cannot change under the pinned golden unannounced (DR-D31 implemented the kernel pin; the interpreter minor version is enforced by the platform-pin plugin) | Security/Release | A new 3.11 patch release could move the golden; the plugin catches a minor-version change but not a patch-level one |
@@ -559,6 +569,7 @@ must then be added to "Paths affected" here and in ADR-011.
 | 14 | `docs/99-templates/template-adr.md`: its Status guidance still ranks ADRs below the superseded specs and cites `alpha-spec.md` 1.4 | Template owner | New ADRs copy outdated rank text |
 | 15 | Structural guards: no crate depends on Python (engine-spec §1.1 item 8), and the CLI depends only on the orchestration crate (§8.1 rule 4) | P1-01 | The rules rest on review alone |
 | 16 | Extend the "Template conformance" tables of the eight draft model specs to the new template headings | Statistical, before each spec is approved | A spec could be approved with a §6.8 field missing |
+| 17 | Make `reference-oracle` a required status check for every pull request to `main` in branch protection (DR-D30, decided 2026-10-09; no workflow edit) | Owner (Security/Release) | Until then a failing oracle run does not block a merge |
 
 ### Known limitations
 - **`ai-toolchain.lock` provenance is `unrecorded` for P0-01.** This deviates from engine-spec §8.20

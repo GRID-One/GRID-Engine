@@ -13,10 +13,11 @@ anywhere in cautious-nevermore at `59bce1d` fetches CollegeFootballData. P1-04 i
 in `grid-identity`. Both crates are still bootstrap stubs. This contract is the Draft input to that work
 package.
 
-**Blocked on DR-C9** (proposed — awaiting Statistical owner). DR-C9 decides the form of the
-low-evidence prior and therefore **what this adapter must fetch**: CFBD play-by-play for a college GRID
-pass, the box-score features of the "NCAA features by position" section below, or both. P1-04 is not
-Ready until DR-C9 is ratified (`engine-spec.md` §6.5).
+**Blocked on the open part of DR-C9.** The owner ratified DR-C9 in part on 2026-10-09: NCAA is the only
+feeder league, and the alpha-spec §6.3 (superseded) blend governs the prior's overall form. Still open is
+**what this adapter must fetch**: whether the college rating comes from CFBD play-by-play for a college
+GRID pass, from the box-score features of the "NCAA features by position" section below, or both. That
+waits for the CFBD terms check. P1-04 is not Ready until it is settled (`engine-spec.md` §6.5).
 
 The oracle offers no target for this adapter:
 
@@ -71,7 +72,7 @@ alpha-spec §4.2; `engine-spec.md` §4.2).
 usable NFL sample (`engine-spec.md` §2.5). nflverse stays the primary source. College data feeds the
 low-evidence prior (`engine-spec.md` §6.5; `docs/05-model-specs/cross-league-priors.md`). NCAA is the
 only feeder league in scope; the oracle's UFL/USFL/XFL/CFL league factors are documented but unused
-(proposed — DR-C9; KI-#23).
+(DR-C9; KI-#23).
 
 **Datasets** (superseded alpha-spec §4.2.1, kept in `engine-spec.md` §4.2.1). "Use only fields that can
 be reproduced and legally retained":
@@ -127,7 +128,7 @@ item. Call-limit exhaustion is a failure test (`engine-spec.md` §12.5). It surf
 and never as a silent empty prior.
 
 **Cadence.** CFBD is never polled. External data is fetched at most once per local calendar day
-(`engine-spec.md` §1.1), with the cap enforced per source *(proposed — DR-C14)*, and every fetch counts
+(`engine-spec.md` §1.1), with the cap enforced per source (DR-C14), and every fetch counts
 against the monthly budget. A CFBD fetch happens only on:
 
 - the initial backfill;
@@ -182,17 +183,19 @@ inputs for these features. Feature construction belongs to `grid-features`; the 
 "NCAA features are translated to NFL latent priors; college fantasy points are never inserted directly
 into an NFL weekly projection."
 
-**How the features become a prior.** The proposed form (DR-C9) is
+**How the features become a prior.** The alpha-spec §6.3 (superseded) blend governs the form (DR-C9):
 `theta_prior = q · theta_ncaa_translated + (1 − q) · theta_position_draft_prior`, with an
 empirical-Bayes update by NFL evidence (`engine-spec.md` §6.5). The oracle's feeder-SV equivalency
 `a_pos + b_pos · feeder_sv` is one translated component. Several items are still open under DR-C9:
 
 - `q`;
-- the draft prior;
+- the draft prior (the position/draft baseline);
 - the influence cap;
+- the exposure weighting of the equivalency;
 - whether `feeder_sv` comes from a CFBD play-by-play GRID pass or from these box-score features.
 
-The oracle's hand-set age and draft step functions are not ported (KI-#49).
+The oracle's hand-set age and draft step functions are not ported; they go back to the Statistical owner
+(DR-C9; KI-#49).
 
 The oracle sketches the play-by-play option in the `load_cfbd` docstring: "Run the reduced
 Layer-1/Layer-2 machinery within college (with within-NCAA opponent adjustment) to produce feeder_sv
@@ -301,8 +304,8 @@ The terminal states are the `engine-spec.md` §8.6.4 enumeration.
 ## Retention rules
 
 - Every raw CFBD response is retained unmodified and content-addressed (sha256), registered in SQLite
-  with its provenance, request parameters (without credentials) and usage metadata *(proposed —
-  DR-C15; `engine-spec.md` §14.3)*. Caching every response is also what keeps the call budget.
+  with its provenance, request parameters (without credentials) and usage metadata (DR-C15;
+  `engine-spec.md` §14.3). Caching every response is also what keeps the call budget.
 - Raw responses are never committed to the repository (`.gitignore` `/data/`).
 - Retention is kept long enough to rebuild any prior used by a retained prediction or evaluation.
 - The retention duration, and any limit the terms place on it, are set in `source-manifest.yaml` and

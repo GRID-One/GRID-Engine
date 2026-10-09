@@ -34,16 +34,18 @@ projections* (`engine-spec.md` §3.2, §3.3).
   passes 446 tests under the pin.
 - **Known defects are registered, not fixed.** The imported oracle has known defects, all recorded in
   `docs/00-meta/known-issues.md`. The most consequential is in the synthetic generator, which draws
-  every play's defenders from the offense's own team (KI-NEW-Y0). Corrections are proposed through a
-  correction ledger (`reference/python/PARITY.md` §(b)); none of the semantic corrections has been
-  applied. Only entry L0, the platform pin above, is applied, and it fixes no model defect.
+  every play's defenders from the offense's own team (KI-NEW-Y0). Corrections go through a correction
+  ledger (`reference/python/PARITY.md` §(b)), whose policy the owner ratified on 2026-10-08 (DR-B1).
+  None of the semantic corrections has been applied. Only entry L0, the platform pin above, is applied,
+  and it fixes no model defect.
 - **GRID has not cleared the Phase-1 gate on historical evidence.** The historical cautious-nevermore
   real-data results did not show GRID beating the stronger transparent baselines, and they rest on
   biased labels and too-narrow intervals. They are non-citable for this engine
   (`engine-spec.md` §3.3; `docs/07-archive/cautious-nevermore/real-data-results.md`).
-- **Owner decisions are open.** Most modeling and parity decisions are proposed defaults awaiting the
-  owner (`docs/00-meta/decision-register.md`). A work package is not Ready while a decision it
-  depends on is unratified.
+- **Some owner decisions are still open.** The owner's decision interview of 2026-10-08/09 settled most
+  modeling and parity decisions in full or in part; the rest stay proposed or open
+  (`docs/00-meta/decision-register.md`). A work package is not Ready while a decision it depends on, or
+  a still-open part of one, is unsettled.
 
 The active work package is P0-01, the engine-only consolidation
 (`docs/01-work-packages/p0-01-engine-consolidation.md`).
@@ -80,7 +82,8 @@ difference.
 The oracle job (`reference-oracle` in `.github/workflows/alpha-ci.yml`) runs the same steps on the
 runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and fails if that interpreter
 is absent. It is expected green (446 passed) on ordinary `ubuntu-latest` runners. It sits outside the
-frozen verify chain and is not merge-authoritative (`engine-spec.md` §8.19).
+frozen verify chain (`engine-spec.md` §8.19). The owner decided that it becomes a required status check
+for every pull request (DR-D30), and applies that setting in branch protection after P0-01 merges.
 
 ## Repository map
 
@@ -140,8 +143,9 @@ outside this repository and integrate only through the versioned engine output c
 
 The repository is licensed under `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`).
 
-`reference/python/` is the exception for now. cautious-nevermore carried no licence file, and the
-licence ruling for the imported oracle is pending (DR-A10). Until that ruling is recorded, do not
+`reference/python/` is the exception for now. cautious-nevermore carried no licence file. On 2026-10-08
+the owner chose to bring the imported oracle under `MIT OR Apache-2.0` (DR-A10, option 1), but the
+ruling itself is still to be posted on the pull request. Until that ruling is recorded, do not
 treat `reference/python/` as licensed under the repository's licence files
 (`reference/python/README.md`). Real third-party data is never committed (DR-A11).
 

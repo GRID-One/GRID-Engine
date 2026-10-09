@@ -10,8 +10,9 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Synthetic world (planted ground truth and the recovery-gate contract)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, adopted subject to owner ratification) it is an authority-level-3 document. It defines the
-planted-truth generator that every GRID estimator is validated against (engine-spec §6.9, §7.13).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it is
+an authority-level-3 document. It defines the planted-truth generator that every GRID estimator is
+validated against (engine-spec §6.9, §7.13).
 The statistical owner approves the generative model. The implementing agent may not redefine it
 (superseded alpha-spec §6.6; carried into engine-spec §6.8).
 
@@ -443,7 +444,7 @@ G-3). The defender bug is present at that boundary (`synth.py:181` there).
 | Tier-0 floors | §7.1 | `test_tier0_recovery.py:86-143` | CN PR #64; calibrated below the legacy seed-7 values |
 | QB `r_scale` 0.55 and the calibration bands | — | `statespace.py:121-133`; `test_calibration_synth.py` | CN PR #66; **tuned on the legacy world** (§8.1) |
 
-### 4.10 Required: the corrected canonical world (proposed — DR-B4, DR-B5; `PARITY.md` ledger entry 1)
+### 4.10 Required: the corrected canonical world (DR-B4, DR-B5; `PARITY.md` ledger entry 1)
 
 The corrected canonical world is the legacy generative model with the following changes. G-1 is the
 only one that changes any draw.
@@ -455,7 +456,7 @@ only one that changes any draw.
   and critic G-1, so they are already measured and reviewed. A different code shape (separate
   offense and defense selection) is equivalent in distribution but changes the stream again, so it
   would need its own measurements.
-- **G-2. Planted net strength = offense quality + defense quality** (proposed — DR-B5). Defenders
+- **G-2. Planted net strength = offense quality + defense quality** (DR-B5). Defenders
   subtract from the yards of the offense they face, so a larger defensive ability is a better
   defense, and a spread prices `off + def` (critic X-2; rapm-attribution.md §1.3).
   - **Primary (exposure-weighted):**
@@ -510,7 +511,7 @@ only one that changes any draw.
   count, not only on `s` (value-model.md §7.4). In this profile V\* is therefore defined on
   `(s, plays elapsed)`. The realistic profile removes the cap.
 
-### 4.11 Required: the "realistic" profile (proposed — DR-B4; KI-NEW-Y2, KI-NEW-A3)
+### 4.11 Required: the "realistic" profile (DR-B4; KI-NEW-Y2, KI-NEW-A3)
 
 The canonical world is easiest exactly where real data is hardest: its QB effect is about six times
 the real one (KI-NEW-Y2) and its starters rotate out on about 20% of snaps. A second profile MUST
@@ -533,7 +534,7 @@ requirements:
   profile itself. They are expected to be far below the canonical floors. Documenting that drop is
   the purpose of the profile.
 
-### 4.12 Required before Layers A–F: the stat-vector world (proposed — DR-B4, option 3)
+### 4.12 Required before Layers A–F: the stat-vector world (DR-B4, option 3)
 
 The current world plants a per-play efficiency signal only. It cannot validate Layers A, B, C or F
 (engine-spec §6.1), the stat-vector targets (§5.1), PB-MAE or predictive distributions (engine-spec
@@ -610,9 +611,9 @@ world is about 4 MB at 8-byte widths (parity-fixture-contract §3).
 
   It does this by wrapping the generator inside the exporter process; `synth.py` is never edited.
   The Rust generator takes its randomness through an injectable draw source. Fed the tape, it MUST
-  reproduce the oracle's `plays`, `players`, `gt` and `college` exactly (S-2; proposed —
-  DR-D28). This tests every equation, constant, branch and rounding rule of §4
-  without reimplementing numpy's algorithms, because Rust consumes results, not raw bits.
+  reproduce the oracle's `plays`, `players`, `gt` and `college` exactly (S-2; DR-D28). This tests
+  every equation, constant, branch and rounding rule of §4 without reimplementing numpy's
+  algorithms, because Rust consumes results, not raw bits.
 - **(c) The distribution, statistically.** The Rust-native generator, with its own seeded PRNG, must
   pass world-level checks (S-4) and the Class D recovery gates (S-5) over a declared **seed
   ensemble**, against floors re-set on the corrected oracle's ensemble (§7.6;
@@ -762,11 +763,11 @@ Same configuration as §7.1, generator seed varied (1–11; 7 is canonical). Min
   also varies with the seed, from 16,390 to 19,014 plays (fixed).
 - Consequences:
   - A Rust-native generator cannot be held to single-seed floors (§5.3).
-  - Re-setting the floors on the corrected world MUST use an ensemble statistic (proposed —
-    DR-D26).
-    - The default: gate the **ensemble median** over a declared seed set at a calibrated-below
-      floor.
-    - Optionally also gate a declared low quantile, for per-seed robustness.
+  - Re-setting the floors on the corrected world MUST use an ensemble statistic (DR-D26).
+    - Gate the **ensemble median** over a declared seed set at a calibrated-below floor.
+    - Also gate a declared low quantile, for per-seed robustness. It is required, not optional.
+    - The statistical owner pre-registers the seed set, the quantile and the margins when the
+      floors are re-set.
     - The oracle's seed-7 world stays the fixture-injected golden.
 - The probe was run with `fit(n_iter=3)` and every downstream seed fixed. The estimators' own seeds
   add further spread (value-model.md §5.2; layer1-credit.md §5.3).
@@ -885,10 +886,11 @@ planted-strength definition, its own golden and re-set gates (§4.10).
 | N-5 (KI-NEW-Z36) | **No value-function truth** is planted, so V(s) has never been validated against truth | value-model.md §7.5 | G-8 (SHOULD) |
 | N-6 (KI-NEW-Z37) | **The schedule silently idles a team** for odd `n_teams`, and is not a round robin | `synth.py:151-159` | Typed config error; the realistic profile uses a real schedule shape (R-5) |
 
-### 8.4 Required corrections and their order (proposed — DR-B1, DR-B4, DR-B5)
+### 8.4 Required corrections and their order (DR-B1, DR-B4, DR-B5)
 
-The order is binding. Each later step is measured on the world the previous step produced (critic
-B-1, X-4).
+The order is binding (DR-B1). Each later step is measured on the world the previous step produced
+(critic B-1, X-4). Each ledger entry still needs its own statistical-owner approval as its commit
+lands.
 
 1. **Oracle ledger entry 1** (one reviewed commit in `reference/python/`; `MANIFEST.tsv` status
    `patched:<ID>`):
@@ -899,8 +901,9 @@ B-1, X-4).
      tests first);
    - the Tier-0 and calibration observed values re-recorded.
 
-   The corrected Tier-0 floors and the QB calibration (G-7) are re-set only after entries 2 and 4
-   and the seed-ensemble decision.
+   The corrected Tier-0 floors and the QB calibration (G-7) are re-set only after entries 2 and 4.
+   The floors are re-set on the DR-D26 seed ensemble, with its seed set, quantile and margins
+   pre-registered by the statistical owner.
 2. **Oracle ledger entry 2** (DR-B5):
    - the team gate becomes E_off + E_def against `N*`, and the golden team anchor follows;
    - the harness market is built on `N*` (G-5), and market rows anchor net strength using the line
@@ -916,7 +919,7 @@ B-1, X-4).
 6. **Rust stat-vector world** (§4.12), spec revision first, before the Layer A–F gates of P1-07 and
    P1-08.
 
-### 8.5 Typed failures of the Rust generator (proposed — DR-B6)
+### 8.5 Typed failures of the Rust generator (DR-B6)
 
 | Condition | Oracle behaviour | Required |
 |---|---|---|
@@ -928,26 +931,26 @@ B-1, X-4).
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Question | Proposed default |
+| Decision | Question | Status (decision register, 2026-10-09) |
 |---|---|---|
-| **DR-B4** | How is the synthetic world corrected and extended? | §4.10 now; §4.11 and §4.12 before Layers A–F (proposed — DR-B4) |
-| **DR-B5** | Team-strength estimand, Layer-3 rows, grade sign | Planted net = off + def quality (G-2); gates on E_off + E_def and `+E_def` (proposed — DR-B5) |
-| **DR-B1** | Oracle correction order | §8.4 (proposed — DR-B1) |
-| **DR-B3** | Parity tolerances | Class D floors re-set on the corrected world (proposed — DR-B3), over a seed ensemble (next row) |
-| **DR-D26** | Single-seed floors fail on every other seed (§7.6). What statistic do Class D gates use? | Gate the median over a declared generator-seed ensemble, calibrated below the corrected oracle's ensemble median, optionally with a declared low-quantile floor. The ensemble and margins are pre-registered by the statistical owner when the floors are re-set. The seed-7 world stays the fixture-injected golden |
-| **DR-D28** | How is the Rust generator proven to implement §4 exactly without matching numpy streams? | Draw-tape replay (§5.3 (b)): the exporter records draw results by wrapping the generator in its own process; Rust replays them through an injectable draw source |
+| **DR-B4** | How is the synthetic world corrected and extended? | Ratified 2026-10-09: §4.10 now; §4.11 and §4.12 before Layers A–F. Still open: the recalibrated `r_scale`, NIS bands and Tier-0 floors; the stat-vector world's distributions and parameters (spec revision before P1-07); ledger entry 1 itself (approved when its commit exists); a work package that builds the stat-vector world |
+| **DR-B5** | Team-strength estimand, Layer-3 rows, grade sign | Ratified 2026-10-09: planted net = off + def quality (G-2); gates on E_off + E_def and `+E_def` |
+| **DR-B1** | Oracle correction order | Ratified 2026-10-08: §8.4. Still open: each ledger entry's own statistical-owner approval as its commit lands |
+| **DR-B3** | Parity tolerances | Overridden 2026-10-09 (the merged table with the post-critic amendments): Class D floors re-set on the corrected world, calibrated below observed values, over a seed ensemble (next row). Still open: the floor values, set once after ledger entries 2 and 4 |
+| **DR-D26** | Single-seed floors fail on every other seed (§7.6). What statistic do Class D gates use? | Overridden 2026-10-09: gate the median over a declared generator-seed ensemble, calibrated below the corrected oracle's ensemble median, and also a declared low quantile (required, not optional). Still open: the ensemble, quantile and margins, pre-registered by the statistical owner when the floors are re-set. The seed-7 world stays the fixture-injected golden |
+| **DR-D28** | How is the Rust generator proven to implement §4 exactly without matching numpy streams? | Ratified 2026-10-09: draw-tape replay (§5.3 (b)): the exporter records draw results by wrapping the generator in its own process; Rust replays them through an injectable draw source. If recording proves impossible without editing `synth.py`, that is a new decision request |
 | **DR-D10** | The spread → EP-per-play conversion for the market anchor (raised in rapm-attribution.md) | Open, no default. Until decided, the synthetic market stays in ability units and is labelled (G-5) |
-| **DR-C1** | Participation publication lag | The stat-vector world carries a publication timestamp per season (§4.12) |
-| **DR-C9** | Feeder leagues | NCAA only for alpha. The synthetic feeder stays one league (`league_factor` 0.62) unless DR-C9 adds more |
-| **DR-D1** | Dated coaching-change records | The stat-vector world plants changes with announcement timestamps, so the as-of rule can be tested on synthetic data first |
+| **DR-C1** | Participation publication lag | Ratified in part 2026-10-09: stages that read participation run only after a season's participation is published. The stat-vector world carries a publication timestamp per season (§4.12) |
+| **DR-C9** | Feeder leagues | Ratified in part 2026-10-09: NCAA is the only feeder league. The synthetic feeder stays one league (`league_factor` 0.62) |
+| **DR-D1** | Dated coaching-change records | Ratified in part 2026-10-09: hand-entered, versioned records, each with an announced-at timestamp kept separate from the effective week. The stat-vector world plants changes with announcement timestamps, so the as-of rule can be tested on synthetic data first |
 
 ---
 
 ## 10. Rust port plan
 
-### 10.1 Homes (engine-spec §8.1; DR-A8 adopted subject to ratification)
+### 10.1 Homes (engine-spec §8.1; DR-A8, ratified 2026-10-08 in the decision interview)
 
 | Piece | Crate::module | WP |
 |---|---|---|
@@ -979,15 +982,15 @@ B-1, X-4).
 
 ### 10.3 Parity class and concrete targets
 
-Classes are per `docs/03-contracts/parity-fixture-contract.md` (proposed — DR-B3).
+Classes are per `docs/03-contracts/parity-fixture-contract.md` (DR-B3).
 
 | ID | Target | Class | Criterion |
 |---|---|---|---|
 | S-1 | Load `synthetic-world/canonical-legacy` and, after entry 1, `canonical-corrected` | exact | every column, id order, NaN position and v0 sentinel round-trips (parity-fixture-contract §5 first row) |
-| S-2 | Draw-tape replay of the oracle generator (legacy and corrected) | exact | Rust `plays`, `players`, truth and `college` equal the oracle's (proposed — DR-D28) |
+| S-2 | Draw-tape replay of the oracle generator (legacy and corrected) | exact | Rust `plays`, `players`, truth and `college` equal the oracle's (DR-D28) |
 | S-3 | Deterministic sub-functions on given inputs: the focus-QB trajectory; legacy `T_t`; `Q_off`, `Q_def`, `N*` from a given world; the drive state machine on given yards and uniforms | exact | §10.4 examples plus the oracle's own values on the canonical world |
 | S-4 | World-level distribution of the Rust-native generator over the seed ensemble against the corrected oracle's ensemble: plays per world, outcome shares, truncation share, starter shares, duplicate rate, defender-team share (= 1.0 exactly), state-support extremes | D (world) | Each ensemble mean within a band set from the oracle's own seed spread, pre-registered with the Class D floors |
-| S-5 | Recovery gates with the Rust V(s), Rust estimators and Rust-native generator | D | Floors re-set on the corrected oracle's seed ensemble, calibrated below observed (proposed — DR-B3, DR-B4, DR-D26). Starting points: the fixed columns of §7.1 and §7.6. **No floor is set by this spec** |
+| S-5 | Recovery gates with the Rust V(s), Rust estimators and Rust-native generator | D | Floors re-set on the corrected oracle's seed ensemble (the median and a declared low quantile), calibrated below observed (DR-B3, DR-B4, DR-D26). Starting points: the fixed columns of §7.1 and §7.6. **No floor is set by this spec** |
 | S-6 | Golden Layer A truth anchors on every Rust-native world in the ensemble | exact (sign, membership) | as `test_golden_master.py` Layer A, with the team anchor on `N*` and E_off + E_def |
 | S-7 | Stream isolation and deterministic extension (§6) | exact | changing one component's parameters leaves every other component bit-identical; seasons `1…S` are unchanged when `S+1` is added |
 | S-8 | Typed failures of §8.5 | divergence | Rust asserts the typed outcome |

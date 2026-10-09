@@ -95,7 +95,7 @@ separate queryable record, keyed by `prediction_version_id`.
 
 Weekly is the primary contract. Rest-of-season and preseason figures are **derived products**:
 sums of weekly simulated draws, labelled `horizon = RestOfSeason | Preseason`, and reported as
-diagnostics *(proposed — DR-C4)*. The oracle's `week = 0` sentinel for a season total (KI-A4)
+diagnostics *(DR-C4)*. The oracle's `week = 0` sentinel for a season total (KI-A4)
 MUST NOT be reproduced. A typed `horizon` field is used instead.
 
 ### 3.2 Stat vectors (alpha-spec §5.1, superseded)
@@ -124,10 +124,10 @@ in yards. Probabilities and shares are in [0, 1].
 | `fumbles_lost` | ✓ | ✓ | ✓ | count ≥ 0; official = sack + rushing + receiving fumbles lost (KI-NEW-I3) |
 | `two_point_conversions` | ✓ | ✓ | ✓ | count ≥ 0; **modelled, not a silent 0** (KI-NEW-I5; the oracle fixes it at 0.0) |
 
-Stat definitions follow the official nflverse weekly player statistics *(proposed — DR-C12;
-engine-spec §4.7)*. The asymmetries are carried over verbatim from the superseded alpha-spec and
-are open (DR-D8): QB has no snap share; RB/WR/TE have no start
-probability; QB has no receiving components.
+Stat definitions follow the official nflverse weekly player statistics *(DR-C12; engine-spec
+§4.7)*. The asymmetries are carried over verbatim from the superseded alpha-spec and are
+intended (DR-D7): QB has no snap share; RB/WR/TE have no start probability; QB has no receiving
+components.
 
 ### 3.3 Availability block (Layer A)
 
@@ -171,8 +171,9 @@ For each player × week × scoring profile:
 - `p_boom`, `p_bust`, relative to positional starter thresholds.
 
 The floor and ceiling percentiles, the default threshold set and the definition of a positional
-starter threshold are **not fixed by any spec**. Each is recorded per output version and is open
-(DR-D8).
+starter threshold are **not fixed by any spec**. Each is a versioned setting, recorded per output
+version and set with Statistical-owner approval before P1-08 is Ready (DR-D8). The values are
+still open.
 
 ### 3.7 Scoring transformation (alpha-spec §5.4, superseded)
 
@@ -186,6 +187,8 @@ fantasy_points = scoring_weights · projected_stat_vector + scoring_offset
   weights. The oracle's `formats.py` matches them with an implicit offset of 0.
 - **Custom profiles.** Imported as versioned files. Profile identity is a content hash of the
   canonical serialization, never key-order-sensitive JSON text (KI-NEW-C1).
+- **Non-affine rules.** A profile containing a threshold bonus or another non-affine rule is
+  rejected with a typed error and never approximated (DR-D6).
 - **Re-scoring.** The same simulated stat draws can be re-scored for any number of profiles
   without re-running the football model. Records carry a `draws_ref { matrix_id, n_draws }`.
 
@@ -231,18 +234,19 @@ prior production projection stays in force:
 explanation payload or generated text may say that a feature "caused" a projection change unless
 the logic is rule-based (for example, `OUT` ⇒ zero).
 
-### 4.2 GRID signal block (proposed — DR-C2, DR-C3)
+### 4.2 GRID signal block (DR-C2, DR-C3)
 
-DR-C2 proposes that GRID is a signal provider inside Layers A–F. DR-C3 proposes that GRID enters
-Layer D as role-specific talent covariates. If both are ratified, the explanation record carries
-the block below. All values are in GRID's dV currency (expected points per play). They are
+GRID is a signal provider inside Layers A–F (DR-C2). It enters Layer D as role-specific talent
+covariates, and the state-space layer keeps one track per player and role (DR-C3). Whether
+RB/WR/TE role credit is an individual signal is still open (DR-D13). The explanation record
+carries the block below. All values are in GRID's dV currency (expected points per play). They are
 explanation and diagnostic fields, never fantasy points.
 
 | Field | Semantics |
 |---|---|
 | `role_talent { dropback \| carry \| target }` | `{ filtered_mean, filtered_var, predictive_var }` from the state-space layer. **Filtered or one-step predictive only** |
 | `form`, `scheme_fit` | Filtered state components |
-| `offseason_rapm` | `{ rating, season, n_plays }`, or null. Fitted only once that season's participation is published *(proposed — DR-C1)* |
+| `offseason_rapm` | `{ rating, season, n_plays }`, or null. Fitted only once that season's participation is published *(DR-C1)* |
 | `prior` | `{ mean, var, q, n0, weight_now }`, or null. The NCAA/draft prior and its current weight (engine-spec §6.5) |
 | `regime_flags` | `{ intervention, scheme_reset, changepoint_z }` |
 
@@ -252,7 +256,7 @@ the canonical "correct-looking wrong semantic" bug (cn-docs.md §8 item 6). Smoo
 appear only in retrospective diagnostics labelled as such.
 
 A matchup grade, if exposed, uses the corrected sign: higher means a tougher defense, `+E_def`
-*(proposed — DR-B5)*. The oracle's `−β_def` grade is inverted (KI-NEW-A2) and MUST NOT be
+*(DR-B5)*. The oracle's `−β_def` grade is inverted (KI-NEW-A2) and MUST NOT be
 reproduced.
 
 ## 5. Team-game environment record
@@ -281,7 +285,8 @@ to **exactly these five categories**:
 - `model_update`
 
 How the Δ is decomposed (for example sequential substitution, and how any residual or
-interaction is reported) is a model-spec item and is open (DR-D8).
+interaction is reported) is a model-spec item. It is still open and is set with Statistical-owner
+approval before P2-07 is Ready (DR-D8).
 Attribution is predictive, not causal (§4.1).
 
 ## 7. Reports (CLI / query outputs)
@@ -297,7 +302,7 @@ Each report is a versioned record type under this contract.
 | Model scorecard | PB-MAE (primary), MAE, RMSE, rank accuracy, active/inactive Brier, interval coverage; by week and position; rookie and low-evidence slice | superseded alpha-spec §10.2 item 3; engine-spec §7.4 |
 | Benchmark results | Provider comparison with provider timestamps and CIs, named or anonymized according to each provider's licence. **No raw competitor rows** | superseded alpha-spec §10.2 item 4 |
 
-The engine emits **no VOR, tier or draft-ranking output** *(proposed — DR-C11)*.
+The engine emits **no VOR, tier or draft-ranking output** *(DR-C11)*.
 
 ## 8. Exports (engine-spec §5.6)
 
@@ -322,8 +327,8 @@ The engine emits **no VOR, tier or draft-ranking output** *(proposed — DR-C11)
 6. **Attribution.** Exports carry the attribution strings of every upstream source whose data
    fed the run ([nflverse/access-and-license.md](../04-providers/nflverse/access-and-license.md)).
    Whether a projection derived from CC-BY-SA participation is an "adapted" work that triggers
-   ShareAlike is a Data/Licensing ruling (DR-A11 scope). Until that ruling, exports are private
-   and are not redistributed.
+   ShareAlike is a Data/Licensing ruling (DR-D3, open). Until that ruling, exports are private
+   and are not redistributed (the DR-D3 interim rule, confirmed 2026-10-09).
 
 ## 9. Versioning and compatibility
 
@@ -368,14 +373,18 @@ The engine emits **no VOR, tier or draft-ranking output** *(proposed — DR-C11)
 
 ## 12. Open items
 
-- **DR-D8** covers five items:
-  - the floor/ceiling percentiles;
-  - the default `p_exceed` thresholds;
-  - the boom/bust positional starter thresholds;
-  - the stat-vector asymmetries (§3.2);
-  - the change-attribution decomposition method (§6).
-- **DR-C2, DR-C3.** GRID signal block (§4.2).
-- **DR-C4.** Derived horizons (§3.1).
-- **DR-C11.** No VOR or tier outputs (§7).
-- **DR-C12.** Stat definitions (§3.2).
-- **DR-A11 scope.** ShareAlike status of derived exports (§8 rule 6).
+- **DR-D8** (decided in part 2026-10-08: each item is a versioned setting, recorded per output
+  version and set with Statistical-owner approval before the package that uses it is Ready).
+  Still open:
+  - the floor/ceiling percentiles (P1-08);
+  - the default `p_exceed` thresholds (P1-08);
+  - the boom/bust positional starter thresholds (P1-08);
+  - the change-attribution decomposition method (§6; P2-07).
+- **DR-C12.** The per-dataset nflverse terms and the canonical weekly-stats release behind the
+  §3.2 stat definitions (P1-03). The statistical policy is decided.
+- **DR-D3.** ShareAlike status of derived exports (§8 rule 6).
+- **DR-D13.** Whether RB/WR/TE role credit in the GRID signal block (§4.2) is an individual signal.
+
+Settled in the decision interview of 2026-10-08/09: the stat-vector asymmetries (DR-D7), the GRID
+signal block (DR-C2, DR-C3), the derived horizons (DR-C4), the rejection of non-affine scoring
+rules (DR-D6) and the absence of VOR and tier outputs (DR-C11).

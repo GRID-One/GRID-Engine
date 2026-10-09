@@ -11,10 +11,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: evaluation and leakage (as-of information model, leakage guards, walk-forward backtest, baselines, metrics, player pool, bootstrap, diagnostics, gates)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, adopted subject to owner ratification) it is an authority-level-3 document. The statistical
-owner approves the definitions. The implementing agent may not redefine them, and may not change a
-metric, threshold or evaluation population after seeing results (alpha-spec §7.7 and §12.7,
-superseded; carried into engine-spec §7.7 and §12.7).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it is
+an authority-level-3 document. The statistical owner approves the definitions. The implementing
+agent may not redefine them, and may not change a metric, threshold or evaluation population after
+seeing results (alpha-spec §7.7 and §12.7, superseded; carried into engine-spec §7.7 and §12.7).
 
 **How to read this spec**
 
@@ -52,7 +52,7 @@ superseded; carried into engine-spec §7.7 and §12.7).
 | Evaluation population | The player-weeks scored | Oracle: paired cells with realized rows. Engine: alpha-spec §7.3 union pool (§4.7) |
 | Diagnostics | Tier 1, Tier 2, H1/H2 verdict, lineup simulation, sniff, report | Implemented (oracle). Engine: diagnostics only (§4.8–§4.10) |
 | Gate registry | Calibrate-then-gate thresholds, frozen once | Implemented (oracle). Engine: only for KPIs without a spec number, on a disjoint period (§4.11) |
-| Promotion gates | alpha-spec §9.4, §7.8, §7.9 | **Absent** in the oracle. Kept verbatim and pre-registered (§4.12; proposed — DR-C5) |
+| Promotion gates | alpha-spec §9.4, §7.8, §7.9 | **Absent** in the oracle. Kept verbatim and pre-registered (§4.12; DR-C5) |
 
 ### 1.2 Statistical intent (load-bearing comments, preserved)
 
@@ -131,10 +131,10 @@ superseded; carried into engine-spec §7.7 and §12.7).
 |---|---|---|
 | `validation/asof.py` | `domain` (as-of types) and the leakage harness in `features` / `evaluation` (§4.5, §12.3) | Binding semantics, made stricter (§4.1, §4.2) |
 | `validation/backtest.py` | `evaluation` walk-forward (§7.1) | Mechanics parity source only; not the protocol |
-| `validation/baselines.py` | `evaluation` baselines (§7, §9.4 naive set) | Persistence and season-to-date are parity cases; last season is a diagnostic baseline (DR-D24) |
+| `validation/baselines.py` | `evaluation` baselines (§7, §9.4 naive set) | Persistence and season-to-date are parity cases; last season is a §9.4 gate baseline (DR-D24) |
 | `validation/metrics.py` | `evaluation` metrics (§7.4, §7.5) | Class A parity on non-degenerate inputs; PB-MAE, Brier, median AE added |
 | `validation/tier1.py`, `tier2.py`, `verdict.py`, `report.py`, `sniff.py` | `evaluation` diagnostics, `governance` reports (§7.14) | Diagnostics only; never gates |
-| `validation/lineup_sim.py` (+ `scoring/vor.py` inside it) | `evaluation` lineup simulation (§7.14.2; proposed — DR-C11) | The start/sit decision metric |
+| `validation/lineup_sim.py` (+ `scoring/vor.py` inside it) | `evaluation` lineup simulation (§7.14.2; DR-C11) | The start/sit decision metric |
 | `validation/thresholds.py` + `provisional_thresholds.json` | `governance` registry (§7.14.4) | Only for KPIs without a spec number, on a disjoint calibration period |
 
 ### 2.2 Flow (engine)
@@ -170,12 +170,12 @@ sources ──(published_at)──► AsOf(S, W, lock) ──► features / mode
 
 | Input | Oracle form | Null and failure semantics (oracle → required) | As-of rule |
 |---|---|---|---|
-| Plays (participation) | plays contract with `season`, `week` (`backtest.py:117-128`) | none checked → plays contract validation | Participation of season `S` only after its publication (§4.1; proposed — DR-C1) |
+| Plays (participation) | plays contract with `season`, `week` (`backtest.py:117-128`) | none checked → plays contract validation | Participation of season `S` only after its publication (§4.1; DR-C1) |
 | Player frame | `[player_id, team, position]`, deduped at the verdict boundary (`verdict.py:383-388`) | duplicates deduped silently → typed error at ingestion | Universe as of the origin (§4.2 G8) |
-| Realized points history | `[player_id, season, week, points]` (`tier1.py:206-208`) | absent rows = absent player | Official stats as labels, REG only (proposed — DR-C12) |
+| Realized points history | `[player_id, season, week, points]` (`tier1.py:206-208`) | absent rows = absent player | Official stats as labels, reconciled against the engine's play-by-play rebuild, which never changes a label; REG only (DR-C12) |
 | Box-score history | raw `player_stats` frame (`verdict.py:364-368`) | degraded columns warned and zero-filled (`verdict.py:98-108`) → typed `LabelError` | as above |
 | Points allowed | `[season, week, def_team, points_allowed]` (`tier2.py:44-46`) | duplicates rejected (`tier2.py:66-72`) | outcomes ≤ W−1 for grades, W for scoring |
-| Market | static `{team: strength}` dict, or a per-week table (`asof.py:116-126`) | dict passed through unsliced | **Line published before the lock** (engine-spec §7.2; proposed — DR-B5). A static dict is not admissible |
+| Market | static `{team: strength}` dict, or a per-week table (`asof.py:116-126`) | dict passed through unsliced | **Line published before the lock** (engine-spec §7.2; DR-B5). A static dict is not admissible |
 | Interventions | records or frame with a week (`asof.py:128-147`) | undated → `LeakageError` (kept) | announced before the lock (DR-D1) |
 | Availability (`out`) | `{(season, week): set(pid)}` (`verdict.py:372-373`) | none → no starter-OUT subset | observed before the lock |
 | Benchmark projections | `baselines.market` wrapper (`baselines.py:123-139`), never wired | — | provider snapshot hashed at lock (engine-spec §7.6) |
@@ -193,7 +193,7 @@ sources ──(published_at)──► AsOf(S, W, lock) ──► features / mode
 |---|---|
 | Locked projection set per origin | the projection records of the output contract, with lock, data snapshot, model and scoring-profile versions; immutable |
 | Scorecard | PB-MAE (primary), per-position NMAE and MAE, RMSE, median AE, rank metrics, active/inactive Brier, interval coverage paired with width, bias slices; by week and position; rookie and low-evidence slice |
-| Comparison | per baseline or provider: paired statistic, week-clustered CI, seed, resample count, cluster unit, imputed-cell counts |
+| Comparison | per baseline or provider: paired statistic, week-clustered CI, seed, resample count, cluster unit, imputed-cell and excluded-cell counts (§4.7) |
 | Gate result | each pre-registered gate item: value, threshold, pass/fail/not-evaluable, protocol version |
 | Diagnostics | H1, H2 (overall and starter-OUT), Tier 2, calibration diagnostics; labelled diagnostic |
 | Leakage report | guard outcomes for the run, `research_only` flag and its reason |
@@ -219,7 +219,7 @@ slice_interventions = DataFrame → keep(·, W);  records → week ≤ W (no sea
 assert_watermark(last_week): raise if last_week > W − 1                          (asof.py:150-159)
 ```
 
-**Required engine type (proposed — DR-C1; engine-spec §4.5).**
+**Required engine type (DR-C1; engine-spec §4.5).**
 
 ```text
 AsOf { season S, week W, lock: Lock { kind ∈ {Thursday, Sunday, Operational}, at: UtcInstant },
@@ -238,12 +238,15 @@ static metadata    ⇔ exempt from the slot rule;  published_at_r < lock.at stil
 - **Publication lag.** nflverse participation for season `s` is published once, after `s`'s
   postseason (`reference/python/backend/grid/nflverse_loader.py:175-178`; critic G-5). With this
   rule, no in-season origin of season `S` can read season-`S` participation, so production RAPM and
-  Layer-1 credit are season-boundary products and the in-season path uses Layer-1′ (proposed —
-  DR-C1; `rapm-attribution.md` §2.3; `layer1-credit.md`).
-- **Historical publication times.** Backfilled history lacks recorded publication times. The
-  declared approximation, for example "participation of season `s` published after `s`'s last
-  postseason game", is open (DR-D5) and recorded with every
-  historical run.
+  Layer-1 credit are season-boundary products and the in-season path uses Layer-1′ (DR-C1;
+  `rapm-attribution.md` §2.3; `layer1-credit.md`).
+- **Historical publication times.** Backfilled history lacks recorded publication times. Each
+  dataset's publication time follows its provider's declared publication-lag rule (P1-03), for
+  example "participation of season `s` published after `s`'s last postseason game", recorded with
+  every historical run. Stat corrections already in backfilled files use the "corrected as
+  retrieved" approximation, accepted for the Phase 1 historical proof, declared in every backtest
+  report and extended to no other data; live seasons use the engine's own snapshots (DR-D5;
+  engine-spec §4.5).
 - **Research mode.** `mode = Research` MAY relax the publication-lag rule, for example to reproduce
   the oracle's in-season RAPM. Every output of such a run carries `research_only = true` with the
   relaxed rule named. It MUST NOT feed a gate, a promotion or a published claim (alpha-spec §12.3:
@@ -266,13 +269,13 @@ deliberately leaky input or forecaster that the guard MUST catch.
 | G4 | **Two-path equivalence.** The offline walk-forward at origin W equals the production incremental path after weeks 1..W−1, with last slot `W−1` and the same persisted column order | `rtol = atol = 1e-6` (`test_leakage_guards.py:150-197`); observed 0.0 (`rapm-attribution.md` §6.2) | Rust-internal: the `evaluation` walk-forward equals the weekly pipeline update, ≤ 1e-12 abs (`rapm-attribution.md` P-6) for RAPM blocks and Class A for Kalman states | — (equivalence test) |
 | G5 | **Publication lag** (new) | absent | Injecting season-`S` participation with `published_at ≥ lock` leaves every non-research output bit-identical | The same injection with `mode = Research` changes outputs and sets `research_only` |
 | G6 | **Interventions** | undated raise; record list season-blind (§1.3 item 2) | Dated by `announced_at`; season-aware; only those announced before the lock apply | A future-season low-week record is rejected |
-| G7 | **Market at lock** | static dict passes through (`asof.py:124-126`); the synth anchor is planted truth plus noise | Only lines published before the lock; a closing line after the lock is post-lock data (engine-spec §7.2; proposed — DR-B5; DR-D2) | A post-lock line injected into a locked run is rejected |
+| G7 | **Market at lock** | static dict passes through (`asof.py:124-126`); the synth anchor is planted truth plus noise | Only lines published before the lock; a closing line after the lock is post-lock data (engine-spec §7.2; DR-B5; DR-D2) | A post-lock line injected into a locked run is rejected |
 | G8 | **Player universe** | fixed frame (§1.3 item 5); `slice_pool` exists but is used only by tests, and fails on `ndarray` cells (KI-V8) | Universe as of the origin; not-yet-seen players are `no_data`, never rated or forecast as evidence | A player first seen at `W + 1` appears in no origin-`W` output |
 | G9 | **State namespace** | `CacheNamespace` refuses roots overlapping a cwd-relative `data/cache` (`asof.py:171-210`) | Backtests and tests write only under an isolated state root, checked against the **configured** production root, before any write | Pointing the namespace at production raises (`test_asof.py:116-119`) |
 | G10 | **Scope** | V(s) frozen on the warm-up (`backtest.py:165-168`) | V(s), priors, equivalency and VOR replacement fit before W; calibration periods for gates disjoint from evaluation (§4.11) | A V(s) refit on the whole season (KI-NEW-W4) is detected by G1 |
-| G11 | **Corrections and labels** | absent; postseason rows enter (KI-NEW-V0a, KI-NEW-I4) | Stat corrections create a new data version; postseason rows never enter REG labels (proposed — DR-C12) | A corrected stat replayed into an earlier snapshot changes its data version |
+| G11 | **Corrections and labels** | absent; postseason rows enter (KI-NEW-V0a, KI-NEW-I4) | Stat corrections create a new data version; postseason rows never enter REG labels (DR-C12) | A corrected stat replayed into an earlier snapshot changes its data version |
 | G12 | **Cross-fit folds** | play-level `KFold(shuffle)` (KI-NEW-A5) | Folds hold out whole weeks; no input to a held-out fold is fitted on it (`layer1-credit.md`; DR-D14) | — |
-| G13 | **Kalman initialisation** | `x0 = nanmean(y[:3])` (KI-#15) | No observation from the forecast week or later initialises any state (proposed — DR-C10) | Changing week-2 observations leaves the week-1 filtered value unchanged |
+| G13 | **Kalman initialisation** | `x0 = nanmean(y[:3])` (KI-#15) | No observation from the forecast week or later initialises any state (DR-C10) | Changing week-2 observations leaves the week-1 filtered value unchanged |
 
 ### 4.3 Walk-forward backtest (`backtest.walk_forward`, `backtest.py:117-201`)
 
@@ -297,11 +300,15 @@ for (s, w) in slots:
 - Incremental equals from scratch: observed max abs diff 4.8e-15 against an asserted 1e-8
   (`tests/validation/test_backtest.py:67-92`; `rapm-attribution.md` §6.2).
 
-**Required protocol** (engine-spec §7.1, proposed — DR-C1, DR-C6):
+**Required protocol** (engine-spec §7.1; DR-C1, DR-C6):
 
 1. For each target week, reconstruct the snapshot available before the lock (§4.1).
 2. Fit or update only on the engine-spec §2.4 window: `S[1..W−1]` plus `S−1, S−2`; preseason and
-   week 1: `S−1..S−3`. RAPM uses exact per-season block sums (`rapm-attribution.md` §6.4).
+   week 1: `S−1..S−3`. RAPM uses exact sums of per-(season, week) blocks; in season (`W > 1`) it
+   uses only the `S−2` and `S−1` blocks, because season-`S` participation is unpublished
+   (`rapm-attribution.md` §6.4). V(s) is fit once per season on `S−3..S−1` and frozen for that
+   season, an accepted gap: after week 1 it still carries `S−3`. Every Kalman filter restarts from
+   the windowed prior at each season boundary, in production and replay alike (DR-D17).
 3. Generate and **freeze** the locked projection set (§3.2). An operational re-projection is a new
    version and never replaces a locked one.
 4. Score after official outcomes and stat corrections are available, with labels from engine-spec
@@ -338,12 +345,12 @@ market(i)        = external projection, passed through (report only)            
 | Rolling three-game average | mean of the player's last three active games before the lock, within the §2.4 window | §9.4 naive set (no oracle source) |
 | Season-to-date average | = oracle `season_to_date` mean | §9.4 naive set; parity case |
 | Position/depth-chart median | median of the player's position × depth-chart-slot group's points over the training window | §9.4 naive set (no oracle source) |
-| Last-season per-game actuals | = oracle `last_season`, REG only | Diagnostic baseline on every scorecard; gate membership open (DR-D24) |
+| Last-season per-game actuals | = oracle `last_season`, REG only | §9.4 naive set, the fifth gate baseline (DR-D24) |
 | Market / providers | provider snapshot at lock | Benchmark only (engine-spec §7.6); never a model input |
 
 Every baseline MUST yield a value for every pooled player-week. A baseline without a value for a
 player (no history) uses the position/depth-chart median as its declared fallback, and the scorecard
-reports the fallback count per baseline (proposed — DR-C5).
+reports the fallback count per baseline (DR-C5).
 
 ### 4.5 Metrics (`metrics.py`)
 
@@ -379,8 +386,8 @@ improvement_j = (PB-MAE_j − PB-MAE_engine) / PB-MAE_j          lower PB-MAE is
 
 - `projected_points` is the **unconditional** expected points of the locked projection under the
   evaluation scoring profile, Half-PPR by default (engine-spec §2.3; output contract §3.4).
-- **`scale_p` estimator (proposed — DR-C5).** engine-spec §7.4 requires a "fixed position scale
-  estimated only from the training period" and delegates the statistic here. Proposed:
+- **`scale_p` estimator (DR-C5).** engine-spec §7.4 requires a "fixed position scale
+  estimated only from the training period" and delegates the statistic here:
 
   ```text
   T        = the training period: every REG week of the seasons before the first evaluated season,
@@ -395,7 +402,7 @@ improvement_j = (PB-MAE_j − PB-MAE_engine) / PB-MAE_j          lower PB-MAE is
   `NMAE` a relative MAE but ties the scale to a baseline definition. `scale_p`, `T` and the protocol
   version are frozen before any PB-MAE result is recorded; a change is a new protocol version.
 - **Strongest naive baseline** = the §4.4 naive baseline with the lowest overall PB-MAE on the
-  evaluation period (proposed — DR-C5).
+  evaluation period (DR-C5).
 
 **Other secondary metrics with no oracle source** (engine-spec §7.5): median absolute error; start/sit
 accuracy at positional starter cutoffs; the ranking Accuracy Gap; active/inactive Brier score
@@ -459,16 +466,18 @@ for each position p and target week w:
   P_{p,w} = top N_p by the engine's locked projection
           ∪ top N_p by each benchmark provider j
           ∪ top N_p by actual fantasy points,            N_QB = 20, N_RB = 40, N_WR = 50, N_TE = 15
-  minus players on a bye;  ties at rank N_p are all included (proposed — DR-C5)
+  minus players on a bye;  ties at rank N_p are all included (DR-C5)
   a pooled player inactive after the lock has actual = 0
-  every forecaster (engine, baselines, providers) is scored on the same P_{p,w}
+  every forecaster (engine, baselines, providers) is scored on the same P_{p,w},
+  except cells excluded for a provider (DR-D23, below)
 ```
 
-- **Missing provider projections (DR-D23; proposed default).** A
-  pooled player-week without a projection from provider `j` receives provider `j`'s **lowest
-  published projection at that position and week** (a provider-tail estimate). The rule is identical
-  for every provider, and each comparison reports the imputed-cell count per provider. No §7.8 or §7.9
-  result is admissible until the owner ratifies the policy.
+- **Missing provider projections (DR-D23).** A pooled player-week without a projection from provider
+  `j` receives provider `j`'s **lowest published projection at that position and week** (a
+  provider-tail estimate). If provider `j` published nothing at that position that week, the
+  player-week is excluded for provider `j` and the exclusions are counted. The rules are identical
+  for every provider, and each comparison reports the imputed-cell and excluded-cell counts per
+  provider.
 - **The engine has no missing projections.** It projects every eligible player. A pooled player-week
   without an engine projection is a typed `EvaluationError::MissingEngineProjection`, never
   imputed.
@@ -509,7 +518,7 @@ weekly_k = −spearman(grade, points_allowed) for each week with ≥ min_teams (
 predictive = bootstrap_ci(weekly values);   no qualifying week → ValueError
 ```
 
-- With a correct grade (`+E_def`, higher = tougher; proposed — DR-B5) a real signal gives a positive
+- With a correct grade (`+E_def`, higher = tougher; DR-B5) a real signal gives a positive
   KPI. The oracle's grades are `−β_def` (KI-NEW-A2), so on real data a real signal would come out
   negative.
 - **The synth verdict test is tautological.** It builds `points_allowed = 20 − 30·grade` from the
@@ -522,10 +531,10 @@ predictive = bootstrap_ci(weekly values);   no qualifying week → ValueError
 
 **H1** (`verdict.py:448-459`): the ALL-row ROS paired margin against last season.
 `SHIP_GRID` if `point > 0` and `excludes_zero`; `BASELINE_FALLBACK` otherwise; `INCONCLUSIVE` without
-paired cells. In the engine H1 is a diagnostic, not a kill criterion (proposed — DR-C4, DR-C5;
+paired cells. In the engine H1 is a diagnostic, not a kill criterion (DR-C4, DR-C5;
 engine-spec §7.14.1).
 
-**H2 lineup simulation** (`lineup_sim.py`; proposed — DR-C11: kept as the start/sit decision metric,
+**H2 lineup simulation** (`lineup_sim.py`; DR-C11: kept as the start/sit decision metric,
 VOR internal):
 
 ```text
@@ -563,7 +572,7 @@ profile is Half-PPR (engine-spec §7.14.2).
 
 **Engine H2.** Method A is the engine's locked weekly projection; method B a declared baseline. The
 oracle's method A is the SV→points map of the as-of RAPM rating (KI-NEW-R3), which uses
-current-season participation (proposed — DR-C1); neither is reproduced. Intervals are week-clustered.
+current-season participation (DR-C1); neither is reproduced. Intervals are week-clustered.
 
 **Sniff test** (`sniff.py:47-89`): at least `min_in_top_k = 3` of a curated elite set in the top
 `top_k = 5`, and none ranked worse than `max_rank = 24`; missing elites count against the top-k bar;
@@ -584,7 +593,7 @@ verdict: baseline_samples = observed per-unit samples × seeded random signs (si
          promoted and checked in the same run                                    (verdict.py:331-335, :470-476)
 ```
 
-**Required (proposed — DR-C5; critic X-16; engine-spec §7.14.4).**
+**Required (DR-C5; critic X-16; engine-spec §7.14.4).**
 
 - Allowed only for KPIs the spec does not fix numerically (the H2 margin, the Tier-2 KPI), never for
   any §7.8, §7.9 or §9.4 threshold.
@@ -601,7 +610,7 @@ verdict: baseline_samples = observed per-unit samples × seeded random signs (si
   versioned entries.
 - The sign-flip null resamples cells iid. Any null used for a gate is week-clustered (§4.6).
 
-### 4.12 Promotion and claim gates (alpha-spec §9.4, §7.8, §7.9; proposed — DR-C5)
+### 4.12 Promotion and claim gates (alpha-spec §9.4, §7.8, §7.9; DR-C5)
 
 The thresholds are **kept verbatim and pre-registered** (engine-spec §7.8, §7.9, §9.4). The oracle
 implements none of them. This section fixes how each is evaluated.
@@ -617,7 +626,7 @@ implements none of them. This section fixes how each is evaluated.
 
 - **Current standing.** CN's only recorded comparison is a tie with last season and a loss to the
   season-to-date mean (`docs/07-archive/cautious-nevermore/real-data-results.md` §3.3). The engine
-  acknowledges that GRID is currently below the §9.4 gate (engine-spec §3.3; proposed — DR-C5).
+  acknowledges that GRID is currently below the §9.4 gate (engine-spec §3.3; DR-C5).
 - A gate item whose definition is open is reported as `not evaluable`, never as passed.
 
 ### 4.13 Constants
@@ -680,7 +689,7 @@ implements none of them. This section fixes how each is evaluated.
 - Every evaluation output is reproducible from the data snapshot, the model versions, the protocol
   version and the recorded seeds (engine-spec §7.10).
 
-### 5.4 Typed failures (alpha-spec §6.6 rule 4; proposed — DR-B6)
+### 5.4 Typed failures (alpha-spec §6.6 rule 4; DR-B6)
 
 | Condition | Oracle behaviour | Required |
 |---|---|---|
@@ -735,7 +744,7 @@ validation 137.
 | `test_asof.py` (14) | cutoff split; season-aware slicing; as-of pool; undated intervention raises; market dict pass-through and table slice; interventions after W excluded; watermark and canary; namespace isolation and canary; tripwire pass, canary, post-construction mutation | Port as behavioural parity. **Divergences:** market dict pass-through, week-only fallback, record-list interventions (§4.2) |
 | `test_leakage_guards.py` (7) | the four guards and their canaries (§4.2 G1–G4) | Port as Rust-native guards; add G2 seam canary and G5–G13 |
 | `test_backtest.py` (7) | origins skip warm-up; parameter validation; finite ratings; incremental == scratch (`rtol = atol = 1e-8`); stride subset; market anchor changes ratings | Port (`rapm-attribution.md` P-5) |
-| `test_baselines.py` (8) | persistence (empty at W = 1); season-to-date mean and spread with pooled and 1e-6 fallbacks; last season; market wrapper | Port persistence and season-to-date as Class A; last season as diagnostic |
+| `test_baselines.py` (8) | persistence (empty at W = 1); season-to-date mean and spread with pooled and 1e-6 fallbacks; last season; market wrapper | Port persistence and season-to-date as Class A; last season as a §9.4 gate baseline (DR-D24) |
 | `test_metrics.py` (24) | Φ, Φ⁻¹ inverse and range check; accuracy; skill guard; bootstrap coverage, excludes-zero, determinism, custom statistic, validation; NIS; PIT; CRPS at zero spread "collapses to MAE" (tested in the limit, not at `sd = 0`); PICP; PINAW; pinball; Spearman ties; top-N; NDCG | Port (Class A); the degenerate cases diverge (§5.4) |
 | `test_tier1.py` (17) | forecast frames; omission rules; tables; skill vs a weak baseline (weekly and ROS); unknown horizon; calibration on planted noise (NIS within ±0.4 of 1, PICP within ±0.10 of 0.80); ROS forecast cases | Diagnostic only |
 | `test_tier2.py` (7) | planted predictive; shuffled not predictive; byes drop; thin weeks; no qualifying week; `min_teams`; duplicates | Diagnostic only |
@@ -772,7 +781,7 @@ From `docs/07-archive/cautious-nevermore/real-data-results.md`, run `real-2022-2
 cleared) and `h2` +0.3164 (cleared). Calibration figures (weekly NIS 1.00, ROS NIS 1.25, PICP@80
 ≈ 0.75–0.87) were recorded for the **first** run only. None of these numbers is a parity target or
 evidence: biased labels (KI-NEW-I1..I5, KI-NEW-V0a), iid intervals (KI-NEW-V1), current-season
-participation (reconcile-code-first C1; reconcile-spec-first R14; proposed — DR-C1), and the H2
+participation (reconcile-code-first C1; reconcile-spec-first R14; DR-C1), and the H2
 forecast map fitted in-sample (KI-NEW-R3).
 
 ### 7.4 iid vs week-clustered intervals (legacy synth; §1.3 item 3)
@@ -822,8 +831,7 @@ from the repo*.
 ## 8. Known defects and required engine behaviour (template: Known limitations)
 
 The Rust port MUST NOT reproduce any item below. Each correction lands as an approved oracle
-correction (proposed — DR-B1) or a deliberate divergence in `reference/python/PARITY.md` (proposed —
-DR-B6).
+correction (DR-B1) or a deliberate divergence in `reference/python/PARITY.md` (DR-B6).
 
 | # | Defect | KI / source | Required behaviour |
 |---|---|---|---|
@@ -832,12 +840,12 @@ DR-B6).
 | 3 | Watermark week-only, skipped at season seams | KI-V2 | `(season, week)` at every origin (G2) |
 | 4 | Record-list interventions season-blind | KI-NEW-Z61; §1.3 item 2 (new) | Season-aware, `announced_at < lock` (G6) |
 | 5 | Static market dict passes through `slice_market`; synth market is planted truth | KI-NEW-Z71; `asof.py:124-126`; `backtest.py:136-141` | Market lines published before the lock only (G7) |
-| 6 | Current-season participation folded into RAPM at every origin | KI-NEW-Z68; reconcile-code-first C1; reconcile-spec-first R14 | Publication-lag axis; research-only otherwise (§4.1, G5; proposed — DR-C1) |
+| 6 | Current-season participation folded into RAPM at every origin | KI-NEW-Z68; reconcile-code-first C1; reconcile-spec-first R14 | Publication-lag axis; research-only otherwise (§4.1, G5; DR-C1) |
 | 7 | Gates promoted from the run they judge | KI-NEW-Z72; `verdict.py:470-476`; critic X-16 | Disjoint, pre-registered calibration; never for spec thresholds (§4.11) |
 | 8 | Registry docstring vs empty-registry test | KI-NEW-Z73; cn-docs §14 item 8 | Committed, versioned registry entries |
 | 9 | No PB-MAE, locks, union pool, provider registry, §9.4/§7.8/§7.9 gates | reconcile-spec-first R47, R52, R54 | §4.5, §4.7, §4.12 |
 | 10 | Walk-forward universe is the fixed frame: not-yet-seen players get rating 0 and forecasts | KI-NEW-Z67; §1.3 item 5; `slice_pool` unused (KI-V8) | As-of universe; `no_data` (G8) |
-| 11 | Tier-2 synth test tautological; grades inverted | critic X-3; KI-NEW-A2, KI-NEW-V2 | Diagnostic until DR-B5 and a points-allowed feed |
+| 11 | Tier-2 synth test tautological; grades inverted | critic X-3; KI-NEW-A2, KI-NEW-V2 | Diagnostic until a points-allowed feed exists and the grade follows DR-B5 (`+E_def`) |
 | 12 | Weekly H2 forecast is an in-sample affine map of the RAPM rating | KI-NEW-R3 | Engine locked weekly projections (§4.10) |
 | 13 | Evaluation seed also seeds model cross-fitting | KI-NEW-Z62; `verdict.py:414-415`, `:438-445` (new) | Separate seeds (§5.3) |
 | 14 | Evaluation scored with STANDARD | KI-NEW-Z69; reconcile-code-first C5 | Half-PPR default; profile in the protocol version |
@@ -845,34 +853,37 @@ DR-B6).
 | 16 | Degenerate metric inputs return silent values | KI-NEW-Z65; KI-V4, KI-V5, KI-V6, KI-V12; `metrics.py:111-112` | §5.4 |
 | 17 | Bootstrap materializes `n × N` matrices | KI-NEW-Z63; `metrics.py:169-171` (new) | Streaming resamples (§5.1) |
 | 18 | Unstable tie handling in top-N and NDCG | KI-NEW-Z64; `metrics.py:308-309`, `:324` (new) | Deterministic tie-break (§5.2) |
-| 19 | Postseason rows in labels and origins | KI-NEW-V0a, KI-NEW-I4 | REG-only labels (proposed — DR-C12) |
+| 19 | Postseason rows in labels and origins | KI-NEW-V0a, KI-NEW-I4 | REG-only labels (DR-C12) |
 | 20 | `weekly_update` is not an oracle (V(s) refit, week-only keys, reinit) | KI-NEW-W1..W5, KI-NEW-W4 | Engine incremental path from batch semantics (§6) |
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Question | Proposed default |
+Status as recorded in `docs/00-meta/decision-register.md`, which is authoritative, after the owner's
+decision interview (2026-10-08/09).
+
+| Decision | Question | Status |
 |---|---|---|
-| **DR-C5** | Primary metric and gates | PB-MAE primary; α§9.4 thresholds verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; calibrate-then-gate only for unnumbered KPIs on a disjoint period (proposed — DR-C5). Open inside it: `scale_p` (§4.5 proposal), the strongest-baseline definition, tie handling at rank N, baseline fallbacks, the ROS clustering scheme, numeric meanings of "materially worse", "documented recalibration", "material degradation" and "without degrading veterans" |
-| **DR-C1** | Participation on the live path | Publication-lag axis; in-season RAPM research-only (proposed — DR-C1) |
-| **DR-C4** | Horizons | Weekly primary; H1 no longer a kill criterion (proposed — DR-C4) |
-| **DR-C6** | Three-season window in backtests | Per-season blocks; per-origin window (proposed — DR-C6) |
-| **DR-C11** | VOR and lineup simulation | Lineup simulation kept as the start/sit metric, VOR internal (proposed — DR-C11) |
-| **DR-C12** | Labels, season type | Official stats, REG only (proposed — DR-C12) |
-| **DR-B2** | Live oracle in CI vs committed fixtures | Both: committed fixtures are the Rust contract; a Linux oracle job proves they regenerate (proposed — DR-B2) |
-| **DR-B5** | Grade sign for Tier 2 | `+E_def` (proposed — DR-B5) |
-| **DR-D23** | Imputation for missing provider projections | Provider's lowest published projection at that position and week; counts reported (§4.7) |
-| **DR-D24** | Last season in the §9.4 gate set? | Reported as a diagnostic baseline on every scorecard; gate membership open |
-| **DR-D5** | Declared publication-time approximation for backfilled history | Open |
-| **DR-D2** | Source of timestamped pre-lock lines for backtests | Open; until then market inputs are unavailable in backtests |
-| **DR-D16** | Conditional vs unconditional calibration | Open (`state-space-kalman.md` §9) |
+| **DR-C5** | Primary metric and gates | Ratified in part 2026-10-09: PB-MAE primary; α§9.4 thresholds verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; calibrate-then-gate only for unnumbered KPIs on a disjoint period; GRID acknowledged below the gate; `scale_p` (§4.5), the strongest-baseline definition, tie handling at rank N and baseline fallbacks as written here. Open inside it: the ROS clustering scheme (§4.6); numeric meanings of "materially worse", "documented recalibration", "material degradation" and "without degrading veterans" (§4.12) |
+| **DR-C1** | Participation on the live path | Ratified in part 2026-10-09: publication-lag axis; in-season RAPM research-only; backtests hide current-season participation. Open: the snap-count source (KI-NEW-Z50) |
+| **DR-C4** | Horizons | Ratified 2026-10-08: weekly primary; H1 no longer a kill criterion |
+| **DR-C6** | Three-season window in backtests | Overridden in part 2026-10-09: per-(season, week) RAPM blocks summed over the per-origin window, in season the `S−2` and `S−1` blocks only; V(s) fit once per season on `S−3..S−1` and frozen (an accepted gap); every Kalman filter restarts from the windowed prior at each season boundary, in production and replay (DR-D17; §4.3) |
+| **DR-C11** | VOR and lineup simulation | Ratified 2026-10-09: lineup simulation kept as the start/sit metric, VOR internal |
+| **DR-C12** | Labels, season type | Overridden in part 2026-10-09: official stats are the labels, reconciled against the engine's play-by-play rebuild for every player-week (the official figure always wins; every disagreement recorded; those above a threshold flagged); REG only. Open: the Data/Licensing terms, the flag threshold and the canonical release (P1-03), the correction-window length |
+| **DR-B2** | Live oracle in CI vs committed fixtures | Ratified 2026-10-08: both; committed fixtures are the Rust contract; a Linux oracle job proves they regenerate |
+| **DR-B5** | Grade sign for Tier 2 | Ratified 2026-10-09: `+E_def` |
+| **DR-D23** | Imputation for missing provider projections | Ratified 2026-10-09: provider's lowest published projection at that position and week; counts reported; a player-week at a position where the provider published nothing that week is excluded for that provider, and the exclusions are counted (§4.7) |
+| **DR-D24** | Last season in the §9.4 gate set? | Decided 2026-10-09: yes, the fifth naive gate baseline (§4.4) |
+| **DR-D5** | Declared publication-time approximation for backfilled history | Decided 2026-10-09: "corrected as retrieved" accepted for stat corrections only, declared in every backtest report; other backfilled data follow each provider's declared publication-lag rule (P1-03; §4.1) |
+| **DR-D2** | Source of timestamped pre-lock lines for backtests | Open; interim rule confirmed 2026-10-09: market inputs are unavailable in backtests, with a missingness indicator, and closing lines are never substituted |
+| **DR-D16** | Conditional vs unconditional calibration | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the pre-game predictive is conditioned on Layer C's projected exposure, and calibration reports show both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (`state-space-kalman.md` §9) |
 
 ---
 
 ## 10. Rust port plan (template: Tolerances, Reference examples)
 
-### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8 adopted subject to ratification)
+### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8, ratified 2026-10-08)
 
 | Piece | Crate::module | WP |
 |---|---|---|
@@ -903,7 +914,7 @@ Component `evaluation-and-leakage`:
 These stages are `ledger_independent = true` for injected inputs, except the walk-forward ratings,
 which follow the RAPM ledger (`rapm-attribution.md` §10.2).
 
-### 10.3 Parity targets (classes per `docs/03-contracts/parity-fixture-contract.md` §6; proposed — DR-B3)
+### 10.3 Parity targets (classes per `docs/03-contracts/parity-fixture-contract.md` §6; DR-B3)
 
 | ID | Target | Class | Criterion |
 |---|---|---|---|
@@ -967,18 +978,18 @@ raise; holding `(2022, 18)` at origin `(2023, 1)` MUST NOT.
 
 | Superseded section | Requirement | How this spec satisfies it | Gap |
 |---|---|---|---|
-| alpha-spec §2.4 | Exact three-season window per prediction | §4.3 step 2 | Per-season RAPM blocks (`rapm-attribution.md` §6.4) |
+| alpha-spec §2.4 | Exact three-season window per prediction | §4.3 step 2 | Per-(season, week) RAPM blocks (`rapm-attribution.md` §6.4); V(s) frozen per season on `S−3..S−1`, an accepted gap (DR-C6) |
 | alpha-spec §4.5 | As-of reconstruction with six timestamps; leakage tests fail the build | §4.1, §4.2 (G1–G13) | Historical publication times are approximated (DR-D5) |
 | alpha-spec §7.1 | Rolling-origin protocol | §4.3 | — |
 | alpha-spec §7.2 | Thursday/Sunday locks | §4.1 (`Lock`), §4.3 step 3 | Lock timestamps per season are configuration |
-| alpha-spec §7.3 | Union player pool; inactive = 0; missing-provider penalty | §4.7 | Policy ratification (DR-D23) |
-| alpha-spec §7.4 | PB-MAE with a training-period scale | §4.5 | `scale_p` ratification (DR-C5) |
+| alpha-spec §7.3 | Union player pool; inactive = 0; missing-provider penalty | §4.7 | — (policy ratified, DR-D23) |
+| alpha-spec §7.4 | PB-MAE with a training-period scale | §4.5 | — (`scale_p` ratified, DR-C5) |
 | alpha-spec §7.5 | Secondary metrics | §4.5 | Accuracy Gap and start/sit accuracy definitions are spec goldens still to write |
 | alpha-spec §7.6 | Benchmark provider registry | §2.1, §10.1 | Phase 2 |
 | alpha-spec §7.7 | Paired, week-clustered CIs; metrics versioned before results | §4.6; front matter (protocol version) | ROS clustering scheme (DR-C5) |
 | alpha-spec §7.8, §7.9, §9.4 | Gates | §4.12 (verbatim thresholds, evaluation procedures) | Open numeric meanings (DR-C5) |
 | alpha-spec §7.10 | Correctness before accuracy | §7.6 | — |
-| alpha-spec §9.2 | Naive baselines | §4.4 | Rolling-3 and position/depth-chart median are new |
+| alpha-spec §9.2 | Naive baselines | §4.4 | Rolling-3 and position/depth-chart median are new; last season joins the gate set (DR-D24) |
 | alpha-spec §12.1 | Player-pool construction; benchmark metric formulas | §4.5, §4.7, §10.3 | — |
 | alpha-spec §12.2 | Goldens for PB-MAE, Brier, calibration, promotion decisions | §10.4 | Brier and promotion goldens to add with P1-09 |
 | alpha-spec §12.3 | Leakage tests, including "current-season participation unavailable at serve time must not appear in promoted live features" | §4.1 research mode; G5 | — |

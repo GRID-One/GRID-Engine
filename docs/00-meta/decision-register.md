@@ -159,7 +159,7 @@ several roles; all are currently held by the repository owner.
 | [DR-D14](#dr-d14-layer1-crossfit-design) | What is the cross-fit design of the Layer-1 context model? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
 | [DR-D15](#dr-d15-layer1prime-definition) | What is the operational definition of Layer-1′? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | penalty-play handling and the snap-count source, before Layer-1′ is promoted (P1-12, P2-03) |
 | [DR-D16](#dr-d16-predictive-exposure-basis) | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | P1-08 (the definition, once Layer C exists) |
-| [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Decided 2026-10-09 (decision interview) | none remaining |
+| [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Decided 2026-10-09 (decision interview) | P1-12 (the windowed prior for veterans must be specified) |
 | [DR-D18](#dr-d18-changepoint-semantics) | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | automatic changepoint adjustments (`z_thresh` and the precision/recall gate; P1-12, P2-03) |
 | [DR-D19](#dr-d19-prior-scale-handoff) | On what scale does the feeder prior enter the Kalman state? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | `P0_form` and `P0_scheme` (P1-12 calibration) |
 | [DR-D20](#dr-d20-ensemble-stacking-level) | What does the §6.6 ensemble stack, and under which weight constraints? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
@@ -974,8 +974,9 @@ several roles; all are currently held by the repository owner.
   - H2 +0.848 is not citable until it is re-run under these rules.
 - **Status.** **Ratified in part (2026-10-09, Product/Architecture and Statistical owners, decision
   interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Two-tier GRID: RAPM and every
-  stage that reads participation run only after a season's participation is published and never feed a
-  live projection; the live tier reads no participation; a participation-free Layer-1′ credit feeds the
+  stage that reads participation run only at season boundaries, once a season's participation is
+  published; their offseason outputs (ratings, priors, features) seed the next season, but no live step
+  fits RAPM or reads participation; a participation-free Layer-1′ credit feeds the
   Kalman in season; AsOf gains a publication-lag axis; backtests hide current-season participation; H2
   +0.848 is not citable until re-run. **Still open:** The snap-count source (provider contract,
   PFR-to-GSIS crosswalk, licence ruling; KI-NEW-Z50). The Layer-1′ exposure basis is now decided under
@@ -1166,8 +1167,9 @@ several roles; all are currently held by the repository owner.
   use S−3..S−1. How the state-space filter crosses the offseason is DR-D17.
 - **Status.** **Overridden (2026-10-09, Statistical owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: (a) RAPM sufficient statistics stored in
-  per-(season, week) blocks; the window is the exact sum of the in-window blocks; live in-season RAPM at
-  (S, W > 1) uses the S−2 and S−1 blocks only; preseason and week 1 use S−3..S−1. (b) V(s) is fit once per
+  per-(season, week) blocks; the window is the exact sum of the in-window blocks; the RAPM fit used at
+  in-season origins (S, W > 1) sums only the S−2 and S−1 blocks, because season S participation is
+  unpublished; preseason and week 1 use S−3..S−1. (b) V(s) is fit once per
   season on the three completed seasons S−3..S−1 and frozen for that season (accepted known gap: after
   week 1 it still carries season S−3, which in-season RAPM has dropped). (c) The Kalman clause overridden
   via DR-D17: instead of carry-with-discount in production plus re-initialisation on replay, every
@@ -1995,8 +1997,10 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default:
   Option 3 (re-initialisation): at every season boundary, in both live production and backtest replay,
   each player's filter restarts from the prior built on the new three-season window; no offseason predict
-  steps or offseason discount. This also settles DR-C6's Kalman clause.
-- **Blocks.** none remaining. (Before the interview: P1-12; P2-03.)
+  steps or offseason discount. This also settles DR-C6's Kalman clause. **To be specified (Statistical
+  owner, before P1-12):** the windowed prior for a player with NFL history. `state-space-kalman.md` §6.5
+  defines only the feeder and population priors.
+- **Blocks.** P1-12 (the windowed prior for players with NFL history must be specified). (Before the interview: P1-12; P2-03.)
 - **Where implemented (when decided).** `state-space-kalman.md` §6.6.
 
 ### DR-D18 changepoint-semantics

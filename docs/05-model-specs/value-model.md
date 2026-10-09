@@ -10,9 +10,9 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Situational value V(s), play value dV, and situation masks
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, adopted subject to owner ratification) it is an authority-level-3 document. The statistical
-owner approves the equations. The implementing agent may not redefine them (superseded alpha-spec
-§6.6; carried into engine-spec §6.8).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the merge comment) it is an
+authority-level-3 document. The statistical owner approves the equations. The implementing agent
+may not redefine them (superseded alpha-spec §6.6; carried into engine-spec §6.8).
 
 **How to read this spec**
 
@@ -21,8 +21,9 @@ owner approves the equations. The implementing agent may not redefine them (supe
   `reference/python/...:LINE` citation uses cautious-nevermore (CN) `59bce1d` line numbers; the
   imported files are byte-identical (`reference/python/MANIFEST.tsv`: `verbatim`).
 - **Proposed decisions.** "(proposed — DR-xx)" marks a default recorded in
-  `docs/00-meta/decision-register.md`. The owner has not ratified it. `DR-NEW:<slug>` marks a
-  decision first raised here (§9).
+  `docs/00-meta/decision-register.md`. The owner has not ratified it. A plain "(DR-xx)" cites a
+  decision, or the part of one, that the owner has settled; the register is authoritative for
+  status. `DR-NEW:<slug>` marks a decision first raised here (§9).
 - **Defect IDs.** `KI-` IDs are entries in `docs/00-meta/known-issues.md`. Findings first made in
   this spec are labelled **new** and listed in §8.2 for registration.
 - **Synthetic generators.** *Legacy* is the oracle's generator as imported; its defenders come from
@@ -111,7 +112,7 @@ The Rust port MUST keep this intent.
   timeouts (KI-NEW-V0b). Measured on real 2023 (historical): corr(V(s), `ep`) = 0.963 over 35,474
   rows, but at 1st and 10 at the offense's own 25 (2,175 rows) V(s) is 1.849 against a mean `ep` of
   1.120, a gap of +0.730 EP. The engine MUST NOT substitute `ep` for V(s): nflfastR's model was
-  trained on later seasons, which is a scope leak in backtests (proposed — DR-C7).
+  trained on later seasons, which is a scope leak in backtests (DR-C7).
 - **Not a projection output.** dV never appears in the stat-vector contract. It appears only in
   labelled GRID explanation and diagnostic fields (engine-spec §5.5).
 
@@ -145,7 +146,7 @@ The Rust port MUST keep this intent.
 plays contract (as of the fit point; REG only — DR-C12)
    │  state s, drive_points label, terminal flag/value, next state s′
    ▼
-V(s) fit  ── once per season on the §2.4 window, frozen (proposed — DR-C6, DR-C7)   ◄── this spec
+V(s) fit  ── once per season on the §2.4 window, frozen (DR-C6, DR-C7)                ◄── this spec
    │
    ▼
 dV = V(s′) − V(s) per play                                                            ◄── this spec
@@ -182,7 +183,7 @@ No oracle production path calls `load_value_model` or passes `cache_path`. Only
   D-14.
 - Outputs: dV currency in `docs/03-contracts/engine-output-contract.md`; artifacts per engine-spec
   §8.5 and §8.8.
-- Parity: `docs/03-contracts/parity-fixture-contract.md` §5 (`value-model` rows), §6 (Class C);
+- Parity: `docs/03-contracts/parity-fixture-contract.md` §5 (`value-model` rows), §6 (C-V);
   `reference/python/PARITY.md` (e) item 4.
 - Neighbours: `rapm-attribution.md`, `layer1-credit.md`, `state-space-kalman.md`,
   `synthetic-world.md`, `evaluation-and-leakage.md`.
@@ -201,7 +202,7 @@ No oracle production path calls `load_value_model` or passes `cache_path`. Only
 | `terminal_value` | float, read on terminal rows only (`value.py:97`) | {0, 3, 7}; equals `drive_points` on terminal rows; NaN elsewhere | NaN on a terminal row → NaN dV silently → typed error | — |
 | `n_down`, `n_ydstogo`, `n_yardline_100` | read on continuing rows only (`value.py:99-102`) | as the state; −1 sentinel on terminal rows | A sentinel on a continuing row is evaluated silently (V(−1, −1, −1) = 7.130 on the canonical synth, measured) → typed error | — |
 | `random_state` | int, default 0 (`value.py:27`) | — | Seeds the booster and its early-stopping split (§4.1) | recorded in the artifact |
-| `season_type` | **absent** from the oracle contract | — | Postseason rows enter the fit on real data (KI-NEW-V0a; 1,638 rows in 2023) → REG only for the label (proposed — DR-C12) | — |
+| `season_type` | **absent** from the oracle contract | — | Postseason rows enter the fit on real data (KI-NEW-V0a; 1,638 rows in 2023) → REG only for the label (DR-C12, DR-D4) | — |
 
 **Training rows.** The oracle fits on **every row** of the frame it is given, terminal rows
 included, with no filter (`value.py:49-55`). The docstring's "non-terminal-irrelevant rows"
@@ -249,7 +250,7 @@ Consequences the port MUST keep in mind:
 
 | Output | Definition | Notes |
 |---|---|---|
-| V(s) artifact | the fitted estimator plus `value_model_version`: estimator id and version, hyperparameters, training window (seasons, season types), data version, row count, seed (if any), content hash | immutable; written atomically (engine-spec §8.5, §8.11; proposed — DR-C15) |
+| V(s) artifact | the fitted estimator plus `value_model_version`: estimator id and version, hyperparameters, training window (seasons, season types), data version, row count, seed (if any), content hash | immutable; written atomically (engine-spec §8.5, §8.11; DR-C15) |
 | V on the declared state grid | every observed `(down, ydstogo, yardline_100)` cell of the training frame and the 1st-and-10 line `yardline_100 = 1..99`, each with its training support count | the parity surface (§10.3) and a regression artifact |
 | `dv` per play | §4.2, tagged with `value_model_version` | a consumer holding dV from two versions MUST fail with `VersionMismatch` |
 | situation masks | §4.3, plus an availability flag per mask | `two_minute` is `Unavailable`, never silently omitted (plays-contract D-1) |
@@ -369,14 +370,21 @@ Measured dV:
   include the ends of the first and third quarters.
 - Measured counts: canonical legacy `red_zone` 1,478, `passing_downs` 2,897, `rushing_downs` 1,812;
   fixed 1,676 / 2,851 / 1,899; real 2023 5,187 / 4,346 / 3,103 (historical).
-- **Not in the engine.** CN documentation listed `goal_line`, `third_and_long` and `fourth_down`
-  (cn-docs §14 item 3). They do not exist in code and are **not** situations of this engine. Adding
-  any situation requires a revision of this spec (proposed — DR-C13).
+- **Not in the oracle code.** CN documentation listed `goal_line`, `third_and_long` and
+  `fourth_down` (cn-docs §14 item 3). They do not exist in code. The engine adds them, with a
+  separate `goal_line_wr`, as defined below (DR-C13, 2026-10-09). Adding any further situation
+  requires a revision of this spec.
 - **Required.**
-  - The canonical set is the code set: `red_zone`, `passing_downs`, `rushing_downs`, `two_minute`.
-    One enum spells them, plural as in code (KI-#57; proposed — DR-C13).
+  - The canonical set is the code set (`red_zone`, `passing_downs`, `rushing_downs`, `two_minute`)
+    plus four masks, plain play filters that overlap the existing set by design (DR-C13):
+    - `goal_line`: `yardline_100 ≤ 5`;
+    - `goal_line_wr`: `yardline_100 ≤ 8`, a separate mask used by WR situational features and
+      ratings;
+    - `third_and_long`: `down = 3 and ydstogo ≥ 7`;
+    - `fourth_down`: `down = 4`.
+  - One enum spells all eight; the code set keeps its plural code names (KI-#57; DR-C13).
   - `two_minute := half_seconds_remaining ≤ 120`, which removes the quarter defect. The adapter MUST
-    emit `half_seconds_remaining` (proposed — DR-C13; plays-contract D-1). The change from the
+    emit `half_seconds_remaining` (DR-C13; plays-contract D-1). The change from the
     oracle's definition is a deliberate divergence listed in `reference/python/PARITY.md`.
   - On a frame without the clock column, `two_minute` is reported `Unavailable`. A consumer that
     requires it gets a typed error, not a missing key.
@@ -393,17 +401,18 @@ Provenance key: **hand-set v0** = present at `f3b641f`, the oldest shallow-clone
 | `max_depth` | 4 | `value.py:52` | hand-set v0 |
 | `learning_rate` | 0.08 | `value.py:52` | hand-set v0 |
 | `max_iter` | 300 (a cap; §4.1) | `value.py:52` | hand-set v0 |
-| `min_samples_leaf` | 120 | `value.py:53` | hand-set v0. Also the support threshold of the Class C grid (parity-fixture-contract §6) |
+| `min_samples_leaf` | 120 | `value.py:53` | hand-set v0. Also the support threshold of the C-V grid (§10.3; parity-fixture-contract §6) |
 | `random_state` | 0 | `value.py:27` | hand-set v0 |
 | Early stopping | on iff rows > 10,000; 10% split; 10 rounds; tol 1e-7 | sklearn defaults | library default. Never chosen by the oracle |
 | `loss`, `max_leaf_nodes`, `l2_regularization`, `max_bins` | squared error, 31, 0.0, 255 | sklearn defaults | library default |
-| Label vocabulary | TD 7, FG 3, else 0 | `nflverse_adapter.py:36`; `synth.py:222-237` | hand-set scaffold (`nflverse_adapter.py:20-22`); kept for v1 (proposed — DR-C13) |
+| Label vocabulary | TD 7, FG 3, else 0 | `nflverse_adapter.py:36`; `synth.py:222-237` | hand-set scaffold (`nflverse_adapter.py:20-22`); kept for v1 (DR-C13) |
 | Synthetic FG rule | inside `fg_range_yardline = 35`, probability 0.82 | `synth.py:50,232` | owned by `synthetic-world.md` |
 | Synthetic drive cap | 12 plays, scored 0 | `synth.py:49,256-260` | owned by `synthetic-world.md` |
 | `red_zone` threshold | ≤ 20 | `situations.py:31` | hand-set (present at the `c1b6748` boundary, 2026-06-22) |
 | `passing_downs` | down 3 and ≥ 7, or down 4 | `situations.py:32` | as above |
 | `rushing_downs` | down ≤ 2 and ≤ 4 | `situations.py:33` | as above |
 | `two_minute` | ≤ 120 s on `quarter_seconds_remaining` | `situations.py:23,58` | as above; replaced (§4.3) |
+| `goal_line`, `goal_line_wr`, `third_and_long`, `fourth_down` | `yardline_100` ≤ 5; `yardline_100` ≤ 8; down 3 and ≥ 7; down 4 | not in the oracle (§4.3) | owner decision (DR-C13, 2026-10-09) |
 
 ### 4.5 Priors
 
@@ -474,7 +483,7 @@ V(s) is cheap. Its cost is irrelevant to the daily DAG because it is fit once pe
 - dV is a subtraction of two predictions. Given the predictions, Class A (≤ 1e-12) is exact
   arithmetic.
 
-### 5.4 Typed failures (superseded alpha-spec §6.6 rule 4; proposed — DR-B6)
+### 5.4 Typed failures (superseded alpha-spec §6.6 rule 4; DR-B6)
 
 | Condition | Oracle behaviour | Required |
 |---|---|---|
@@ -488,7 +497,7 @@ V(s) is cheap. Its cost is irrelevant to the daily DAG because it is fit once pe
 | Training window incomplete (fewer than the §6.2 seasons) | n/a | `ValueModelError::WindowIncomplete` |
 | Training rows at or after the fit point | allowed (KI-NEW-W4) | impossible by construction: the fit takes an `AsOf` view (P1-05) |
 | dV from two V(s) versions mixed in one block or solve | undetectable | `ValueModelError::VersionMismatch` |
-| Artifact write interrupted | `joblib.dump` in place, silent overwrite | temp file + rename, content hash, registered in the SQLite manifest (proposed — DR-C15) |
+| Artifact write interrupted | `joblib.dump` in place, silent overwrite | temp file + rename, content hash, registered in the SQLite manifest (DR-C15) |
 
 ---
 
@@ -508,7 +517,7 @@ the oracle disagree:
   synth, so early stopping is off (§4.1).
 - `verdict` refits on the pre-origin `AsOf` slice (`verdict.py:169-172`).
 
-### 6.2 Required behaviour (proposed — DR-C6, DR-C7)
+### 6.2 Required behaviour (DR-C6, DR-C7)
 
 1. **Fit once per season, at the season boundary.** The V(s) used for every projection origin in
    season `S` is fitted on the regular-season plays of the three completed seasons `S−3, S−2, S−1`
@@ -516,7 +525,9 @@ the oracle disagree:
    all of season `S`.
    - It is **not** refit in season on `S−2, S−1, S[1..W−1]`. That window would be permitted by
      §2.4, but refitting would re-base dV and every RAPM block and Layer-1 credit already built on it.
-     Freezing uses only pre-season data, so it is strictly inside the §2.4 window.
+     Freezing uses only pre-season data, so no season-`S` play enters it. After week 1 it still
+     carries season `S−3`, which the in-season §2.4 window and in-season RAPM have dropped; the
+     owner accepted this known gap (DR-C6, 2026-10-09).
    - V(s) needs play-by-play only, not participation, so it has no publication-lag dependency
      (engine-spec §4.5).
 2. **Versioned and as-of bounded.** The fit consumes an `AsOf` view whose cutoff is the season
@@ -564,8 +575,8 @@ sensitivity of §5.2 is of the same order as several of these differences.
 
 ### 7.3 Class C feasibility (input to DR-B3)
 
-DR-B3 proposes Class C as `corr(dV) ≥ 0.999` **and** `|ΔV| ≤ 0.10` EP on grid cells with support
-≥ `min_samples_leaf`. Measured against §5.2:
+DR-B3's recommended default set Class C at `corr(dV) ≥ 0.999` **and** `|ΔV| ≤ 0.10` EP on grid
+cells with support ≥ `min_samples_leaf`. Measured against §5.2:
 
 - The oracle against itself with another seed reaches corr(dV) 0.9891–0.9942 (legacy synth),
   0.9896–0.9931 (fixed synth) and 0.9940–0.9960 (real 2023). **No seed reaches 0.999.**
@@ -575,10 +586,11 @@ DR-B3 proposes Class C as `corr(dV) ≥ 0.999` **and** `|ΔV| ≤ 0.10` EP on gr
 - Only 14 synthetic states (about 11% of rows) have support ≥ 120. The grid criterion covers a small,
   central part of the surface.
 
-So the DR-B3 Class C criterion cannot be met by scikit-learn re-seeded, and a different estimator,
-which is what DR-C7 proposes, is a larger perturbation than a seed. §10.3 proposes a V(s)-specific
-replacement (DR-D27). `layer1-credit.md` §5.3 reaches the same conclusion for
-the Layer-1 context booster.
+So that Class C criterion cannot be met by scikit-learn re-seeded, and a different estimator, which
+is what DR-C7 requires, is a larger perturbation than a seed. The owner therefore replaced Class C
+for V(s) with the V(s)-specific criterion C-V of §10.3 (DR-B3, DR-D27; 2026-10-09).
+`layer1-credit.md` §5.3 reaches the same conclusion for the Layer-1 context booster, whose
+replacement is C-L1 (DR-B3).
 
 ### 7.4 State-centring of dV, and why the synthetic world breaks it
 
@@ -632,51 +644,55 @@ The Rust port MUST NOT reproduce any item below.
 
 | # | Defect | KI / source | Required behaviour |
 |---|---|---|---|
-| 1 | V(s) refit on the whole season on every weekly run, leaking later weeks into dV and re-basing earlier blocks | KI-NEW-W4; `PARITY.md` (e) 4; plays-contract D-14 | §6.2: once per season on the window, frozen, as-of bounded (proposed — DR-C6, DR-C7, DR-B6) |
-| 2 | Postseason rows train V(s) | KI-NEW-V0a; plays-contract D-2 | REG only (proposed — DR-C12) |
-| 3 | 7/3/0 label: opponent return touchdowns and safeties score 0; no clock or score in the state | KI-NEW-V0b; plays-contract D-3 | Kept for v1 and documented here (proposed — DR-C13). Signed EP or clock/score state is a v2 change of this spec and of the plays contract |
+| 1 | V(s) refit on the whole season on every weekly run, leaking later weeks into dV and re-basing earlier blocks | KI-NEW-W4; `PARITY.md` (e) 4; plays-contract D-14 | §6.2: once per season on the window, frozen, as-of bounded (DR-C6, DR-C7, DR-B6) |
+| 2 | Postseason rows train V(s) | KI-NEW-V0a; plays-contract D-2 | REG only (DR-C12, DR-D4) |
+| 3 | 7/3/0 label: opponent return touchdowns and safeties score 0; no clock or score in the state | KI-NEW-V0b; plays-contract D-3 | Kept for v1 and documented here (DR-C13). Signed EP or clock/score state is a v2 change of this spec and of the plays contract |
 | 4 | An unknown `fixed_drive_result` silently scores 0 | KI-NEW-Z46; plays-contract D-3 | Closed table; unknown value → `SchemaDrift` (P1-03) |
 | 5 | A `fixed_drive` spanning a change of possession chains next state across offenses | KI-NEW-Z47; plays-contract D-4 | Quarantine the drive (P1-03) |
-| 6 | `two_minute` uses the quarter clock and is never emitted | KI-NEW-A4; plays-contract D-1 | §4.3: `half_seconds_remaining ≤ 120`; `Unavailable` on synthetic frames (proposed — DR-C13) |
-| 7 | Situation names plural in code, singular in the schema | KI-#57 | One canonical enum (proposed — DR-C13) |
-| 8 | No V(s) versioning; `cache_path` silently overwrites; joblib (pickle) artifact | KI-NEW-Z45; reconcile-spec-first R55; `PARITY.md` (e) 5 | §3.3 artifact; atomic write; no pickle (proposed — DR-C15) |
+| 6 | `two_minute` uses the quarter clock and is never emitted | KI-NEW-A4; plays-contract D-1 | §4.3: `half_seconds_remaining ≤ 120`; `Unavailable` on synthetic frames (DR-C13) |
+| 7 | Situation names plural in code, singular in the schema | KI-#57 | One canonical enum (DR-C13) |
+| 8 | No V(s) versioning; `cache_path` silently overwrites; joblib (pickle) artifact | KI-NEW-Z45; reconcile-spec-first R55; `PARITY.md` (e) 5 | §3.3 artifact; atomic write; no pickle (DR-C15) |
 | 9 | Synthetic state space leaves football (yardline above 99, `ydstogo > yardline_100`) | KI-NEW-Z39; plays-contract D-9 | The V(s) support is declared per profile; the corrected and realistic synthetic profiles are football-valid (synthetic-world.md §4.10–§4.11) |
-| 10 | Gradient boosting on GRID's critical path, not deterministic across seeds | DR-C7; reconcile-spec-first C4 | Deterministic in-house estimator behind a `Regressor` trait (proposed — DR-C7, DR-C8; §10.2) |
+| 10 | Gradient boosting on GRID's critical path, not deterministic across seeds | DR-C7; reconcile-spec-first C4 | Deterministic in-house estimator behind a `Regressor` trait (DR-C7, DR-C8; §10.2) |
 
 ### 8.2 Defects found in this consolidation (to be registered)
 
 | # | Defect | Evidence | Required behaviour |
 |---|---|---|---|
 | N-1 (KI-NEW-Z41) | **Hidden early stopping.** For frames over 10,000 rows the booster early-stops on a seeded random 10% split; `max_iter = 300` is never reached on full-season frames, and smaller frames (the backtest warm-up) train a different regime | §4.1 table | §5.2 engine rule: no size-dependent mode switch; any split declared and recorded. Fixtures record `n_iter_` and the split (§10.3) |
-| N-2 (KI-NEW-Z74) | **Seed dominates V(s) at the scale of the parity tolerance.** Re-seeding moves V by up to 0.27 EP on supported states and caps corr(dV) at 0.989–0.996 | §5.2, §7.3 | Amend DR-B3 Class C for V(s) (DR-D27; §10.3) |
+| N-2 (KI-NEW-Z74) | **Seed dominates V(s) at the scale of the parity tolerance.** Re-seeding moves V by up to 0.27 EP on supported states and caps corr(dV) at 0.989–0.996 | §5.2, §7.3 | Class C replaced for V(s) by C-V (DR-B3, DR-D27; §10.3) |
 | N-3 (KI-NEW-Z42) | **V outside the label hull.** Predictions as low as −0.240 (synth) and −0.435 (real) | §4.6 | `OutOfHull` typed failure; the engine estimator is hull-respecting by construction |
 | N-4 (KI-NEW-Z44) | **Silent out-of-support evaluation.** A −1 sentinel evaluates to 7.130 | §3.1 | `SentinelOnContinuingRow`, `OutOfSupport` |
-| N-5 (KI-NEW-Z32) | **Synthetic dV is not state-centred**, caused by the 12-play cap and persistent lineup quality | §7.4 | Corrected generator ends drives by football events (synthetic-world.md, DR-B4) |
+| N-5 (KI-NEW-Z32) | **Synthetic dV is not state-centred**, caused by the 12-play cap and persistent lineup quality | §7.4 | Corrected generator ends drives by football events (synthetic-world.md; proposed — DR-B4) |
 | N-6 (KI-NEW-Z43) | **Non-monotone V.** V(1st and 10) rises with distance at 17–18 of 98 steps; V rises with down in 191 synthetic cells | §4.6 | Input to the DR-C7 estimator choice |
 | N-7 (KI-NEW-Z75) | The golden master's thread-divergence comment attributes the ~1e-2 drift to V(s), which is thread-invariant | §5.2 | Documentation correction (oracle unchanged); the Rust determinism gate covers every stage |
 | N-8 (KI-NEW-Z77) | Wrong `value.py` line citations in two contracts: plays-contract §2.1–§2.2 cites `value.py:112,157,159,161-164,169-172` and §1 `:87,111-112,151-166`; parity-fixture-contract §5 cites `value.py:153-164` and `:113-116`. `value.py` has 123 lines. The correct sites are `:50` (label), `:51-54` (estimator, `min_samples_leaf` at `:53`), `:89-104` (`compute_dv`: `terminal` `:95`, `terminal_value` `:97`, next state `:99-102`) and `:107-110` (`attach_dv`) | `wc -l`; this spec | Contract owners fix the citations. Fixed: both contracts now cite these sites |
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Question | Proposed default |
+The owner settled each of these, in whole or in part, in the decision interview of 2026-10-08/09
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). The decision register is authoritative
+for status; this table records what applies to V(s) and what stays open.
+
+| Decision | Question | Outcome (decision register) |
 |---|---|---|
-| **DR-C7** | Which estimator produces V(s)? | A deterministic in-house estimator behind a `Regressor` trait: binned-and-smoothed or monotone-constrained. No nflfastR `ep` (proposed — DR-C7). The choice is made on held-out-season label error and downstream recovery (§7.5). Whether monotonicity in yardline, distance and down is imposed (§4.6, N-6) is part of this decision |
-| **DR-C8** | Booster backend, if any booster is used | Pure Rust first; `xgb` optional behind a feature (proposed — DR-C8). If DR-C7 adopts a non-boosted estimator, V(s) needs no booster |
-| **DR-C13** | `drive_points` vocabulary; situation set; clock column | 7/3/0 for v1; the code set; `two_minute` on `half_seconds_remaining` (proposed — DR-C13) |
-| **DR-C6** | Three-season window for stateful components | V(s) refit per season on the window, frozen in season (proposed — DR-C6; §6.2) |
-| **DR-C12** | Season type for labels | REG only (proposed — DR-C12) |
-| **DR-B3** | Parity tolerances | Class C does not fit V(s) (§7.3). See DR-D27 |
-| **DR-B6** | Typed failure vs faithful port | Typed failures of §5.4; refit-every-run is a divergence (proposed — DR-B6) |
-| **DR-D27** | What does V(s) parity mean when the Rust estimator is, by DR-C7, a different estimator, and the oracle is not reproducible against itself under a seed change? | The three-part criterion C-V of §10.3. Thresholds pre-registered by the statistical owner before any Rust V(s) is evaluated |
-| **DR-D22** | May nflverse's `ep`/`epa` columns enter features at all (superseded alpha-spec §11.3 lists "EPA and success per opportunity")? DR-C7 rules them out only as V(s) | **Open, no default.** The same scope-leak argument applies: nflfastR's model was trained on later seasons. Until decided, EPA-type features are computed from GRID dV only |
+| **DR-C7** | Which estimator produces V(s)? | **Ratified in part (2026-10-09).** A deterministic in-house estimator behind a `Regressor` trait, not a booster, that satisfies §10.2. No nflfastR `ep`. **Still open:** which estimator (binned-and-smoothed or monotone-constrained) and whether monotonicity in yardline, distance and down is imposed (§4.6, N-6), decided on pre-registered held-out-season label error and downstream recovery (§7.5) |
+| **DR-C8** | Booster backend, if any booster is used | **Ratified in part (2026-10-09).** Pure Rust first, with no native artifacts; `xgb` only as a later optional feature once a booster earns its place. A work package may propose an existing crate (for example `linfa-trees`) as a documented exception to engine-spec §6.4.3, with its API verified against source, under the normal dependency approval. **Still open:** the concrete crate, approved in the WP that first needs a booster. V(s) needs no booster (DR-C7) |
+| **DR-C13** | `drive_points` vocabulary; situation set; clock column | **Overridden (2026-10-09).** 7/3/0 for v1, documented as a limitation; an unknown drive result is a typed error, not 0; `two_minute` on `half_seconds_remaining ≤ 120`. The override: the code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.3) |
+| **DR-C6** | Three-season window for stateful components | **Overridden (2026-10-09).** V(s) is fit once per season on `S−3..S−1` and frozen for the season, with the accepted `S−3` gap (§6.2). The override concerns the Kalman clause (DR-D17), not V(s) |
+| **DR-C12** | Season type for labels | **Overridden (2026-10-09).** REG only, which DR-D4 also decides for V(s). The override (official labels reconciled against the play-by-play rebuild) concerns the stat labels, not `drive_points` |
+| **DR-B3** | Parity tolerances | **Overridden (2026-10-09).** Class C does not fit V(s) (§7.3) and is replaced by C-V (§10.3; DR-D27). **Still open:** the Class D floor values |
+| **DR-B6** | Typed failure vs faithful port | **Ratified in part (2026-10-08).** Typed failures of §5.4; refit-every-run is a divergence listed in `reference/python/PARITY.md`. The open part, the ill-conditioning threshold, does not concern V(s) |
+| **DR-D27** | What does V(s) parity mean when the Rust estimator is, by DR-C7, a different estimator, and the oracle is not reproducible against itself under a seed change? | **Ratified in part (2026-10-09).** The four-part criterion C-V of §10.3, with its two numeric limits pre-registered. **Still open:** parts 3 and 4 wait on the DR-C7 estimator spec and the re-set Class D floors; the reference envelope is computed on the corrected world once it exists |
+| **DR-D22** | May nflverse's `ep`/`epa` columns enter features at all (superseded alpha-spec §11.3 lists "EPA and success per opportunity")? DR-C7 rules them out only as V(s) | **Decided (2026-10-09).** No: EPA-type features are computed from GRID dV only, permanently. Reopened only by ADR |
 
 ---
 
 ## 10. Rust port plan
 
-### 10.1 Homes (engine-spec §8.1; DR-A8 adopted subject to ratification)
+### 10.1 Homes (engine-spec §8.1; DR-A8)
 
 | Piece | Crate::module | WP |
 |---|---|---|
@@ -691,7 +707,7 @@ The Rust port MUST NOT reproduce any item below.
 
 `models` stays synchronous, with no Tokio or SQLx dependency (engine-spec §8.1 rule 3).
 
-### 10.2 The `Regressor` trait and estimator requirements (proposed — DR-C7, DR-C8)
+### 10.2 The `Regressor` trait and estimator requirements (DR-C7, DR-C8)
 
 The trait replaces superseded final-build-spec §11.8's `IncrementalBooster` for V(s). V(s) is
 refit per season, never continued, so it needs no `continue_training`. An illustrative shape (P1-06
@@ -723,7 +739,7 @@ Whatever estimator DR-C7 selects MUST satisfy:
 
 ### 10.3 Parity class and concrete targets
 
-Classes are per `docs/03-contracts/parity-fixture-contract.md` (proposed — DR-B3). Downstream stages
+Classes are per `docs/03-contracts/parity-fixture-contract.md` (DR-B3). Downstream stages
 never depend on V(s) parity: RAPM, Layer 1 and the Kalman receive the **oracle's dV** as an injected
 input (parity-fixture-contract §5; rapm-attribution.md §10.2).
 
@@ -731,12 +747,12 @@ input (parity-fixture-contract §5; rapm-attribution.md §10.2).
 |---|---|---|---|
 | P-V1 | `compute_dv` given the injected per-row V(s) and V(s′) | A | ≤ 1e-12 abs on every row; NaN positions identical (none on a valid frame) |
 | P-V2 | Telescoping identity on the Rust dV, every drive | A (property) | ≤ 1e-12 abs |
-| P-V3 | Situation masks on injected plays | exact | `red_zone`, `passing_downs`, `rushing_downs` identical; `two_minute` is `Unavailable` on synthetic frames (divergence) and follows §4.3 on clock-bearing frames |
+| P-V3 | Situation masks on injected plays | exact | `red_zone`, `passing_downs`, `rushing_downs` identical; `two_minute` is `Unavailable` on synthetic frames (divergence) and follows §4.3 on clock-bearing frames; `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` have no oracle counterpart and are checked against their §4.3 definitions (E-4) |
 | P-V4 | Rust V(s) estimator against its own spec reference examples (once DR-C7 adds them to §4) | A (spec golden) | as stated with the examples |
-| P-V5 | Rust V(s) against the oracle booster on the canonical **corrected** synth, identical training rows | **C-V** (below) | proposed — DR-D27 |
+| P-V5 | Rust V(s) against the oracle booster on the canonical **corrected** synth, identical training rows | **C-V** (below) | DR-B3, DR-D27; parts 3 and 4 wait on the DR-C7 estimator spec and the re-set Class D floors |
 | P-V6 | No-future-data property | exact | poisoning season-`S` plays leaves the season-`S` artifact bit-identical (§6.2) |
 | P-V7 | Thread and row-order invariance | exact | Rust V(s) bit-identical at 1 and N threads and under a row shuffle |
-| P-V8 | End to end with the Rust V(s), Rust boosters and Rust synth | D | Class D gates of `synthetic-world.md` §10.3, re-set on the corrected world (proposed — DR-B3, DR-B4) |
+| P-V8 | End to end with the Rust V(s), Rust boosters and Rust synth | D | Class D gates of `synthetic-world.md` §10.3, re-set on the corrected world and gated on the median and a required low quantile over the DR-D26 seed ensemble (DR-B3, DR-B4, DR-D26; the floor values, seed set, quantile and margins stay open) |
 | P-V9 | Divergences: typed failures of §5.4; season-boundary freeze instead of refit-every-run; `two_minute` definition | divergence | Listed in `reference/python/PARITY.md`; Rust asserts the typed outcome |
 
 **Fixture.** `fixtures/parity/value-model/canonical-<level>/` carries the training frame by
@@ -745,7 +761,7 @@ with per-state support, per-row V(s) and V(s′), the oracle dV, the seed, the f
 early-stopping flag, and the **seed envelope**: V on the grid and dV for seeds 1–10, from which the
 C-V thresholds' reference values are computed. Legacy cases are audit-only (DR-B1).
 
-**C-V: a V(s)-specific Class C (new finding; proposed amendment to DR-B3).** All four are required:
+**C-V: a V(s)-specific Class C (new finding; adopted 2026-10-09, DR-B3, DR-D27).** All four are required:
 
 1. `corr(dV_Rust, dV_oracle) ≥ 0.98` over all rows. The oracle's seed-envelope minimum is 0.9891
    (legacy) and 0.9896 (fixed).
@@ -756,8 +772,10 @@ C-V thresholds' reference values are computed. Legacy cases are audit-only (DR-B
 4. P-V8 holds with Rust dV in place of the injected dV.
 
 These thresholds sit outside every observed oracle self-perturbation, in the calibrate-below-observed
-manner of the oracle's gates. They MUST be pre-registered by the statistical owner before any Rust
-V(s) is evaluated against them (engine-spec §7.13.4).
+manner of the oracle's gates. The statistical owner pre-registered the numeric limits of items 1 and
+2 on 2026-10-09, before any Rust V(s) exists (DR-D27; engine-spec §7.13.4). Items 3 and 4 wait on
+the DR-C7 estimator spec and the re-set Class D floors, and the reference envelope is computed on
+the corrected world once it exists (still open under DR-D27).
 
 ### 10.4 Reference examples (become golden unit tests)
 
@@ -780,14 +798,14 @@ dV = −2.10. The same play ending in a field goal (value 3): dV = +0.90.
 
 **E-4: situation masks.**
 
-| (down, ydstogo, yardline_100) | `red_zone` | `passing_downs` | `rushing_downs` |
-|---|---|---|---|
-| (3, 7, 25) | false | true | false |
-| (4, 1, 1) | true | true | false |
-| (2, 4, 20) | true | false | true |
-| (3, 6, 30) | false | false | false |
-| (1, 10, 21) | false | false | false |
-| (2, 5, 15) | true | false | false |
+| (down, ydstogo, yardline_100) | `red_zone` | `passing_downs` | `rushing_downs` | `goal_line` | `goal_line_wr` | `third_and_long` | `fourth_down` |
+|---|---|---|---|---|---|---|---|
+| (3, 7, 25) | false | true | false | false | false | true | false |
+| (4, 1, 1) | true | true | false | true | true | false | true |
+| (2, 4, 20) | true | false | true | false | false | false | false |
+| (3, 6, 30) | false | false | false | false | false | false | false |
+| (1, 10, 21) | false | false | false | false | false | false | false |
+| (2, 5, 15) | true | false | false | false | false | false | false |
 
 **E-5: sentinel guard.** A continuing row carrying `(−1, −1, −1)` MUST return
 `ContractError::SentinelOnContinuingRow`. The oracle returns V = 7.130 for that state on the
@@ -801,13 +819,13 @@ Sections cited as "(superseded)" live in `docs/00-meta/specs/superseded/`.
 
 | Superseded section | Requirement | How this spec satisfies it | Gap |
 |---|---|---|---|
-| final-build-spec §11.8 | Gradient boosting behind an adapter; `IncrementalBooster` with `continue_training`; `xgb` primary, `linfa-trees` fallback; "the rest of the application must not depend directly on XGBoost-specific types" | §10.2: a `Regressor` trait without continuation, because V(s) is refit per season. Backend per DR-C8 (pure Rust first). The no-vendor-types rule is kept | DR-C7 and DR-C8 ratification |
+| final-build-spec §11.8 | Gradient boosting behind an adapter; `IncrementalBooster` with `continue_training`; `xgb` primary, `linfa-trees` fallback; "the rest of the application must not depend directly on XGBoost-specific types" | §10.2: a `Regressor` trait without continuation, because V(s) is refit per season. Backend per DR-C8 (pure Rust first). The no-vendor-types rule is kept | The DR-C7 estimator choice and the DR-C8 concrete crate (both still open) |
 | final-build-spec §12.1–§12.2 | Daily "Gradient Boosting (continuation / replay)"; three training modes | **Replaced** for V(s): a season-boundary rebuild only (§6.2), the analogue of the "periodic rebuild" mode | — |
 | final-build-spec §12.3 | Snapshot and rollback of model files | §3.3 versioned, immutable artifact | Snapshot list in engine-spec §8 must include the V(s) artifact |
 | final-build-spec §19.2 | Golden outputs on fixed synthetic data | §10.3 P-V1–P-V7 and the state-grid artifact | — |
-| alpha-spec §6.2 (gradient-boosting row) | Boosting for "nonlinear residual correction, interaction effects, availability/workload models, and component-rate models"; "No single method is promoted because it is architecturally required" | V(s) boosting is outside those roles. DR-C7 proposes a deterministic estimator that must earn its place (§10.2 item 6) | — |
-| alpha-spec §6.6 | Model-spec contents; rule 1 (implement the documented formula, not a "superficially similar library API"); rule 4 (typed failures); rule 5 (seeded, thread-independent) | This document; §10.2 item 7; §5.4; §5.2 | The estimator's own equations are added at DR-C7 ratification |
-| alpha-spec §2.4 | Exact three-season rule | §6.2 preseason-window fit, frozen in season | — |
+| alpha-spec §6.2 (gradient-boosting row) | Boosting for "nonlinear residual correction, interaction effects, availability/workload models, and component-rate models"; "No single method is promoted because it is architecturally required" | V(s) boosting is outside those roles. DR-C7 requires a deterministic estimator that must earn its place (§10.2 item 6) | — |
+| alpha-spec §6.6 | Model-spec contents; rule 1 (implement the documented formula, not a "superficially similar library API"); rule 4 (typed failures); rule 5 (seeded, thread-independent) | This document; §10.2 item 7; §5.4; §5.2 | The estimator's own equations are added once the open part of DR-C7 names the estimator, before P1-06 (§10.2 item 7) |
+| alpha-spec §2.4 | Exact three-season rule | §6.2 preseason-window fit, frozen in season | Accepted known gap: after week 1 the frozen fit still carries `S−3` (DR-C6) |
 | alpha-spec §4.5, §12.3 | As-of reconstruction; leakage tests | §6.2 items 2 and 4; P-V6 | Test lives in `evaluation-and-leakage.md` |
-| alpha-spec §11.3 | "EPA and success per opportunity" as efficiency features | GRID dV features (§3.4; engine-spec §11.6) | Provider `ep`/`epa` as features: DR-D22 |
+| alpha-spec §11.3 | "EPA and success per opportunity" as efficiency features | GRID dV features (§3.4; engine-spec §11.6) | — (provider `ep`/`epa` never enter features; DR-D22) |
 | alpha-spec §12.1 | Unit tests for the math core | §7.1, §10.3, §10.4 | — |

@@ -179,7 +179,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - Calibration is allowed only on a period disjoint from evaluation.
   - Frozen gates are committed.
 - **Enforced in.**
-  - `engine-spec.md` §7.4 and §9.4 (DR-C5, proposed);
+  - `engine-spec.md` §7.4 and §9.4 (DR-C5);
   - the "Validation and promotion" section of `template-model-spec.md`: "thresholds are versioned before
     results are seen" (in place).
 
@@ -203,7 +203,7 @@ on, and "Enforced in" says where that requirement lives or will live.
 - **Enforced in.**
   - the "Known limitations" and "Constraints" sections of `template-model-spec.md` (in place);
   - `docs/05-model-specs/rapm-attribution.md` and `state-space-kalman.md`;
-  - DR-B5 (proposed).
+  - DR-B5.
 
 ## B. Numerics and determinism
 
@@ -297,7 +297,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - Any deliberate fallback is documented in a model spec and an ADR (see LL-24).
 - **Enforced in.**
   - `engine-spec.md` §8.6 (daily pipeline run records) and §6.4;
-  - DR-B6 (proposed);
+  - DR-B6;
   - the CLAUDE.md prohibited shortcuts ("converting malformed data to a healthy default"; in place).
 
 ## C. Data, time and leakage
@@ -334,7 +334,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - An evaluation that uses data not published by lock is labelled research-only.
 - **Enforced in.**
   - `engine-spec.md` §4.5 (as-of and publication lag) and §6.3 (live vs offseason);
-  - DR-C1 (proposed);
+  - DR-C1;
   - the publication-lag axis: planned (P1-05).
 
 ### LL-16 Take labels from the official source; reconstructions are biased
@@ -352,13 +352,16 @@ on, and "Enforced in" says where that requirement lives or will live.
 - **Rule.**
   - Training labels are official nflverse weekly player stats, REG weeks only, under a versioned
     correction window.
-  - PBP aggregates are features or cross-checks only.
-  - Any reconstruction is reconciled against the official table, with a tolerance test.
+  - The engine's PBP rebuild is a required reconciliation source and never changes a label. It is
+    compared with the official figure for every player-week, every disagreement is recorded, and
+    disagreements above a threshold (set in the P1-03 ingestion spec) are flagged for review. A PBP
+    aggregate may still be a feature.
+  - Any other reconstruction is reconciled against the official table, with a tolerance test.
   - Column semantics are verified against the data dictionary **and** the code.
 - **Enforced in.**
   - `engine-spec.md` §4.7 (training labels);
   - `docs/04-providers/nflverse/README.md`;
-  - DR-C12 (proposed);
+  - DR-C12;
   - provider contract tests: planned (P1-03).
 
 ### LL-17 Verify that the real-data path produces the contract the engine expects
@@ -410,7 +413,8 @@ on, and "Enforced in" says where that requirement lives or will live.
   - The synthetic world includes a profile at the real scale before any constant is calibrated on it.
 - **Enforced in.**
   - the "Priors: where they come from" section of `template-model-spec.md` (in place);
-  - DR-B4 and DR-C9 (proposed);
+  - DR-B4; DR-C9 for the prior's form (proposed — DR-C9 for its blend weight, baseline and influence
+    cap);
   - `docs/05-model-specs/cross-league-priors.md` and `state-space-kalman.md`.
 
 ## D. Records, process and evidence
@@ -490,7 +494,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - The offline backtest and the production path must agree (the two-path equivalence guard).
 - **Enforced in.**
   - `engine-spec.md` §8.6 and §12 (two-path equivalence);
-  - DR-C14 (proposed);
+  - DR-C14;
   - planned (P1-05, P1-12).
 
 ### LL-24 Search history before reversing a behaviour
@@ -575,7 +579,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - Claim language follows the evidence level.
 - **Enforced in.**
   - `engine-spec.md` §3 (success and claims) and §3.3 (current evidence status);
-  - DR-C5 (proposed).
+  - DR-C5.
 
 ## E. Found while writing the model specs (2026-10)
 
@@ -602,7 +606,7 @@ on, and "Enforced in" says where that requirement lives or will live.
   - The model version records data-dependent outcomes such as `n_iter_` and any validation split.
 - **Enforced in.**
   - the constants tables of `docs/05-model-specs/value-model.md` §4.4 and `layer1-credit.md` §4.9 (P0-01);
-  - DR-C7 and DR-D14 (proposed);
+  - DR-C7 and DR-D14;
   - the Rust `Regressor` trait and booster configuration: planned (P1-06).
 
 ### LL-30 Calibrate a parity tolerance against the oracle's own envelope before adopting it
@@ -626,6 +630,8 @@ on, and "Enforced in" says where that requirement lives or will live.
     Rust result is seen.
   - A Rust result that fails a calibrated criterion is a decision request, not a reason to loosen it.
 - **Enforced in.**
-  - the DR-B3 amendments, all proposed: C-V (DR-D27) and C-L1 (`layer1-credit.md` §10.3);
-  - DR-D26, seed-ensemble Class D floors (proposed);
+  - the DR-B3 amendments, adopted by the owner on 2026-10-09: C-V (DR-D27), with its two numeric limits
+    pre-registered, and C-L1 (`layer1-credit.md` §10.3);
+  - DR-D26, seed-ensemble Class D floors: the median and a required low quantile over a declared seed
+    set, with the seed set, quantile and margins pre-registered when the floors are re-set;
   - the seed envelope in the V(s) parity fixture (`value-model.md` §10.3): planned (P1-12).

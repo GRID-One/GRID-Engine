@@ -5,20 +5,26 @@ defects, and where Rust deliberately differs. Read `README.md` first.
 
 Status words used here:
 
-- **DR-A** decisions are adopted by the consolidation PR, subject to owner ratification.
-- **DR-B** and **DR-C** decisions are **proposed defaults pending the owner**
-  (`docs/00-meta/decision-register.md`).
-- **DR-D** decisions are proposed or open, except **DR-D31**, which the owner ratified on
-  2026-10-08 (option 1).
+- **DR-A** decisions were ratified on 2026-10-08 in the owner's decision interview
+  (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and are named again in the P0-01
+  merge comment. Two exceptions: DR-A3 is ratified as a direction only, so Windows stays
+  merge-authoritative until its follow-up ADR, and the DR-A10 licence ruling is still owed (the
+  owner posts it on PR #4).
+- **DR-B**, **DR-C** and **DR-D** decisions were settled in the same interview (2026-10-08 and
+  2026-10-09), in full or in part; what an entry leaves open stays open. The exceptions: DR-D2,
+  DR-D3 and DR-D13 stay open under their interim rules, DR-D9 and DR-D10 were not asked, and
+  DR-D31 was ratified on 2026-10-08 (option 1). `docs/00-meta/decision-register.md` is
+  authoritative for status.
 - One correction-ledger entry has been applied: **L0**, the golden master's platform pin
   (KI-NEW-Z78), which implements DR-D31. It changes no engine code, test or tolerance.
-  Entries 1 to 5 are proposed and not applied.
+  Entries 1 to 5 are proposed and not applied; each needs its own Statistical-owner approval as
+  its commit lands (DR-B1).
 
 ## (a) Oracle status
 
 | Field | Value |
 |---|---|
-| Status | **legacy-59bce1d + L0**: the import, plus correction-ledger entry L0 (section (b)), which regenerated the golden master's Layer C arrays under the pinned platform. Proposed tag for the import commit: `oracle-legacy-59bce1d` (critic X-4). The tag is created by whoever commits; it is not created here. |
+| Status | **legacy-59bce1d + L0**: the import, plus correction-ledger entry L0 (section (b)), which regenerated the golden master's Layer C arrays under the pinned platform. Tag for the import commit: `oracle-legacy-59bce1d` (critic X-4; DR-B1). Creating it is an owner action (P0-01 follow-up 9); it is not created here. |
 | Code | 105 files from `cautious-nevermore@59bce1d`: 102 verbatim, plus patches P1 (import cut), P2 (demo output dir) and L0 (golden snapshot regenerated under the platform pin). None of them changes engine behaviour (`MANIFEST.tsv`). |
 | Platform of record | Linux x86_64, CPython 3.11, `OPENBLAS_CORETYPE=Haswell`, threads pinned to 1. `tools/pytest_platform_pin.py` (loaded by `pytest.ini`) sets the kernel before NumPy loads and refuses any other kernel or interpreter (DR-D31, entry L0). |
 | Verified | At import: 2026-10-01, clean venv, `requirements.lock`, Python 3.11.15, Linux x86_64, threads pinned to 1. **446 passed** (node-ID set identical to the upstream in-scope run), isolation guard 0 violations, `tools/verify_manifest.py` OK. After L0: 2026-10-08, Python 3.11.15, the plugin-set Haswell kernel: **446 passed**; `tools/verify_manifest.py` OK (105 rows: 102 verbatim, 3 patched), also with `--upstream`. |
@@ -37,7 +43,7 @@ Status words used here:
 Even these are measured on legacy-synth inputs, and they are compared stage-isolated (see
 section d).
 
-**Procedure (DR-B1, proposed):**
+**Procedure (DR-B1):**
 
 1. Import verbatim. Done at `59bce1d`, followed by the platform-portability entry L0
    (section (b)), which the owner approved through DR-D31. This is the current state.
@@ -212,8 +218,8 @@ re-measures them when it runs.
   - Priors are not wired into either path (KI-NEW-P2).
 - **Evidence.** Read the code at the lines above. `tests/grid/golden_master.py:88-111`
   freezes the affected `k_total_filt` and `k_total_pred`.
-- **Proposed change.** x0 and P0 come from the prior (P0 = σ²/n0) or a diffuse init, with no
-  look-ahead. This is part of the DR-C10 bundle: weekly credit as the observation, R from
+- **Proposed change.** x0 and P0 come from the prior (P0 = σ²/n0), with no look-ahead. This
+  is part of the DR-C10 bundle: weekly credit as the observation, R from
   real exposures, one filter core with a persisted `games_since_event`, and state keyed by
   (season, week).
 - **Goldens and gates affected.**
@@ -243,9 +249,12 @@ re-measures them when it runs.
 
   `real_contract.py` shows postseason plays in the plays contract.
 - **Proposed change.** Labels come from official nflverse weekly player stats with a
-  versioned correction window. Training labels use REG weeks only. Use `pass_touchdown` /
-  `rush_touchdown` with `td_player_id`, and `fumbled_1_player_id` with `fumble_lost`.
-  Two-point conversions are modelled, and there is an explicit season-type policy (DR-C12).
+  versioned correction window, reconciled against the play-by-play rebuild for every
+  player-week: the official figure is always the label, every disagreement is recorded, and
+  disagreements above a threshold (set in the P1-03 ingestion spec) are flagged (DR-C12).
+  Training labels use REG weeks only, and two-point conversions are included. The rebuild uses
+  `pass_touchdown` / `rush_touchdown` with `td_player_id`, and `fumbled_1_player_id` with
+  `fumble_lost`.
 - **Goldens and gates affected.**
   - No synthetic golden.
   - `tests/pipeline/test_data_pipeline.py` and `tests/grid/test_nflverse_loader.py`
@@ -280,29 +289,34 @@ calibration fails 1/6. Focus-QB NIS on the fixed world sits close to its ≤ 10 
 (KI-NEW-S2), so the guard is too loose to be a meaningful parity number. None of the
 legacy values may be frozen as a Rust target.
 
-## (d) Tolerance classes: PROPOSED (DR-B3)
+## (d) Tolerance classes (DR-B3)
 
 The normative home is `docs/03-contracts/parity-fixture-contract.md`. It defines the fixture
 format, the sha256 manifest and the export rules (single-threaded, Linux), per DR-B2:
 committed stage fixtures are the Rust contract, and the Linux oracle job proves they
-regenerate. The proposed default classes are:
+regenerate. The classes are the merged table with the post-critic amendments, which the owner
+chose on 2026-10-09 over the register's literal default (DR-B3):
 
 | Class | Applies to | Tolerance |
 |---|---|---|
 | A | Element-wise closed forms: Kalman / RTS / fixed-lag, affine maps, metrics | ≤ 1e-12 absolute |
 | A′ | Dense linear solves | ≤ 1e-9 relative |
-| B | Conjugate-gradient RAPM | ≤ 10 × CG tolerance, and `converged = true` |
-| C | Booster stages (V(s), Layer-1 context model) | corr(dV) ≥ 0.999 and \|ΔV\| ≤ 0.10 EP on grid cells with support ≥ `min_samples_leaf` |
-| D | End-to-end recovery | Floors re-set on the **fixed** generator, calibrated below observed (as the CN gates are) |
+| B | Conjugate-gradient RAPM | All three: `converged = true`; a relative residual ≤ `tol_cg` on the oracle's system; agreement with the dense solve to 1e-9 (`docs/05-model-specs/rapm-attribution.md` §10.3) |
+| C-V | V(s) (DR-D27; `docs/05-model-specs/value-model.md` §10.3) | All four: corr(dV) ≥ 0.98 over all rows; max \|V_Rust − V_oracle\| ≤ 0.30 EP on states with support ≥ 120; the Rust estimator passes its own spec goldens (P-V4); the Class D gates hold with Rust dV (P-V8) |
+| C-L1 | Layer-1 context model (`docs/05-model-specs/layer1-credit.md` §10.3) | All four: corr(residual) ≥ 0.99; weekly credit corr ≥ 0.99 with RMS Δ ≤ 0.05 EP per play; per-position season-credit corr ≥ 0.995; the downstream Class D gates |
+| D | End-to-end recovery | Floors re-set on the **fixed** generator and gated over a declared generator-seed ensemble: the median, calibrated below the corrected oracle's ensemble median (calibrate-below-observed, as the CN gates are), and a declared low quantile, which is required (DR-D26) |
 
-**Class C is the unratified DR-B3 default, and it is unattainable (KI-NEW-Z74).** The oracle
+**C-V and C-L1 replace the register's original Class C**, corr(dV) ≥ 0.999 and |ΔV| ≤ 0.10 EP on
+grid cells with support ≥ `min_samples_leaf`, **which is unattainable (KI-NEW-Z74).** The oracle
 fails it against itself: re-seeding the V(s) booster gives corr(dV) 0.9891–0.9942 (legacy) and
 0.9896–0.9931 (fixed), and under a fold-seed change the Layer-1 context residual correlates
 with itself at only 0.9936–0.9974.
-The stage-specific replacements are proposed, not ratified: **C-V** for V(s) (proposed — DR-D27;
-`docs/05-model-specs/value-model.md` §10.3) and **C-L1** for the Layer-1 context model (proposed
-amendment to DR-B3; `docs/05-model-specs/layer1-credit.md` §10.3). Both must be pre-registered by
-the statistical owner before any Rust result is seen. The contract (§5, §6) carries the detail.
+Every threshold is pre-registered by the statistical owner before any Rust result is seen (DR-B3).
+C-V's two numeric limits are pre-registered now (DR-D27); its parts 3 and 4 wait on the DR-C7
+estimator spec and the re-set Class D floors, and its reference envelope is computed on the
+corrected world once it exists. Still open: the Class D floor values, set once, after ledger
+entries 2 and 4, on the DR-D26 ensemble, whose seed set, quantile and margins are pre-registered
+when the floors are re-set. The contract (§5, §6) carries the detail.
 
 Comparisons are **stage-isolated**. Python-produced dV is fed into Rust RAPM, and
 Python-produced weekly credit into the Rust Kalman filter, so Rust never has to bit-match
@@ -314,18 +328,20 @@ single-threaded on Linux, on its pinned platform: CPython 3.11 and `OPENBLAS_COR
 tolerance. It is also why `run_demo.py`, which does not pin threads, prints slightly
 different state-space numbers at different thread counts (`README.md`).
 
-## (e) Deliberate Rust divergences: typed failures (DR-B6, PROPOSED)
+## (e) Deliberate Rust divergences: typed failures (DR-B6)
 
-The proposed default: Rust turns each oracle failure path below into an explicit typed
-failure, and the oracle is left unchanged. These paths are **excluded from parity**. Parity
-is defined on the healthy path only, and Rust tests assert the typed error instead.
+The policy (DR-B6, ratified in part on 2026-10-08): Rust turns each oracle failure path below
+into an explicit typed failure, and the oracle is left unchanged. These paths are **excluded
+from parity**. Parity is defined on the healthy path only, and Rust tests assert the typed error
+instead. Still open: the numeric ill-conditioning (condition-number) threshold of row 1, which a
+model spec proposes before P1-06's solver failure semantics are final.
 
-| # | Oracle behaviour (file:line at 59bce1d) | Rust (proposed) | Note |
+| # | Oracle behaviour (file:line at 59bce1d) | Rust | Note |
 |---|---|---|---|
 | 1 | **`lstsq` fallback.** `layers._solve_ridge_prior` computes `np.linalg.cond(A)` on every solve and switches to `np.linalg.lstsq` when cond > 1e10, with only a log warning (`layers.py:355-358`). | Cholesky / CG with a typed singular or ill-conditioned error. | **Reverses a recorded decision.** The fallback was added deliberately by PR #53, audit item C3 ("Conditioning check + `lstsq` fallback in ridge solver"). The ADR that adopts the typed failure must cite PR #53 C3 (critic G-3). The cond() SVD is also O(n³) per solve (KI-NEW-A6). |
-| 2 | **Corrupt-state reinit.** `KalmanState.load` returns `None` for any state width other than 2 or 3 (`statespace.py:116-118`), and the caller starts fresh. `weekly_update` reinitialises the accumulators on a dimension mismatch or player reorder (`weekly_update.py:245-252`), which is KI-NEW-W2. | A typed state-schema or version error, plus an explicit, logged migration or rebuild command. | PR #56 described "corrupt → reinit" as deliberate design (critic G-3). A 1-D `mu` on disk raises IndexError (KI-A8) instead of returning `None`. |
+| 2 | **Corrupt-state reinit.** `KalmanState.load` returns `None` for any state width other than 2 or 3 (`statespace.py:116-118`), and the caller starts fresh. `weekly_update` reinitialises the accumulators on a dimension mismatch or player reorder (`weekly_update.py:245-252`), which is KI-NEW-W2. | A typed state-schema or version error, plus an explicit, logged migration or rebuild command. | PR #56 described "corrupt → reinit" as deliberate design (critic G-3); the adopting ADR cites it as a decision it reverses (DR-B6). A 1-D `mu` on disk raises IndexError (KI-A8) instead of returning `None`. |
 | 3 | **Skip-on-failure.** `weekly_update.run`: <ul><li>fetch errors become a health warning and a skipped week (`:215-220`);</li><li>an already-processed week is silently skipped (`:238-244`, KI-NEW-W1);</li><li>`kalman_trajectory` write failures are skipped (`:411`);</li><li>a `coaching_changes` query error becomes "no resets" (`:330`).</li></ul> Elsewhere, `layer1_all_qbs` swallows per-QB fit errors with a bare `except Exception: pass` (`layers.py:555-556`, KI-G6), and health is reported "ok" unconditionally (KI-NEW-W5). | Typed errors with a non-zero exit, and evidence records. | Never convert malformed data or a failed stage into a healthy default (superseded alpha-spec Appendix D). |
-| 4 | **V(s) refit every run.** `weekly_update.run` refits V(s) on the whole season on every call (`weekly_update.py:213`). In backfill that also leaks future weeks into dV (KI-NEW-W4). | A versioned, as-of V(s) artifact, refit on a declared schedule (DR-C6, DR-C7). | Parity for V(s) uses class C on a pinned training window, not a per-run refit. |
+| 4 | **V(s) refit every run.** `weekly_update.run` refits V(s) on the whole season on every call (`weekly_update.py:213`). In backfill that also leaks future weeks into dV (KI-NEW-W4). | A versioned, as-of V(s) artifact, fit once per season on the window `S-3..S-1` and frozen for that season (DR-C6, DR-C7). | Parity for V(s) uses class C-V on a pinned training window, not a per-run refit. |
 | 5 | **Non-atomic saves.** <ul><li>`ParquetCache.put` writes with `to_parquet` in place (`cache.py:25-28`, KI-G9);</li><li>accumulators and Kalman state use `np.savez` in place (`layers.py:117`, `statespace.py:61`);</li><li>`ingest_grid` writes its snapshots and then the manifest last (`ingest_grid.py:63-81`, KI-V10);</li><li>`health_check.write_health` writes in place (`health_check.py:40`).</li></ul> | Temp file + rename, content hashes, and a SQLite-registered manifest (DR-C15). | A crash mid-write leaves a "fresh" partial file in the oracle. |
 | 6 | **Accumulators saved before the solve.** `weekly_update.run` saves the RAPM accumulators (`weekly_update.py:259`, `np.savez` in place via `layers.py:117`) before the solve (`:278`) and the Kalman step (`:389-398`). A failure after the save leaves the week marked done, and the watermark skips the re-run (`:240-244`). KI-NEW-Z14. | Stage outputs commit atomically after the run succeeds, with a run record (DR-B6, DR-C15). | Same family as rows 3 and 5; excluded from parity like them. |
 

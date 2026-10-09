@@ -20,31 +20,32 @@ ports (engine-spec §1.7, §7.12, §7.13). This contract defines:
 - how fixtures are regenerated and checked in CI.
 
 **Status.** No fixture exists yet. The first port work package that needs one (P1-06 or P1-12)
-creates the exporter and the first cases under this contract. Most rules below implement owner
-decisions that are still *proposed*:
+creates the exporter and the first cases under this contract. The rules below implement these
+owner decisions. A part the table marks open is not settled:
 
 | Topic | Decision |
 |---|---|
-| Correction levels | DR-B1 |
-| Committed fixtures and oracle job | DR-B2 |
-| Tolerance classes | DR-B3, including the proposed C-L1 amendment |
-| V(s) parity criterion C-V | DR-D27 |
-| Synthetic world | DR-B4 |
-| Typed-failure divergences | DR-B6 |
-| Synthetic-only fixtures | DR-A11 |
-| Fixture format | DR-D29 |
+| Correction levels | DR-B1 (ratified 2026-10-08). Open: each ledger entry's own Statistical-owner approval as its commit lands, and creating the `oracle-legacy-59bce1d` tag (an owner action) |
+| Committed fixtures and oracle job | DR-B2 (ratified 2026-10-08) |
+| Tolerance classes | DR-B3 (overridden 2026-10-09: the merged table with the Class B, C-V, C-L1 and seed-ensemble Class D amendments). Open: the Class D floor values |
+| V(s) parity criterion C-V | DR-D27 (ratified in part 2026-10-09: the two numeric limits are pre-registered now). Parts 3 and 4 wait on the DR-C7 estimator spec and the re-set Class D floors |
+| Class D over a seed ensemble | DR-D26 (overridden 2026-10-09: a declared low quantile is gated as well as the ensemble median). Open: the seed set, quantile and margins |
+| Synthetic world | DR-B4 (ratified 2026-10-09). Open: the recalibrated values and the stat-vector world's parameters |
+| Typed-failure divergences | DR-B6 (ratified in part 2026-10-08). Open: the ill-conditioning threshold |
+| Synthetic-only fixtures | DR-A11 (ratified 2026-10-08; named again in the P0-01 merge comment) |
+| Fixture format | DR-D29 (ratified 2026-10-08) |
+| `reference-oracle` as a required check | DR-D30 (overridden 2026-10-09: required for every PR; the owner applies it in branch protection after P0-01 merges) |
 | Oracle golden platform (interpreter and OpenBLAS kernel) | DR-D31 (ratified 2026-10-08, option 1; ledger entry L0) |
 
-See [decision-register.md](../00-meta/decision-register.md). Until ratification these rules are
-the default the first port WP proposes to the owners. They are not settled law. The exception is the
-oracle platform pin, which DR-D31 settled.
+See [decision-register.md](../00-meta/decision-register.md) for each entry. An open part is not
+settled law until its named owner sets it.
 
 ## 1. What parity is, and what it is not
 
-1. **The oracle never overrides the spec** *(DR-A2, adopted subject to ratification)*. The
-   committed fixtures sit at authority level 5 (tests and fixtures). Oracle *source* sits at
-   level 6 (code). When the oracle and a model spec disagree, that is a decision request. An
-   accepted divergence is a statistical-owner ADR plus an entry in `reference/python/PARITY.md`.
+1. **The oracle never overrides the spec** *(DR-A2)*. The committed fixtures sit at authority
+   level 5 (tests and fixtures). Oracle *source* sits at level 6 (code). When the oracle and a
+   model spec disagree, that is a decision request. An accepted divergence is a statistical-owner
+   ADR plus an entry in `reference/python/PARITY.md`.
 2. **Parity is stage-isolated.** Each Rust stage is fed the *oracle's own upstream outputs*, so
    a difference in one stage cannot cascade into the next (§5). End-to-end comparison is by
    recovery statistics (Class D) only.
@@ -55,16 +56,18 @@ oracle platform pin, which DR-D31 settled.
    - skip-on-failure in `weekly_update`;
    - non-atomic saves.
 
-   Rust raises typed errors there *(proposed — DR-B6)*. The ADR making ill-conditioning a typed
-   failure cites cautious-nevermore PR #53 audit item C3, which added the fallback deliberately.
-   Each divergence is listed in `PARITY.md`.
+   Rust raises typed errors there *(DR-B6)*. The ADR making ill-conditioning a typed failure
+   cites cautious-nevermore PR #53 audit item C3, which added the fallback deliberately, and
+   PR #56, as the decisions it reverses. The condition-number threshold is still open: a model
+   spec proposes it before P1-06's solver failure semantics are final (DR-B6). Each divergence
+   is listed in `PARITY.md`.
 4. **The oracle is never edited to make a Rust test pass** (engine-spec Appendix D item 13
    and §6.8 rule 3, which carries superseded alpha-spec §6.6 rule 3). Approved corrections are
    made first in Python under the correction ledger (§7) and only then exported.
 
 ## 2. Fixture format (DR-D29)
 
-**Recommendation:**
+**Decision (ratified 2026-10-08):**
 
 - **one deterministic JSON manifest** per case;
 - **raw little-endian binary arrays**, one file per array;
@@ -80,7 +83,7 @@ oracle platform pin, which DR-D31 settled.
 
 Any new Rust dependency, including a dev-dependency used only by tests, needs written
 justification and owner approval (superseded alpha-spec §14.2; root `CLAUDE.md`). The
-recommended format needs none. The parity harness uses `serde_json` as the *first use of an
+ratified format needs none. The parity harness uses `serde_json` as the *first use of an
 already-declared workspace dependency*, the same status as `crates/persistence`'s use of
 `sqlx`. Verifying sha256 *inside* Rust would need a hashing crate as a new direct dependency.
 This contract therefore puts hash verification in a shell guard (§9). An in-Rust check is an
@@ -217,14 +220,14 @@ therefore takes the oracle's realized intermediate as an **injected input**.
 |---|---|---|---|---|
 | `synthetic-world` canonical world | — (exported frames are the input) | loads v0 frames and upgrades them (`from_legacy_v0`) | round-trip of every column and id order | exact |
 | `value-model` dV | per-row V(s) (`value.py:92`) and V(s′) for continuing rows (`value.py:99-102`) | `compute_dv` | `dv` | A |
-| `value-model` V(s) estimator | the plays frame; the oracle V on a declared state grid, with per-cell support counts; the oracle's seed envelope (V on the grid and `dv` for seeds 1–10) | Rust V(s) (C-7 estimator) | V on grid cells with support ≥ `min_samples_leaf` (120 in the oracle, `value.py:53`); `dv` on all rows | C-V (proposed — DR-D27; `value-model.md` §10.3), not Class C (§6; KI-NEW-Z74) |
+| `value-model` V(s) estimator | the plays frame; the oracle V on a declared state grid, with per-cell support counts; the oracle's seed envelope (V on the grid and `dv` for seeds 1–10) | Rust V(s) (C-7 estimator) | V on grid cells with support ≥ `min_samples_leaf` (120 in the oracle, `value.py:53`); `dv` on all rows | C-V (DR-D27; `value-model.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `rapm-attribution` design | plays + players + `dv` | `build_design` | COO/CSR triplets, player and team index maps, y | exact (values in {−1, +1, +2}, [plays-contract.md](plays-contract.md) D-8) |
 | `rapm-attribution` normal equations | design + `dv` | XᵀX, Xᵀy, incremental accumulation | XᵀX, Xᵀy; incremental == batch | A |
 | `rapm-attribution` solve | XᵀX, Xᵀy, `lam=120`, mask (players 1.0 or `lambda_by_pos`; team intercepts 0.05; interactions 10.0), prior mean, market rows (`w_market=40`) | dense or CG ridge | β, ratings, team ratings | A′ (dense) / B (CG) |
-| `rapm-attribution` situations | plays | situation masks | boolean masks | exact |
-| `layer1-credit` context model | play features `x_i`, `dv` and the fold map (`layers.py:497-519`) | the Rust booster's out-of-fold residual | the residual, weekly credit, per-position season credit | C-L1 (proposed amendment to DR-B3; `layer1-credit.md` §10.3), not Class C (§6; KI-NEW-Z74) |
+| `rapm-attribution` situations | plays | situation masks | boolean masks for the oracle's `red_zone`, `passing_downs` and `rushing_downs`. `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (DR-C13) have no oracle counterpart, and `two_minute` is a `PARITY.md` divergence ([plays-contract.md](plays-contract.md) D-1) | exact |
+| `layer1-credit` context model | play features `x_i`, `dv` and the fold map (`layers.py:497-519`) | the Rust context model's out-of-fold residual (booster or ridge/GAM: open, DR-C7) | the residual, weekly credit, per-position season credit | C-L1 (DR-B3; `layer1-credit.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `layer1-credit` weekly credit | plays + `dv` + the out-of-fold residual `_resid` (`layers.py:497-519`); fold ids for audit | per-player weekly mean residual and snaps | `credit`/`qb_credit`, `snaps`, week set | A (credit), exact (snaps, weeks) |
-| `layer1-credit` fixed point `fit(n_iter=3)` | `_resid` **for each iteration** (the defender-rating feature changes per iteration) and V(s)/dV | the RAPM ↔ Layer-1 loop | ratings, team ratings, `qb_weekly` | A′/B + A |
+| `layer1-credit` `fit`, a single pass (DR-D11) | `_resid` for that pass and V(s)/dV | one RAPM solve, then Layer-1 credit, with no credit fed back into RAPM prior means. The engine does not implement the oracle's three-round loop `fit(n_iter=3)`, in which the defender-rating feature changes per iteration; how cases treat that loop is set in `rapm-attribution.md` §4.7 | ratings, team ratings, `qb_weekly` | A′/B + A |
 | `state-space-kalman` | `y`, `snaps`, `played`, interventions, scheme resets, `SSParams`, and the **effective** `x0` and `P0` | filter, RTS, predictive variance | `total_filt`, `total_smooth`, `tau_smooth`, `var_total_filt`, `total_pred`, `var_total_pred`, NIS terms | A |
 | `cross-league-priors` | college frame, ratings, the equivalency **permutation indices** (`priors.py:104-105`) | equivalency, priors, washout | slope, intercept, `oos_r2`, prior mean and variance, washout table | A′ (least squares), A |
 | `evaluation-and-leakage` metrics | inputs; **bootstrap resample indices** | closed-form metrics; CIs on injected resamples | metric values, CIs | A |
@@ -245,41 +248,45 @@ Rules:
   teams (`layers.py:255`). Fixtures carry the explicit index maps. Rust compares by key, and
   adopts the fixture's column order where Class A/A′ summation order matters.
 
-## 6. Tolerance classes (proposed — DR-B3)
+## 6. Tolerance classes (DR-B3)
 
-The values are those of critic.md §3.2 (decision B-3). Some norms are not stated there; those
-choices are part of the same proposal.
+The owner adopted the merged table of critic.md §3.2 (decision B-3) with the post-critic
+amendments to Classes B, C and D (DR-B3, overridden 2026-10-09). Some norms are not stated
+there; those choices are this contract's, within the adopted values. Every threshold is
+pre-registered before any Rust result is seen (DR-B3).
 
 | Class | Applies to | Criterion (Rust `r` vs oracle `p`, identical inputs) |
 |---|---|---|
 | **A** | element-wise closed forms: Kalman, RTS, fixed-lag, affine and scoring, credit means, metrics, dV subtraction, XᵀX/Xᵀy | `max_i \|r_i − p_i\| ≤ 1e-12` |
 | **A′** | dense linear solves (ridge with prior mean, least squares) | `‖r − p‖∞ / ‖p‖∞ ≤ 1e-9` |
-| **B** | iterative sparse CG RAPM | `‖β_r − β_p‖₂ / ‖β_p‖₂ ≤ 10 × cg_tol` **and** the solver diagnostics report `converged = true`. `cg_tol` is recorded in the case |
-| **C** | booster stages: V(s) and the Layer-1 context model. The unratified DR-B3 default, measured unattainable (KI-NEW-Z74); see the stage-specific C-V and C-L1 below | `corr(dV_r, dV_p) ≥ 0.999` **and** `\|V_r − V_p\| ≤ 0.10` EP on state-grid cells with support ≥ `min_samples_leaf` |
-| **D** | end-to-end recovery on the synthetic world | the recovery floors of engine-spec §7.13, **re-set on the corrected (defender-fixed) synthetic world**, calibrated below observed values the way the oracle's gates are. The floors live in engine-spec §7.13 and `reference/python/PARITY.md`, never in fixtures |
+| **B** | iterative sparse CG RAPM | all three: the solver diagnostics report `converged = true`; the Rust solution's relative residual on the **oracle's** system `(A, b)` is ≤ `tol_cg`; **and** it agrees with the dense solve to 1e-9 relative (`rapm-attribution.md` §10.3). `tol_cg` is recorded in the case. This replaces the critic's `10 × tol_cg` bound on β, which a correct CG fails (`rapm-attribution.md` §5.2) |
+| **C-V**, **C-L1** | the oracle's booster stages: V(s) (C-V) and the Layer-1 context model (C-L1). They replace the critic's Class C, `corr(dV_r, dV_p) ≥ 0.999` **and** `\|V_r − V_p\| ≤ 0.10` EP on state-grid cells with support ≥ `min_samples_leaf`, which is unattainable (KI-NEW-Z74) | stage-specific; see C-V and C-L1 below |
+| **D** | end-to-end recovery on the synthetic world | the recovery floors of engine-spec §7.13, **re-set on the corrected (defender-fixed) synthetic world**, calibrated below observed values the way the oracle's gates are, and gated over a declared generator-seed set: the ensemble median, calibrated below the corrected oracle's ensemble median, **and** a declared low quantile, both required (DR-D26). The seed set, quantile, margins and floor values are still open; the statistical owner pre-registers them when the floors are re-set. The seed-7 world stays the fixture-injected golden. The floors live in engine-spec §7.13 and `reference/python/PARITY.md`, never in fixtures |
 
-**Class C cannot be met as written (KI-NEW-Z74).** It is the DR-B3 default as proposed, and the
-oracle fails it against itself: re-seeding the V(s) booster gives corr(dV) 0.9891–0.9942 on the
-legacy synthetic world, 0.9896–0.9931 on the defender-fixed one and 0.9940–0.9960 on real 2023
-data (`value-model.md` §7.3), and under a fold-seed change the Layer-1 context residual
-correlates with itself at only 0.9936–0.9974 (`layer1-credit.md` §5.3). The model specs therefore propose stage-specific
-criteria in its place. Neither is ratified:
+**Class C cannot be met as written (KI-NEW-Z74).** It was the booster class of the critic's
+table, and the oracle fails it against itself: re-seeding the V(s) booster gives corr(dV)
+0.9891–0.9942 on the legacy synthetic world, 0.9896–0.9931 on the defender-fixed one and
+0.9940–0.9960 on real 2023 data (`value-model.md` §7.3), and under a fold-seed change the
+Layer-1 context residual correlates with itself at only 0.9936–0.9974 (`layer1-credit.md` §5.3).
+DR-B3 therefore replaces it with stage-specific criteria:
 
-- **C-V** for V(s) (proposed — DR-D27; `value-model.md` §10.3). All four are required:
+- **C-V** for V(s) (DR-B3, DR-D27; `value-model.md` §10.3). All four are required:
   corr(dV_r, dV_p) ≥ 0.98 over all rows; max `|V_r − V_p|` ≤ 0.30 EP on states with support
   ≥ 120; the Rust estimator passes its own spec goldens (P-V4); and the Class D gates hold with
-  Rust dV (P-V8). The `value-model` fixture carries the oracle's seed envelope (seeds 1–10) from
-  which the reference values are computed.
-- **C-L1** for the Layer-1 context model (proposed amendment to DR-B3; `layer1-credit.md`
-  §10.3). On the canonical fixed synth, with injected `x`, `dv` and fold map, all four are
-  required: residual corr ≥ 0.99; weekly credit corr ≥ 0.99 with RMS Δ ≤ 0.05 EP per play;
-  per-position season-credit corr ≥ 0.995; and the P-L1-7 Class D gates.
+  Rust dV (P-V8). The two numeric limits are pre-registered now (DR-D27). Parts 3 and 4 wait on
+  the DR-C7 estimator spec and the re-set Class D floors. The `value-model` fixture carries the
+  oracle's seed envelope (seeds 1–10) from which the reference values are computed; the envelope
+  is computed on the corrected world once that world exists (DR-D27).
+- **C-L1** for the Layer-1 context model (DR-B3; `layer1-credit.md` §10.3). On the canonical
+  fixed synth, with injected `x`, `dv` and fold map, all four are required: residual corr
+  ≥ 0.99; weekly credit corr ≥ 0.99 with RMS Δ ≤ 0.05 EP per play; per-position season-credit
+  corr ≥ 0.995; and the P-L1-7 Class D gates.
 
-Both sit below the oracle's own measured envelope and MUST be pre-registered by the statistical
-owner before any Rust result is seen (engine-spec §7.13.4). A Rust stage that fails them is a
-decision request, not a reason to loosen them. engine-spec §7.12.5 also records the two other
-proposed DR-B3 amendments: the Class B refinement (`rapm-attribution.md` §10.3) and Class D over
-a seed ensemble (proposed — DR-D26).
+Both sit below the oracle's own measured envelope and are pre-registered before any Rust result
+is seen (DR-B3; engine-spec §7.13.4). A Rust stage that fails them is a decision request, not a
+reason to loosen them. DR-B3 also adopted the two other amendments that engine-spec §7.12.5
+records: the Class B refinement (`rapm-attribution.md` §10.3; the Class B row above) and Class D
+over a seed ensemble (DR-D26; the Class D row).
 
 **In every class:**
 
@@ -299,10 +306,10 @@ Linux. **It is not a Rust tolerance.**
 `tests/grid/test_performance.py` asserts a wall-clock speed-up. It is not a parity target
 (critic.md G-6).
 
-## 7. Legacy versus corrected oracle (proposed — DR-B1)
+## 7. Legacy versus corrected oracle (DR-B1)
 
 1. **Two levels.** `oracle.level = "legacy"` means the as-imported oracle: `59bce1d` plus import
-   patches P1 and P2 (critic.md X-4 proposes the tag `oracle-legacy-59bce1d` for that commit), and
+   patches P1 and P2 (DR-B1 tags that commit `oracle-legacy-59bce1d`; the owner creates the tag), and
    ledger entry L0, the golden master's platform-pin regeneration. L0 changes no semantics, so a case
    exported after it is still `legacy`; its platform is recorded in `environment`. `oracle.level = "corrected"` means the
    oracle after the statistical-owner-approved entries of the **correction ledger** in
@@ -326,7 +333,7 @@ Linux. **It is not a Rust tolerance.**
    `-corrected` sibling.
 5. The diff between legacy and corrected outputs **is** the documented divergence list.
 
-## 8. Synthetic-only rule (DR-A11, adopted subject to ratification)
+## 8. Synthetic-only rule (DR-A11)
 
 - Parity fixtures are generated **solely from synthetic inputs**: the synthetic generator, or
   hand-built toy frames like the oracle's own unit tests (for example nflverse-shaped pbp rows
@@ -376,7 +383,7 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
    - the semantic explanation (ledger id, model-spec section, or contract version);
    - a per-array change summary (max |Δ| and the largest movers, as the golden master prints
      them);
-   - statistical-owner sign-off when a booster-stage case (C-V, C-L1 or Class C), a Class D case
+   - statistical-owner sign-off when a booster-stage case (C-V or C-L1), a Class D case
      or a `-corrected` target moves.
 6. Windows never regenerates fixtures. Rust tests never write fixtures.
 
@@ -384,14 +391,17 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
 
 | Job | Check | Status |
 |---|---|---|
-| `guards` (Linux) | A fixture guard, for example `scripts/check-parity-fixtures.sh`, using `sha256sum` as `check-evidence-claims.sh` already does. It checks: every listed file exists and its sha256 matches; no unlisted file is present; required manifest keys exist; `provenance.data == "synthetic"`; `INDEX.tsv` agrees; the fixture tree is marked `-text` | **proposed**. A new step in `.github/workflows/alpha-ci.yml` touches the workflow security boundary (Security/Release owner) |
+| `guards` (Linux) | A fixture guard, for example `scripts/check-parity-fixtures.sh`, using `sha256sum` as `check-evidence-claims.sh` already does. It checks: every listed file exists and its sha256 matches; no unlisted file is present; required manifest keys exist; `provenance.data == "synthetic"`; `INDEX.tsv` agrees; the fixture tree is marked `-text` | not yet added. DR-D29 (ratified 2026-10-08) puts hash verification in this shell guard. A new step in `.github/workflows/alpha-ci.yml` touches the workflow security boundary (Security/Release owner) |
 | `linux-smoke`, `windows-authoritative` | The Rust parity tests run inside the existing Rust test step. They read the committed fixtures, apply the §6 classes, and need no Python | no recipe change; tests are added under the existing `test-rust` step |
-| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner image's tool-cache CPython 3.11 and fails if that is absent, with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval. The job pins `OPENBLAS_CORETYPE=Haswell`, and the golden master was regenerated under CPython 3.11 + Haswell by ledger entry L0, so the suite is expected green on GitHub's AMD runners (KI-NEW-Z78; DR-D31, ratified 2026-10-08) | suite run: in place since P0-01; fixture regeneration: **proposed — DR-B2** |
+| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner image's tool-cache CPython 3.11 and fails if that is absent, with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval. The job pins `OPENBLAS_CORETYPE=Haswell`, and the golden master was regenerated under CPython 3.11 + Haswell by ledger entry L0, so the suite is expected green on GitHub's AMD runners (KI-NEW-Z78; DR-D31, ratified 2026-10-08) | suite run: in place since P0-01; fixture regeneration: DR-B2 (ratified 2026-10-08), added with the exporter by the first port WP (§9). A required status check for every PR once the owner applies it after P0-01 merges (DR-D30) |
 
 **Rules for the `reference-oracle` job:**
 
 - It is never wired into `verify.ps1` or `windows-authoritative`. Golden Layer C and the cache
   TTL test fail on Windows (critic.md G-6).
+- It becomes a required status check for every PR to `main` once the owner applies that setting
+  in GitHub branch protection after P0-01 (PR #4) merges (DR-D30). No workflow edit is needed.
+  Being a required check does not wire it into the frozen verify chain.
 - If the runner's Python or BLAS kernel cannot reproduce the fixtures under the platform pin, escalate
   to the owner (KI-NEW-Z78; DR-D31). Never loosen a tolerance or regenerate to absorb the drift.
 - Adding an oracle smoke step to the frozen `verify` chain is an ADR-001 D5 amendment and needs

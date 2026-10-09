@@ -7,12 +7,12 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
   prose now archived (non-authoritative) under docs/07-archive/cautious-nevermore/.
 ---
 
-# Model spec: RAPM attribution (Layer 2), market reconciliation (Layer 3), team strength and the GRID fixed point
+# Model spec: RAPM attribution (Layer 2), market reconciliation (Layer 3), team strength and the single-pass GRID fit
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, adopted subject to owner ratification) it is an authority-level-3 document. The statistical
-owner approves the equations. The implementing agent may not redefine them (alpha-spec §1.3,
-superseded; carried into engine-spec §1).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the merge comment) it is an
+authority-level-3 document. The statistical owner approves the equations. The implementing agent
+may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec §1).
 
 **How to read this spec**
 
@@ -22,6 +22,8 @@ superseded; carried into engine-spec §1).
   uses cautious-nevermore @ `59bce1d` line numbers, which are byte-identical in the import.
 - **Proposed decisions.** Statements tagged "(proposed — DR-xx)" are defaults recorded in
   `docs/00-meta/decision-register.md`. The owner has not ratified them, so they are not settled.
+  Decisions the owner settled at the 2026-10-08/09 decision interview are cited plainly as
+  "(DR-xx)"; the register's **Still open** clause names any part that stays open.
 - **Synthetic generators.**
   - *Legacy synth* is the oracle's generator as imported. Its defenders are drawn from the
     offense's own roster (KI-NEW-Y0; critic G-1).
@@ -39,14 +41,14 @@ superseded; carried into engine-spec §1).
 | Estimand | Definition | Units / support | Status |
 |---|---|---|---|
 | Player rating `β_p` | Marginal effect of player `p`, while on the field, on per-play situational value `dV = V(s′) − V(s)` (value-model.md). It is jointly adjusted for every other on-field player and for team offense and defense baselines. Offensive players enter `+1`; defenders enter `−1`. A larger `β_p` is better for the player's own side in both cases. | EP per play; real | Implemented (oracle) |
-| Team offense effect `E_off[t]` | Gauge-invariant mean fitted offensive contribution on team `t`'s offensive plays: the intercept plus the exposure-weighted on-field offensive ratings (§4.5). | EP per play; real; positive = good offense | **Proposed — DR-B5** |
-| Team defense effect `E_def[t]` | The same construction on `t`'s defensive plays. Positive = good defense. | EP per play; real | **Proposed — DR-B5** |
-| Team net strength `N[t]` | `E_off[t] + E_def[t]`: the quantity a point spread prices. | EP per play; real | **Proposed — DR-B5** |
-| Defensive matchup grade `G[t]` | `+E_def[t]`. Higher means a tougher matchup. | EP per play; real | **Proposed — DR-B5** (the oracle's sign is inverted, KI-NEW-A2) |
+| Team offense effect `E_off[t]` | Gauge-invariant mean fitted offensive contribution on team `t`'s offensive plays: the intercept plus the exposure-weighted on-field offensive ratings (§4.5). | EP per play; real; positive = good offense | **Required — DR-B5** |
+| Team defense effect `E_def[t]` | The same construction on `t`'s defensive plays. Positive = good defense. | EP per play; real | **Required — DR-B5** |
+| Team net strength `N[t]` | `E_off[t] + E_def[t]`: the quantity a point spread prices. | EP per play; real | **Required — DR-B5** |
+| Defensive matchup grade `G[t]` | `+E_def[t]`. Higher means a tougher matchup. | EP per play; real | **Required — DR-B5** (the oracle's sign is inverted, KI-NEW-A2) |
 
 The component's outputs are **signals, not projections**. GRID is a signal provider to Layers B,
-D and E and to the priors (engine-spec §6.1 / §6.2; proposed — DR-C2). RAPM coefficients are not
-fantasy points. RAPM is also never a live in-season dependency (§2.3; proposed — DR-C1).
+D and E and to the priors (engine-spec §6.1 / §6.2; DR-C2). RAPM coefficients are not fantasy
+points. RAPM is also never a live in-season dependency (§2.3; DR-C1).
 
 ### 1.2 What it treats as nuisance (load-bearing intent, preserved verbatim)
 
@@ -80,6 +82,9 @@ The oracle's comments state the intent. The Rust port MUST keep it.
   > "Fixed point: Layer 2 -> defender ratings -> Layer 1 opponent adjustment -> (optional)
   > Layer 1 QB credit re-seeds the QB's Layer-2 prior. RAPM already does most
   > opponent/teammate adjustment jointly, so the loop is light here."
+
+  This is the oracle's intent, not a port requirement: the engine drops the re-seed loop, and
+  GRID's fit is a single pass (§4.7; DR-D11).
 
 - **Situational slices are labelled, not zero-filled.** Players absent from a situation get the
   ridge prior (0). The docstring says callers "should label 'no data' rather than a real zero
@@ -120,7 +125,7 @@ These were derived from the design and verified on the code. Both are binding fo
 ```text
 plays contract (participation) ─┐
 V(s) → dV  (value-model.md) ────┴─► Layer 2 RAPM (+ Layer 3 market rows)   ◄── this spec
-                                       │  β_p (players), γ_off/γ_def, E_off/E_def/N (proposed)
+                                       │  β_p (players), γ_off/γ_def, E_off/E_def/N (DR-B5)
                                        ├─► Layer-1 opponent adjustment (layer1-credit.md: defender ratings)
                                        ├─► priors / features: offseason talent covariate (cross-league-priors.md,
                                        │     projection-stack.md, engine-spec §6.5, §11.6)
@@ -129,22 +134,22 @@ V(s) → dV  (value-model.md) ────┴─► Layer 2 RAPM (+ Layer 3 mark
 Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cumulative RAPM β (§8, KI-NEW-W3).
 ```
 
-### 2.2 Layers served (engine-spec §6.1; proposed — DR-C2, DR-C3)
+### 2.2 Layers served (engine-spec §6.1; DR-C2, DR-C3)
 
 | Consumer | What RAPM provides |
 |---|---|
 | Layer B (team environment) | `N[t]` as a team-strength input, reconciled to the market line at lock |
-| Layer D (efficiency) | Offseason player rating as a talent covariate in EB-shrunk component-rate models (proposed — DR-C3, option (a)) |
+| Layer D (efficiency) | Offseason player rating as a further covariate, with a missing indicator, beside the role-specific talent covariates in EB-shrunk, exposure-weighted component-rate models (DR-C3, option 1) |
 | Layer E (matchup) | `G[t] = +E_def[t]` |
 | §6.5 priors | `estimate_equivalency` consumes the `ratings` frame (`reference/python/backend/grid/priors.py`; cross-league-priors.md) |
 | Layer-1 | Defender ratings for the opponent-adjustment feature (layer1-credit.md §4) |
 
-### 2.3 Live vs offseason (engine-spec §6.3; proposed — DR-C1)
+### 2.3 Live vs offseason (engine-spec §6.3; DR-C1)
 
 - Participation for season `S` is published **once, after `S`'s postseason**. This is stated in
   alpha-spec §4.1 (superseded), Participation row: "No for current in-season use". It is also
   stated in alpha-spec Appendix A. engine-spec §4.5 adds the publication-lag axis.
-- Therefore (proposed — DR-C1):
+- Therefore (DR-C1):
   - Production RAPM is fitted **only at season boundaries**, on completed seasons whose
     participation is published.
   - Its outputs seed priors and features.
@@ -173,14 +178,14 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
 
 | Input | Oracle form | Units / type | Null and failure semantics (oracle → required) | As-of rule |
 |---|---|---|---|---|
-| `off_players` per play | tuple of IDs (`layers.py:266,278`) | GSIS ID strings (real); ints (synth) | Empty tuple allowed. IDs not in the column universe are **dropped with a WARNING** (`layers.py:277-304`; PR #53 C4) → MUST be a typed error at this stage (§5.4) | Participation of season `S` usable only at as-of ≥ its publication timestamp (engine-spec §4.5; proposed — DR-C1) |
+| `off_players` per play | tuple of IDs (`layers.py:266,278`) | GSIS ID strings (real); ints (synth) | Empty tuple allowed. IDs not in the column universe are **dropped with a WARNING** (`layers.py:277-304`; PR #53 C4) → MUST be a typed error at this stage (§5.4) | Participation of season `S` usable only at as-of ≥ its publication timestamp (engine-spec §4.5; DR-C1) |
 | `def_players` per play | tuple of IDs | as above | as above | as above |
 | `off_team`, `def_team` | team code (`layers.py:309-314`) | string (real) / int (synth) | A code absent from the **players** frame raises a bare `KeyError` (no guard) → MUST be a typed error | as-of of the play |
 | `dv` | float column (`layers.py:327`) | EP per play | Missing column raises bare `KeyError` (KI-G12) → typed contract error. NaN is not checked → MUST be a typed error | V(s) frozen per data version and as-of (value-model.md; KI-NEW-W4) |
 | `season`, `week` | ints | — | The oracle RAPM ignores `season` (§6) → Rust keys every block by `(season, week)` | — |
-| `season_type` | absent in the oracle contract | — | Postseason plays enter RAPM today (KI-NEW-V0a) → RAPM MUST consume only the season types the plays contract admits | — |
+| `season_type` | absent in the oracle contract | — | Postseason plays enter RAPM today (KI-NEW-V0a) → RAPM MUST consume only the season types the plays contract admits: `REG` only (DR-D4) | — |
 | Column universe `players` | `player_id, team, position` (+`is_starter, ability` synth only) (`layers.py:252-258,417-422`) | — | Columns: players sorted by `str(id)`; teams = `sorted(players.team.unique())`. **The team list comes from the players frame, not the plays.** | Universe = as-of roster/identity snapshot over the fit window (engine-spec §4.4; reconcile-code-first C21) |
-| Market `s_t` | `{team: strength}` | **must be in the estimand's units, EP/play net strength** | Oracle absent-team handling differs at three sites (§4.4) → absent teams are simply **not anchored** | Line **as of lock** (engine-spec §4.3; proposed — DR-B5). The spread→EP/play scale is open (DR-D10) |
+| Market `s_t` | `{team: strength}` | **must be in the estimand's units, EP/play net strength** | Oracle absent-team handling differs at three sites (§4.4) → absent teams are simply **not anchored** | Line **as of lock** (engine-spec §4.3; DR-B5). The spread→EP/play scale is open (DR-D10) |
 | `prior_mean_players` | `{pid: m_p}` (`layers.py:373-376`) | EP per play | An unknown pid raises bare `KeyError` → typed error | as-of |
 | `lambda_by_pos` | `{position: multiplier}` (`layers.py:381-386`) | dimensionless | Unknown position → multiplier 1 | — |
 
@@ -199,10 +204,10 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
 |---|---|---|
 | `player_rating` | `β_p` per player in the window universe | `no_data = true` when the player has zero exposure in the window or slice. Never a silent 0 (`layers.py:437-440`) |
 | `exposure_off`, `exposure_def` | play counts per player in the window | needed to interpret `β_p` and to build `E_*` |
-| `team_off_effect` | `E_off[t]` | proposed — DR-B5 |
-| `team_def_effect` | `E_def[t]` | proposed — DR-B5 |
-| `team_net_strength` | `N[t] = E_off[t] + E_def[t]` | proposed — DR-B5. Replaces the oracle's `γ_off − γ_def` |
-| `def_matchup_grade` | `G[t] = +E_def[t]`, higher = tougher | proposed — DR-B5. Replaces `−γ_def` |
+| `team_off_effect` | `E_off[t]` | DR-B5 |
+| `team_def_effect` | `E_def[t]` | DR-B5 |
+| `team_net_strength` | `N[t] = E_off[t] + E_def[t]` | DR-B5. Replaces the oracle's `γ_off − γ_def` |
+| `def_matchup_grade` | `G[t] = +E_def[t]`, higher = tougher | DR-B5. Replaces `−γ_def` |
 | `market_residual` | `N[t] − s_t` for anchored teams | the falsifiable hook of `layers.py:13-14` |
 | `solver_diagnostics` | see §5.3 | MUST accompany every solve |
 | provenance | window seasons, as-of, data version, column-map version, hyperparameters (§4.9) | engine-spec §8.5 / §8.8 |
@@ -319,7 +324,7 @@ else:            return np.linalg.solve(A, b)   # LU                            
   uses rank-1 `XᵀX` with `λ = 1e-15`.
 - **Provenance.** The `lstsq` fallback was added deliberately as audit item C3 in PR #53
   ("Conditioning check + lstsq fallback in RAPM ridge solver"). The Rust replacement is a typed
-  failure (§5.4; proposed — DR-B6), and the ADR that adopts it MUST cite PR #53 C3 as the
+  failure (§5.4; DR-B6), and the ADR that adopts it MUST cite PR #53 C3 as the
   decision being reversed (critic G-3).
 
 ### 4.4 Layer 3: market pseudo-observations
@@ -345,7 +350,7 @@ else:            return np.linalg.solve(A, b)   # LU                            
     defensive plays per team on the canonical synth. Layer 3 is therefore a weak nudge
     (consistent with KI-NEW-A1).
 
-**Required semantics** (proposed — DR-B5; critic X-2 adjudication):
+**Required semantics** (DR-B5; critic X-2 adjudication):
 
 1. The `[+1, −1]` row (the "G1 fix" queued in CN docs) is **rejected**. It only aligns the code
    with the legacy generator's defender bug (KI-NEW-Y0).
@@ -383,7 +388,7 @@ Both are wrong under §1.3: KI-NEW-A1 and KI-NEW-A2 (CONFIRMED by
 `β_def = +0.409` and shipped grade −0.409, while the WEAK defense gets `β_def = −0.382` and
 grade +0.382.
 
-**Required** (proposed — DR-B5). `n^off_{t,p}` is player `p`'s count of on-field offensive
+**Required** (DR-B5). `n^off_{t,p}` is player `p`'s count of on-field offensive
 plays for team `t` in the window, and `N_off(t)` is `t`'s count of offensive plays (likewise for
 defense):
 
@@ -414,7 +419,7 @@ Layer 1 as `D_i = Σ_{p ∈ def_players(i)} β_p` (`layers.py:488-494,507`).
 `D_i` **omits `γ_def[def_team(i)]`**, so it is gauge-dependent (§1.3). The required per-play
 defensive effect is specified in layer1-credit.md §4.3 and §8.
 
-### 4.7 The fixed point `fit()` (`layers.py:591-610`)
+### 4.7 The oracle's fixed point `fit()` (`layers.py:591-610`) and the engine's single pass
 
 ```text
 prior ← None
@@ -442,11 +447,14 @@ return ratings, team_df, qb_weekly, β, colidx of the LAST iteration   (:609-610
   `np.corrcoef(ratings.rating, ratings.ability)` (`:606-608`), so it **fails on real rosters**,
   which carry no `ability` column.
 - **Required** (DR-D11).
-  - Either the re-seed is generalized to every player with Layer-1 credit and given a
-    convergence criterion, or the "fixed point" claim is dropped from engine-spec §6.2 and
-    `n_iter` is fixed at 1.
-  - Until decided, the Rust port MUST implement `fit` exactly as above for parity, with an
-    explicit `n_iter`, and MUST NOT depend on synth-only columns.
+  - The "fixed point" claim is dropped from engine-spec §6.2. GRID's fit is a single pass: the
+    round count is fixed at 1, and no Layer-1 credit is fed back into RAPM prior means.
+    Feedback may be reintroduced only by ADR with recovery evidence.
+  - The engine does not implement the oracle's three-round loop, and MUST NOT depend on
+    synth-only columns.
+  - How the parity fixtures treat the oracle's three-round loop (§10.2, §10.3 P-7) is for this
+    spec to define, and is not yet specified. The oracle's first round runs with
+    `prior = None`, before any re-seed.
 
 ### 4.8 Situation RAPM (`run_situation_rapm`, `layers.py:432-484`)
 
@@ -457,8 +465,12 @@ return ratings, team_df, qb_weekly, β, colidx of the LAST iteration   (:609-610
 - It raises `ValueError` without participation columns (`:469-473`).
 - `weekly_update` uses `MIN_PLAYS = 50` with **no market rows** and a mask built inline
   (`weekly_update.py:47,435-480`).
-- The situation vocabulary and `two_minute` definition are owned by DR-C13 (proposed: code set
-  canonical; `two_minute` via `half_seconds_remaining`; KI-NEW-A4, KI-#57).
+- The situation vocabulary and `two_minute` definition are owned by DR-C13 (KI-NEW-A4, KI-#57).
+  The canonical set is the code set (`red_zone`: `yardline_100` ≤ 20; `passing_downs`;
+  `rushing_downs`; `two_minute`: `half_seconds_remaining` ≤ 120) plus `goal_line`
+  (`yardline_100` ≤ 5), `goal_line_wr` (`yardline_100` ≤ 8, a separate mask used by WR
+  situational features and ratings), `third_and_long` (`down == 3` and `ydstogo` ≥ 7) and
+  `fourth_down` (`down == 4`). They are plain play filters and overlap by design.
 - Situation and interaction RAPM are **research-only**, because they need participation
   (alpha-spec §6.2; cn-docs: "Situation RAPM is exactly as blocked as base RAPM without
   participation").
@@ -482,7 +494,7 @@ Provenance key:
 | `min_pair_plays` | 30 | `layers.py:230` | hand-set (Phase-4 T7) |
 | `lambda_by_pos` | none by default | `layers.py:363,381-386` | hand-set design hook (Phase-3 plan, lost: "softer regularization for QB (more volatile) vs RB"; critic G-3). Never passed by a production solver (KI-#32). Test values only (`tests/grid/test_attribution.py:40,51,69`) |
 | Condition threshold | 1e10 | `layers.py:356` | hand-set (PR #53 C3) |
-| `n_iter` | 3 | `layers.py:591`; `tests/grid/golden_master.py:31` | hand-set v0 |
+| `n_iter` | 3 | `layers.py:591`; `tests/grid/golden_master.py:31` | hand-set v0. The engine fixes the round count at 1 (DR-D11; §4.7) |
 | Situation `min_plays` | 200 (`run_situation_rapm`); 50 (`weekly_update`) | `layers.py:432`; `weekly_update.py:47` | hand-set (Phase 4) |
 | Prior mean `m` | 0, except the `fit` re-seed | `layers.py:373-376,605` | design ("ridge toward replacement") |
 | Synth market noise | N(0, 0.01), seed 1 | `tests/grid/test_tier0_recovery.py:33-34`; `golden_master.py:30,69-70` | test harness only |
@@ -494,7 +506,8 @@ Provenance key:
   `σ²` unmodelled. RAPM is a penalized point estimator in the oracle. There is no posterior
   variance output.
 - **Prior means.**
-  - `m = 0` ("replacement"), except the `fit` re-seed (§4.7).
+  - `m = 0` ("replacement"), except the oracle's `fit` re-seed (§4.7), which the engine does not
+    port (DR-D11).
   - Priors from cross-league equivalency are **not** wired into RAPM on any oracle path
     (compare KI-NEW-P2).
 - **Required (open).**
@@ -530,9 +543,9 @@ Provenance key:
 | Real 2023 regular season, full-roster universe | 33,836 | 3,154 | 285,128 (2.9% dense) | dense `XᵀX` ≈ 80 MB per block |
 | Real 2023 regular season, on-field universe only | 33,836 | 1,666 | 285,128 | — |
 
-The engine needs per-season blocks (§6) plus per-situation blocks, so the Rust engine SHOULD
-store `XᵀWX` sparse (final-build-spec §11.1: `sprs`). Dense storage MAY be used for the parity
-oracle path.
+The engine needs per-`(season, week)` blocks (§6) plus per-situation blocks, so the Rust engine
+SHOULD store `XᵀWX` sparse (final-build-spec §11.1: `sprs`). Dense storage MAY be used for the
+parity oracle path.
 
 ### 5.2 Solvers (P1-06 generalized-ridge primitive)
 
@@ -569,7 +582,7 @@ Every solve MUST return the following, persisted with the output (engine-spec §
   20.6 s vs 0.70 s for the solve on real 2023: KI-NEW-A6);
 - `n_plays`, `nCols`, `n_unknown_participants` (MUST be 0 to proceed, §5.4), column-map version.
 
-### 5.4 Typed failures (alpha-spec §6.6 rule 4; proposed — DR-B6)
+### 5.4 Typed failures (alpha-spec §6.6 rule 4; DR-B6)
 
 The Rust engine MUST return a typed error, never a silent default, and never fall back to
 `lstsq`, for each of:
@@ -640,23 +653,24 @@ owns the harness.
 | Re-running an earlier week silently no-ops, so stat corrections cannot apply | KI-A9 | Idempotent recompute from `(season, week)`-keyed blocks (replace the block, re-sum) |
 | The `walk_forward` watermark guard fires only within a season (`backtest.py:178-181`), and accumulation runs across seasons with no window | KI-V2 | Window per §6.4; watermark checked across seasons |
 | `weekly_update` refits V(s) on the whole season (`weekly_update.py:210-214`), leaking future weeks into dV in a backfill, and re-basing earlier blocks' `Xᵀy` | KI-NEW-W4 | V(s) frozen per data version and as-of (value-model.md). A V(s) version change invalidates and rebuilds every block |
-| The Kalman is fed the cumulative RAPM `β` with `snaps = 1` (`weekly_update.py:307-309`) | KI-NEW-W3, KI-#24 | The Kalman observes weekly Layer-1/1′ credit (layer1-credit.md; proposed — DR-C10) |
+| The Kalman is fed the cumulative RAPM `β` with `snaps = 1` (`weekly_update.py:307-309`) | KI-NEW-W3, KI-#24 | The Kalman observes weekly Layer-1/1′ credit (layer1-credit.md; DR-C10) |
 | Absent market teams anchored to 0 (`weekly_update.py:274`) | (new; §8) | §4.4 item 4 |
 
-### 6.4 Required window semantics (proposed — DR-C6, with DR-C1)
+### 6.4 Required window semantics (DR-C6, with DR-C1)
 
-- **Sufficient statistics are stored per block.** For each completed season `s`, persist
-  `XᵀWX_s`, `XᵀWy_s`, exposure counts `n^off_s`, `n^def_s`, `N_off_s`, `N_def_s`, the
-  column-map version, the V(s) version and the data version. Storage follows engine-spec §8.5;
-  per proposed DR-C15, SQLite is the source of truth and bulk arrays are registered in its
-  manifest.
+- **Sufficient statistics are stored per `(season, week)` block.** For each block `b` of a
+  completed season, persist `XᵀWX_b`, `XᵀWy_b`, exposure counts `n^off_b`, `n^def_b`, `N_off_b`,
+  `N_def_b`, the column-map version, the V(s) version and the data version. Storage follows
+  engine-spec §8.5; per DR-C15, SQLite is the source of truth and bulk arrays are registered in
+  its manifest.
 - **Market rows and prior means are never persisted** in these statistics. They are added at
   solve time.
 - **Window.**
-  - Production (offseason) RAPM for season `S` uses the exact sum of blocks
-    `s ∈ {S−3, S−2, S−1}` (alpha-spec §2.4 preseason rule, superseded; engine-spec §2.4).
-  - Under DR-C1, in-season origins `(S, W)` reuse that preseason fit, because season-`S`
-    participation is unpublished.
+  - Production (offseason) RAPM for season `S`, used at the preseason and week-1 origins, is the
+    exact sum of the blocks of seasons `S−3, S−2, S−1` (alpha-spec §2.4 preseason rule,
+    superseded; engine-spec §2.4).
+  - In-season origins `(S, W > 1)` use the exact sum of the S−2 and S−1 blocks only, because
+    season-`S` participation is unpublished (DR-C1, DR-C6).
   - A **research-only** mode MAY add in-season blocks `S[1..W−1]` when participation is
     available historically. Every output of that mode MUST carry `research_only = true`, and it
     MUST NOT feed promoted outputs (alpha-spec §12.3: "current-season participation unavailable
@@ -687,7 +701,9 @@ pins (scikit-learn 1.9.1, numpy 2.4.6, scipy 1.17.1, pandas 3.0.6).
 | Team strength corr(`team_rating`, planted) | ≥ 0.60 (`:99`) | 0.6643. **Void**: it measures `γ_off − γ_def` against the legacy `off − def` target, which is coherent only with the defender bug | 0.6596 against the same, now meaningless, target |
 
 The legacy-synth DEF and team values are void (KI-NEW-Y0). Player recovery is valid on both
-synths. The fixed values are the starting point for re-set Class D floors (DR-B3/DR-B4; §10.3).
+synths. The fixed values are single-seed context only. The re-set Class D floors are calibrated
+below the corrected oracle's median over a declared seed ensemble, with a declared low quantile
+also gated, and are set once, after ledger entries 2 and 4 (DR-B3, DR-B4, DR-D26; §10.3).
 
 ### 7.2 Estimand evidence for DR-B5 (fixed synth; `tools/investigations/sign_check.py --synth fixed`; single solve, `λ = 120`, `μ_team = 0.05`, `w = 40`)
 
@@ -745,7 +761,8 @@ KI-NEW-V0a) and the participation skew (§2.3).
 A season-boundary RAPM output is promotable only when all of the following hold:
 
 - diagnostics are clean (§5.3, with no typed error);
-- the Rust-native Class D recovery floors pass on the fixed synth (§10.3);
+- the Rust-native Class D recovery gates pass on the fixed synth over the declared seed ensemble
+  (§10.3; DR-B3, DR-D26);
 - the truth-anchored sign tests pass (§10.3 T-1, T-2);
 - the market residuals are reported.
 
@@ -769,63 +786,63 @@ reproducible from the repo*.
 
 The Rust port MUST NOT reproduce any item in this table. Each correction lands first as an
 approved oracle correction in the `reference/python/PARITY.md` ledger, in the order G-1 synth →
-B-5 convention → grade sign (proposed — DR-B1). Alternatively it is recorded there as a
-deliberate divergence (proposed — DR-B6).
+B-5 convention → grade sign (DR-B1). Alternatively it is recorded there as a deliberate
+divergence (DR-B6).
 
 | # | Defect | KI / source | Required behaviour |
 |---|---|---|---|
-| 1 | The synth draws defenders from the offense team, so every team, DEF and grade number is void | KI-NEW-Y0 (critic G-1) | Parity targets come from the corrected synth (synthetic-world.md; proposed — DR-B4) |
+| 1 | The synth draws defenders from the offense team, so every team, DEF and grade number is void | KI-NEW-Y0 (critic G-1) | Parity targets come from the corrected synth (synthetic-world.md; DR-B4) |
 | 2 | The Layer-3 row `[+1, +1]` with `team_rating = γ_off − γ_def`, a legacy `off − def` truth, and a comment (`layers.py:400`) that contradicts the code | KI-G1, KI-V1, KI-NEW-A1, KI-NEW-Y1 | §4.4 / §4.5. **Do not** adopt `[+1, −1]` |
 | 3 | Matchup grade `−γ_def` (inverted), in three code sites plus docstrings and tautological tests | KI-NEW-A2 | `G[t] = +E_def[t]`. Truth-anchored tests (§10.3) |
 | 4 | Intercept-only grades carry no validated signal (Tier-2 ≈ 0 for either sign on synth) | KI-NEW-V2 | Grade = `E_def`. Gate on real points allowed per engine-spec §7.14 |
-| 5 | Silent `lstsq` fallback plus a full SVD on every solve | KI-NEW-A6; PR #53 C3 | Typed failure plus a cheap condition estimate (§5.4; proposed — DR-B6) |
+| 5 | Silent `lstsq` fallback plus a full SVD on every solve | KI-NEW-A6; PR #53 C3 | Typed failure plus a cheap condition estimate (§5.4; DR-B6) |
 | 6 | Unknown participant IDs silently dropped; unknown team or prior IDs raise bare `KeyError`; missing `dv` raises bare `KeyError` | KI-NEW-Z10; PR #53 C4; KI-G12; new | Typed errors (§5.4) |
 | 7 | Three different absent-team market behaviours (`KeyError` / skip / anchor to 0) | KI-NEW-Z11; reconcile-code-first §1.12; new for `run_rapm` | Not anchored (§4.4 item 4) |
 | 8 | Synth market target in ability units vs estimand in dV units (about 15× scale gap) | KI-NEW-Z12; new (§4.4) | `s_t` expressed in EP/play net strength (DR-D10; synthetic-world.md) |
-| 9 | Fixed point re-seeds only `focus_qb`, has no convergence test, and `verbose=True` (the default) needs `ability` | KI-NEW-Z9; KI-G14; new | DR-D11. No dependence on synth-only columns |
+| 9 | Fixed point re-seeds only `focus_qb`, has no convergence test, and `verbose=True` (the default) needs `ability` | KI-NEW-Z9; KI-G14; new | No loop: a single pass with no re-seed (DR-D11; §4.7). No dependence on synth-only columns |
 | 10 | `lambda_by_pos` never used in production; no WR/TE target-share attribution | KI-#32 | Calibrate or remove (DR-D12) |
 | 11 | Real-data rating scale ≈ 0.04 SD at every position; QB value absorbed by `γ_off`; synth-calibrated scale constants | KI-NEW-A3, KI-NEW-P4, KI-NEW-Y2 | A real-data penalty and QB-identifiability decision before any real-RAPM golden (DR-D12). Realistic synth profile (DR-B4) |
 | 12 | Interaction block unreachable from `run_rapm`; synth plants no interaction | KI-NEW-Z13; new; reconcile-code-first C25 | Research-only. A planted effect before any recovery claim |
 | 13 | Duplicate IDs within a play summed to ±2 | KI-NEW-Z38; new | `ContractError::DuplicateParticipant` |
 | 14 | Incremental path: week-only watermark, reinit on roster change, no recompute, cross-season accumulation, V(s) refit leakage | KI-NEW-W1, KI-NEW-W2, KI-A9, KI-V2, KI-NEW-W4 | §6.3 / §6.4 |
 | 15 | Cumulative RAPM fed to the Kalman with `snaps = 1` | KI-NEW-W3, KI-#24 (critic X-13) | The Kalman observes weekly Layer-1/1′ credit |
-| 16 | Postseason plays enter RAPM | KI-NEW-V0a | Plays-contract `season_type` policy |
-| 17 | Current-season participation used at every walk-forward origin (train/serve skew); real H2 +0.848 measured that way | KI-NEW-Z68; reconcile-code-first C1; reconcile-spec-first R14 | Research-only labelling. Publication-lag axis (engine-spec §4.5; proposed — DR-C1) |
+| 16 | Postseason plays enter RAPM | KI-NEW-V0a | `REG` plays only (DR-D4); plays-contract `season_type` policy |
+| 17 | Current-season participation used at every walk-forward origin (train/serve skew); real H2 +0.848 measured that way | KI-NEW-Z68; reconcile-code-first C1; reconcile-spec-first R14 | Research-only labelling. Publication-lag axis (engine-spec §4.5; DR-C1) |
 | 18 | No schedule (player → opponent) table, so grades are never keyed to opponents | KI-#31 | Grades keyed by `(season, week, def_team)` and joined through the schedule provider contract |
 | 19 | A NaN prior mean silently turns the whole `β` into NaN (dense `Λm`), reachable through `fit()` when the focus QB has no plays | KI-NEW-Z8; new | §5.4 `NonFinitePrior` |
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Question | Proposed default |
+| Decision | Question | Default and status |
 |---|---|---|
-| **DR-B5** | Team-strength estimand, Layer-3 rows, matchup grade | Net strength from gauge-invariant `E_off + E_def`. The market anchors `N` using the line at lock. `G = +E_def`. Reject `[+1, −1]` (proposed — DR-B5) |
-| **DR-C1** | RAPM and participation on the live path | Offseason-only RAPM at season boundaries. In-season Layer-1′. Publication-lag axis (proposed — DR-C1) |
-| **DR-C5** | Domain controls of the generalized objective: home field, garbage time, overtime, minimum exposure, play weights | **Open.** To be set in this spec before P1-12 code (proposed — DR-C5). The oracle models none of them; `W = I` |
-| **DR-C6** | Three-season window | Per-season blocks, exact window sums (proposed — DR-C6) |
-| **DR-B3** | Parity tolerances | Classes A / A′ / B / C / D (proposed — DR-B3). See the Class B refinement in §10.3 |
-| **DR-B4** | Synthetic world | Fix defenders, plant net strength, regenerate goldens, realistic profile (proposed — DR-B4) |
-| **DR-B6** | Typed failure vs faithful port | Typed failure. The ADR cites PR #53 C3 (proposed — DR-B6). The condition-estimate threshold value is open |
-| **DR-B1** | Oracle correction order | G-1 synth → B-5 convention → grade sign → … (proposed — DR-B1) |
-| **DR-C2 / DR-C3** | GRID as signal provider; where talent enters Layer D | Layers A–F skeleton. Role-specific talent covariates (proposed — DR-C2, DR-C3) |
-| **DR-C13** | Situation vocabulary | Code set canonical; `two_minute` via `half_seconds_remaining` (proposed — DR-C13) |
-| **DR-C15** | Storage | SQLite source of truth; bulk blocks registered in a manifest (proposed — DR-C15) |
+| **DR-B5** | Team-strength estimand, Layer-3 rows, matchup grade | Net strength from gauge-invariant `E_off + E_def`. The market anchors `N` using the line at lock. `G = +E_def`. Reject `[+1, −1]`. **Ratified** 2026-10-09 (DR-B5) |
+| **DR-C1** | RAPM and participation on the live path | Offseason-only RAPM at season boundaries. In-season Layer-1′. Publication-lag axis. **Ratified in part** 2026-10-09 (DR-C1); the snap-count source stays open |
+| **DR-C5** | Domain controls of the generalized objective: home field, garbage time, overtime, minimum exposure, play weights | **Open.** To be set in this spec before P1-12 code (DR-C5, ratified in part 2026-10-09; these controls stay open). The oracle models none of them; `W = I` |
+| **DR-C6** | Three-season window | Per-`(season, week)` blocks, exact window sums; `(S, W > 1)` uses the S−2 and S−1 blocks only (§6.4). **Overridden** 2026-10-09 (DR-C6) in its Kalman clause, through DR-D17; the RAPM clause is settled as stated |
+| **DR-B3** | Parity tolerances | Classes A / A′ / B / D, with Class C replaced by C-V (V(s)) and C-L1 (Layer-1 context model); the Class B refinement of §10.3; Class D over a seed ensemble (DR-D26). **Overridden** 2026-10-09 (DR-B3). The Class D floor values stay open |
+| **DR-B4** | Synthetic world | Fix defenders, plant net strength, regenerate goldens, realistic profile. **Ratified** 2026-10-09 as a direction (DR-B4); the recalibrated `r_scale`, NIS bands and Tier-0 floors, and the stat-vector world's distributions and parameters, stay open |
+| **DR-B6** | Typed failure vs faithful port | Typed failure. The ADR cites PR #53 C3. **Ratified in part** 2026-10-08 (DR-B6). The condition-estimate threshold value is open |
+| **DR-B1** | Oracle correction order | G-1 synth → B-5 convention → grade sign → …; **ratified** 2026-10-08 (DR-B1). Each ledger entry is still approved by the statistical owner as its commit lands |
+| **DR-C2 / DR-C3** | GRID as signal provider; where talent enters Layer D | Layers A–F skeleton. Role-specific talent covariates, with last season's RAPM as a further covariate; the Kalman splits by role. **Ratified** 2026-10-09 (DR-C2, DR-C3) |
+| **DR-C13** | Situation vocabulary | Code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.8); `two_minute` via `half_seconds_remaining` ≤ 120. **Overridden** 2026-10-09 (DR-C13) |
+| **DR-C15** | Storage | SQLite source of truth; bulk blocks registered in a manifest. **Ratified** 2026-10-08 (DR-C15) |
 | **DR-D10** | How a spread (points per game) at lock maps to `s_t` in EP per play over the window, and whether totals also enter (Layer B implied points) | **Open, no default.** Requires a calibration study |
-| **DR-D12** | `λ`, `μ_team`, `lambda_by_pos`, and QB identifiability on the real scale. Options: multi-season pooling (DR-C6), a QB-specific penalty or prior, or Layer-1 event credit for QBs | **Open.** Calibrate by rolling origin on completed seasons, pre-registered before results (engine-spec §7) |
-| **DR-D11** | Generalize the re-seed to every credited player with a convergence test, or drop the fixed-point claim | **Open.** Parity port as is until decided |
+| **DR-D12** | `λ`, `μ_team`, `lambda_by_pos`, and QB identifiability on the real scale. Options: multi-season pooling (DR-C6), a QB-specific penalty or prior, or Layer-1 event credit for QBs | **Decided in part** 2026-10-09 (DR-D12): calibrate by rolling origin on completed seasons, pre-registered before results (engine-spec §7); the study compares all three remedies. The values and the winning remedy stay open |
+| **DR-D11** | Generalize the re-seed to every credited player with a convergence test, or drop the fixed-point claim | **Decided** 2026-10-09 (DR-D11): drop the fixed-point claim. A single pass (rounds fixed at 1), with no Layer-1 credit fed back into RAPM prior means (§4.7) |
 
 ---
 
 ## 10. Rust port plan (template: Tolerances, Reference examples)
 
-### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8 adopted subject to ratification)
+### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8, ratified 2026-10-08)
 
 | Piece | Crate::module | WP |
 |---|---|---|
 | Generalized ridge primitive: dense Cholesky + Jacobi-PCG, diagnostics, typed errors, weights | `models::ridge` | **P1-06** (numerical primitives) |
 | Design builder, column map, market rows, `E_*`, grade, situation slices, `fit` | `models::rapm` (uses `domain` plays types and `features` situation masks) | **P1-12** (GRID component port) |
-| Per-season sufficient-statistic blocks, column-map versioning, window sums | `models::rapm` + `persistence` | P1-12 (store), P1-02 (schema) |
+| Per-`(season, week)` sufficient-statistic blocks, column-map versioning, window sums | `models::rapm` + `persistence` | P1-12 (store), P1-02 (schema) |
 | Publication-lag gate on participation | `domain` as-of types + `features` store | **P1-05** |
 | Walk-forward per-origin ratings, two-path, three-season window | `evaluation` | **P1-09** |
 | Season-boundary refresh stage | `pipeline` (replaces `application` in the first engine WP; DR-A8) | P2-01 (operation) |
@@ -834,7 +851,7 @@ deliberate divergence (proposed — DR-B6).
 
 The fixtures are the synthetic-only parity fixtures (DR-A11) defined by
 `docs/03-contracts/parity-fixture-contract.md`. They are exported single-threaded from the
-oracle, both legacy and corrected, and sha256-manifested (proposed — DR-B2). The RAPM set is:
+oracle, both legacy and corrected, and sha256-manifested (DR-B2). The RAPM set is:
 
 - canonical synth `plays` / `players` (and the fixed-synth equivalents);
 - the oracle `dv` (injected, so V(s) differences do not cascade);
@@ -845,28 +862,28 @@ oracle, both legacy and corrected, and sha256-manifested (proposed — DR-B2). T
 - per-origin walk-forward ratings;
 - the per-iteration Layer-1 residual vectors for `fit` (injected).
 
-### 10.3 Parity targets (proposed — DR-B3 classes)
+### 10.3 Parity targets (DR-B3 classes)
 
 | ID | Target | Class | Criterion |
 |---|---|---|---|
 | P-1 | Design: CSR triplets, `y`, column map, `nCols` | A (exact) | Integer equality. `y` identical |
 | P-2 | `XᵀX` and `Xᵀy` per block and summed | A | `XᵀX` exact (integer sums). `Xᵀy` ≤ 1e-12 abs |
-| P-3 | Dense `β` for: (a) `λ=120`, `μ_team=0.05`, no market; (b) (a) plus market `[+1,+1]` with legacy target, `w=40`; (c) `lambda_by_pos = {QB:0.5, RB:1.5, WR:1.0, TE:1.0}`; (d) prior-mean re-seed; (e) interactions `μ = 10`, `min_pair_plays = 10` on the `cb_split` synth (design called directly); (f) each situation slice | A′ | ≤ 1e-9 relative (‖·‖₂) vs oracle `np.linalg.solve` |
+| P-3 | Dense `β` for: (a) `λ=120`, `μ_team=0.05`, no market; (b) (a) plus market `[+1,+1]` with legacy target, `w=40`; (c) `lambda_by_pos = {QB:0.5, RB:1.5, WR:1.0, TE:1.0}`; (d) a nonzero prior mean (the oracle's re-seed configuration); (e) interactions `μ = 10`, `min_pair_plays = 10` on the `cb_split` synth (design called directly); (f) each situation slice | A′ | ≤ 1e-9 relative (‖·‖₂) vs oracle `np.linalg.solve` |
 | P-4 | PCG `β` for P-3 (a), (b) and the real-scale stress (synthetic, `nCols ≈ 3e3`) | B | See the refinement below |
 | P-5 | Incremental == batch (Rust internal) and vs oracle per-origin ratings with injected `dv` | A (internal), A′ (vs oracle) | Internal ≤ 1e-12 abs. Vs oracle ≤ 1e-9 relative (the oracle asserts 1e-8) |
 | P-6 | Two-path: Rust weekly stage == Rust walk-forward at W | A | ≤ 1e-12 abs (the oracle observes 0.0) |
-| P-7 | `fit` with injected per-iteration Layer-1 residuals: ratings, team values, `qb_weekly` | A′ | ≤ 1e-9 relative |
+| P-7 | `fit` with injected per-iteration Layer-1 residuals: ratings, team values, `qb_weekly` | A′ | ≤ 1e-9 relative. The engine's fit is a single pass (DR-D11); how this target treats the oracle's three-round loop is not yet specified (§4.7) |
 | P-8 | Typed-failure divergences: the rank-1 `λ=1e-15` case; unknown-ID case | divergence | Rust returns `IllConditioned` / `UnknownParticipant`. Listed in `reference/python/PARITY.md` |
-| P-9 | End to end with the Rust booster and Rust synth | D | Recovery floors **re-set on the fixed synth** by calibrate-below-observed (proposed — DR-B3/DR-B4). Observed fixed values to calibrate from are in §7.1. Floors are not set by this spec |
+| P-9 | End to end with the Rust V(s) and Layer-1 estimators (DR-C7) and Rust synth | D | Recovery floors **re-set on the fixed synth** by calibrate-below-observed (DR-B3, DR-B4), gated on the median over a declared seed ensemble, calibrated below the corrected oracle's ensemble median, and on a declared low quantile (DR-D26). The floor values are set once, after ledger entries 2 and 4, on that ensemble; the single-seed fixed values in §7.1 are context only. Floors are not set by this spec |
 | P-10 | `E_off`, `E_def`, `N`, `G` from the corrected oracle | A′ | ≤ 1e-9 relative once the oracle correction (DR-B1 ledger, B-5) lands. Until then, formula tests on §10.4 |
 
-**Class B refinement (new finding; proposed amendment to DR-B3).**
+**Class B refinement (new finding; adopted with DR-B3 on 2026-10-09).**
 
-- DR-B3's Class B criterion is "‖β_cg − β_py‖/‖β_py‖ ≤ 10 × CG tolerance". It conflates the
-  residual tolerance with the solution error.
+- DR-B3's original default Class B criterion was "‖β_cg − β_py‖/‖β_py‖ ≤ 10 × CG tolerance". It
+  conflates the residual tolerance with the solution error.
 - Measured on the canonical synth, the solution error is **10.6× to 24×** the relative-residual
   tolerance (§5.2). The criterion therefore fails for a correct CG at every tested tolerance.
-- Proposed Class B criterion, all three required:
+- The Class B criterion (DR-B3), all three required:
   1. `converged = true`;
   2. the Rust solution's relative residual on the **oracle's** `(A, b)` is ≤ `tol_cg`;
   3. ‖β_cg − β_dense‖/‖β_dense‖ ≤ 1e-9, with `tol_cg = 1e-12` (measured 1.4e-11 at that
@@ -919,7 +936,7 @@ oracle team_rating = γ_off − γ_def :  A = 12/85 − 4/43 = 0.048153214774282
 The oracle's `team_rating` cannot tell A from B. Yet A's offense gained +0.3 on average and its
 defense allowed −0.2.
 
-**Proposed outputs (§4.5)** for the same `β`:
+**Required outputs (§4.5; DR-B5)** for the same `β`:
 
 ```text
 E_off[A] = 12/85 + 0.6/85 = 12.6/85 = 0.148235294117647     E_def[A] = 4/43 + 0.2/43 = 4.2/43 = 0.097674418604651
@@ -944,10 +961,10 @@ oracle grade −γ_def:  A = −0.093023255813953,  B = +0.141176470588235   ←
 
 | Superseded section | Requirement | How this spec satisfies it | Gap |
 |---|---|---|---|
-| alpha-spec §1.2 | "a traditional basketball-style RAPM implementation is not allowed to become a hidden dependency of the live projection path" | §2.3: offseason-only RAPM, publication-lag gate (proposed — DR-C1) | Ratification of DR-C1 |
+| alpha-spec §1.2 | "a traditional basketball-style RAPM implementation is not allowed to become a hidden dependency of the live projection path" | §2.3: offseason-only RAPM, publication-lag gate (DR-C1) | — |
 | alpha-spec §4.1 (Participation row), Appendix A | Participation not for in-season use; published after the postseason | §3.1 as-of rule; §6.4 research-only mode | The provider contract must carry the publication timestamp (P1-03 / P1-05) |
-| alpha-spec §2.4 | Exact three-season rule | §6.4 per-season blocks (proposed — DR-C6) | — |
-| alpha-spec §6.1 Layers B, E | Team environment; opponent adjustment | §2.2: `N[t]`, `G[t]` (proposed — DR-B5, DR-C2) | Venue, rest and weather (Layer E) are outside RAPM |
+| alpha-spec §2.4 | Exact three-season rule | §6.4 per-`(season, week)` blocks (DR-C6) | — |
+| alpha-spec §6.1 Layers B, E | Team environment; opponent adjustment | §2.2: `N[t]`, `G[t]` (DR-B5, DR-C2) | Venue, rest and weather (Layer E) are outside RAPM |
 | alpha-spec §6.2 (RAPM row) | "Opponent-adjusted team/unit/player effects where participant data supports them; research-only if live feature parity is absent" | §2.3, §6.4 | — |
 | alpha-spec §6.6 | Model-spec contents; rule 4 typed failures; rule 3 no silent golden regeneration | This document; §5.4; §10.3 (goldens regenerated only through the DR-B1 ledger) | Computational-complexity statement for declared dimensions: §5.1 sizes only. A benchmark is still due in P1-06 |
 | alpha-spec §12.1 / final-build-spec §19.1 | Unit tests for "ridge regression, RAPM construction" | §7.3, §10.3 | — |

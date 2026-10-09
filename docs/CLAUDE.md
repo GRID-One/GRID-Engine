@@ -31,7 +31,7 @@ The reference oracle never overrides the specification. The superseded specifica
 - **Rust owns all authoritative state**: data, model parameters and versions, predictions and
   intervals, feature definitions, training and ingestion status, persisted settings.
 - **SQLite is the durable source of truth.** Bulk artifacts (Parquet frames, serialized
-  accumulators) are content-hashed and registered in a SQLite manifest (proposed — DR-C15).
+  accumulators) are content-hashed and registered in a SQLite manifest (DR-C15).
 - **Concurrency.** Tokio for async I/O and job coordination; Rayon or `spawn_blocking` for CPU-heavy
   work. Never block the async runtime.
 - **Statistical interfaces are first-class**: ridge, RAPM-style sparse regularized effects, Kalman,
@@ -60,7 +60,7 @@ text is quoted by engine-spec §8.1; the engine role is what each crate owns for
 | `governance` | Model promotion, rollback, snapshot, job queue. | Model states and the promotion gate, threshold registry, production pointers and snapshot records, durable job queue. The oracle verdict is rendered, never acted on |
 | `application` | Commands, queries, events, app services. Orchestrates crates. | The engine facade: library API (§8.2–§8.4) and orchestration of the daily pipeline DAG (§8.6). "App services" means application services behind the library API, not a user interface |
 
-**Target crates (DR-A8, pending ratification).** P0-01 only drops `ffi`. Later packages change the
+**Target crates (DR-A8, ratified 2026-10-08).** P0-01 only drops `ffi`. Later packages change the
 rest:
 
 - `application` → `pipeline` (P1-01): library facade, DAG orchestration, durable-job execution.
@@ -85,7 +85,7 @@ rest:
    not edit them. An overlap is a stop condition.
 6. Not ported: `grid/cache.py`, `scoring/format_registry.py`,
    `pipeline/{data_pipeline,compute_valuations,sync_*,health_check}.py`. VOR exists only inside the
-   evaluation lineup simulation (proposed — DR-C11).
+   evaluation lineup simulation (DR-C11).
 
 ## Reference Oracle (`reference/python/`)
 
@@ -110,8 +110,10 @@ status, correction ledger, tolerances and divergences: `reference/python/PARITY.
   ledger entry L0): `tools/pytest_platform_pin.py` enforces it for pytest, and anything run outside
   pytest exports it. The isolation guard blocks app imports and network access.
   `python3 tools/verify_manifest.py` must pass.
-- **CI.** The `reference-oracle` job is outside the frozen verify chain, never wired into
-  `verify.ps1`, `just verify` or `windows-authoritative`, and not merge-authoritative (DR-A3, DR-D30).
+- **CI.** The `reference-oracle` job is outside the frozen verify chain and never wired into
+  `verify.ps1`, `just verify` or `windows-authoritative` (DR-A3). It becomes a required status check for
+  every pull request once the owner applies that setting in branch protection after P0-01 merges
+  (DR-D30).
   It runs on the runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, fails if
   that interpreter is absent, and is expected green (446 passed). If the runner's interpreter or BLAS
   kernel still moves a golden, escalate; never loosen a tolerance, disable the platform pin or skip a
@@ -190,7 +192,7 @@ reminders:
 - Adding unapproved production dependencies inside feature PRs.
 - Regenerating golden files or oracle fixtures without semantic review and a ledger entry.
 - Converting typed errors into silent defaults in critical paths; the oracle's silent-failure paths
-  become typed failures in the engine (proposed — DR-B6).
+  become typed failures in the engine (DR-B6).
 - Merging, signing, publishing, promoting or deploying autonomously.
 - Changing `rust-toolchain.toml` inside a feature PR.
 - Rewriting migrations to hide incompatibility.

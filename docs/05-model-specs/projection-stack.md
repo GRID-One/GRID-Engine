@@ -10,9 +10,9 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: projection stack (volume, stat-line rates, talent features, SV→points map, preseason assembly, scoring)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, adopted subject to owner ratification) it is an authority-level-3 document. The statistical
-owner approves the equations. The implementing agent may not redefine them (alpha-spec §1.3,
-superseded; carried into engine-spec §1).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it
+is an authority-level-3 document. The statistical owner approves the equations. The implementing
+agent may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec §1).
 
 **How to read this spec**
 
@@ -22,13 +22,16 @@ superseded; carried into engine-spec §1).
   `59bce1d` line numbers, which are byte-identical in the import for every file cited here.
 - **Proposed decisions.** Statements tagged "(proposed — DR-xx)" are defaults recorded in
   `docs/00-meta/decision-register.md`. The owner has not ratified them, so they are not settled.
+  A decision the owner has settled is cited plainly as "(DR-xx)": the owner's decision interview of
+  2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) settled most entries in
+  full or in part, and a still-open part keeps its tag. The register is authoritative for status.
   `DR-NEW:<slug>` marks a decision raised after the critic's consolidation; it has no register
   entry yet unless one is cited.
 - **Scope.** `reference/python/backend/projection/*` in full, and the scoring engine
   `reference/python/backend/scoring/{engine,formats,columns}.py`. `scoring/vor.py` and
   `scoring/format_registry.py` are oracle-only: they are imported because the oracle's closure needs
   them (critic X-5, X-20) and are not ported, except VOR inside the lineup simulation
-  (`evaluation-and-leakage.md` §4.10; proposed — DR-C11).
+  (`evaluation-and-leakage.md` §4.10; DR-C11).
 - **Synthetic generators.** *Legacy synth* is the oracle's generator as imported. Its defenders are
   drawn from the offense's own roster (KI-NEW-Y0; critic G-1). The projection modules do not read
   the synth's defence directly, but every number below that passes through RAPM ratings or the
@@ -45,12 +48,12 @@ superseded; carried into engine-spec §1).
 | Per-game usage `v̂_{i,c}` | Projected per-game count of usage driver `c ∈ {pass_attempts, rush_attempts, targets, receptions}` for player `i`, shrunk toward the position mean | count per game, ≥ 0 | Implemented (oracle), `volume.py`. Partial Layer C seed |
 | Per-unit rate `r̂_{i,(c,s)}` | Projected stat `s` per unit of driver `c` (e.g. passing yards per attempt), as a function of GRID talent features | stat per unit of `c`, real (unconstrained in the oracle) | Implemented (oracle), `model.py`. Partial Layer D seed |
 | Per-game stat line | The 14 `SCORING_STAT_COLS` per game: volume copied through, the rest `v̂ · r̂` | box-score units per game | Implemented (oracle) |
-| Season stat line | Per-game line × an expected games count (17) | box-score units per season | Implemented (oracle), `preseason.py`. A derived product (proposed — DR-C4) |
+| Season stat line | Per-game line × an expected games count (17) | box-score units per season | Implemented (oracle), `preseason.py`. A derived product (DR-C4) |
 | Fantasy points | Scoring-profile transform of a stat line | points | Implemented (oracle) as a linear map with no offset and no version |
-| Weekly points from credit | Per-position affine map `a_pos + b_pos · credit` from GRID currency to weekly fantasy points | points per game | Implemented (oracle), `sv_to_points.py`. **Diagnostic only** in the engine (proposed — DR-C2) |
+| Weekly points from credit | Per-position affine map `a_pos + b_pos · credit` from GRID currency to weekly fantasy points | points per game | Implemented (oracle), `sv_to_points.py`. **Diagnostic only** in the engine (DR-C2) |
 
 The stack's outputs are **fantasy-relevant projections**. GRID's signals (RAPM rating, state-space
-talent, the cross-league prior) enter only as **covariates** (proposed — DR-C2, DR-C3). They are
+talent, the cross-league prior) enter only as **covariates** (DR-C2, DR-C3). They are
 never re-labelled as fantasy points.
 
 ### 1.2 Statistical intent (load-bearing comments, preserved)
@@ -124,7 +127,7 @@ for the port.
      `docs/03-contracts/engine-output-contract.md` §4.2. It is causal only if the filter's
      initialisation is causal. The oracle initialises from `nanmean(y[:3])` inside the window
      (`statespace.py:186`; KI-#15). The engine computes it with the forward filter alone, from a
-     prior-based `x0`/`P0` (proposed — DR-C10), and names it `end_of_window_filtered_talent`.
+     prior-based `x0`/`P0` (DR-C10), and names it `end_of_window_filtered_talent`.
 3. **Receptions are projected as volume, and catch rate is not modelled.**
    - `receptions` is a `VOLUME_COLS` entry (`volume.py:34`) and the driver of receiving yards and
      touchdowns (`model.py:57`).
@@ -142,15 +145,15 @@ for the port.
 
 ## 2. Position in the engine
 
-### 2.1 Layers A–F (engine-spec §6.1; proposed — DR-C2)
+### 2.1 Layers A–F (engine-spec §6.1; DR-C2)
 
 | Layer (engine-spec §6.1) | What the oracle has | Status | Engine requirement |
 |---|---|---|---|
 | A. Availability and role eligibility | Nothing. Every projected player gets the full per-game line, and preseason multiplies by 17 games (`preseason.py:30`) | **Absent** | New work, no parity target. `p_active`, `p_start`, snap multiplier, `p_limited_role` (engine output contract §3.3) |
-| B. Team game environment | Nothing in `projection/`. Team intercepts exist only in RAPM (`rapm-attribution.md` §4.5) | **Absent** | New work. Team net strength anchored to the market line at lock is a GRID input (proposed — DR-B5) |
+| B. Team game environment | Nothing in `projection/`. Team intercepts exist only in RAPM (`rapm-attribution.md` §4.5) | **Absent** | New work. Team net strength anchored to the market line at lock is a GRID input (DR-B5) |
 | C. Opportunity allocation | `volume.project_volume`: EB shrinkage of prior-season per-game usage toward the position mean, plus an override hook | **Partial** | §4.8.1. No team totals, no simplex allocator, no snap share, no in-season data, games miscounted (KI-NEW-R2) |
 | D. Efficiency | `model.fit_stat_line_model`: per-position, per-(driver, stat) standardized ridge of the per-unit rate on `[rapm_rating, smoothed_talent, prior_mean]` | **Partial** | §4.8.2. Unweighted (KI-NEW-R1), no TD shrinkage rule, no catch rate, fumbles and two-point conversions fixed at 0 |
-| E. Matchup and context | Nothing in `projection/`. The matchup grade lives in RAPM, with an inverted sign (KI-NEW-A2) | **Absent** | `rapm-attribution.md` §4.5 grade `G = +E_def` (proposed — DR-B5), plus venue, rest and weather, as new work |
+| E. Matchup and context | Nothing in `projection/`. The matchup grade lives in RAPM, with an inverted sign (KI-NEW-A2) | **Absent** | `rapm-attribution.md` §4.5 grade `G = +E_def` (DR-B5), plus venue, rest and weather, as new work |
 | F. Correlated simulation | Nothing. The only uncertainty is an evaluation-side Gaussian spread (`evaluation-and-leakage.md` §4.8) | **Absent** | New work (P1-08). Every distribution, quantile and P(zero) comes from Layer-F draws (engine-spec §5.3) |
 | Scoring (engine-spec §5.4) | `scoring/engine.calculate_points`: `Σ rules[k] · stats[k]` | Implemented, linear, unversioned, no offset | §4.7. Affine profile with offset and version; Half-PPR default |
 
@@ -170,14 +173,14 @@ player-season totals + features ──► model.fit_stat_line_model ──► St
 (credit, weekly points) pairs ──► sv_to_points.fit_sv_to_points ──► weekly points (diagnostic)
 ```
 
-### 2.3 Horizons (engine-spec §2.2; proposed — DR-C4)
+### 2.3 Horizons (engine-spec §2.2; DR-C4)
 
 - **Oracle.** Three horizons with three different producers:
   - weekly: the SV→points affine map on the walk-forward RAPM rating (`tier1.forecast_weekly_points`,
     `verdict.py:403-404`);
   - rest of season (ROS): the stat-line model, per game (`games = 1`, `tier1.py:106`, `:168`);
   - preseason: per-game line × 17 (`preseason.py:59`).
-- **Engine (proposed — DR-C4).**
+- **Engine (DR-C4).**
   - The weekly stat vector is the primary contract (`docs/03-contracts/engine-output-contract.md`
     §3.1).
   - ROS and preseason quantities are **derived sums of weekly Layer-F draws**, labelled with a typed
@@ -189,9 +192,10 @@ player-season totals + features ──► model.fit_stat_line_model ──► St
 
 ### 2.4 Contracts and neighbouring specs
 
-- Inputs: official weekly player statistics as labels (engine-spec §4.7; proposed — DR-C12); the
-  GRID signals of `rapm-attribution.md`, `layer1-credit.md`, `state-space-kalman.md` and
-  `cross-league-priors.md`, materialized as GRID-derived features (engine-spec §11.6).
+- Inputs: official weekly player statistics as labels, reconciled against the engine's play-by-play
+  rebuild for every player-week (engine-spec §4.7; DR-C12); the GRID signals of
+  `rapm-attribution.md`, `layer1-credit.md`, `state-space-kalman.md` and `cross-league-priors.md`,
+  materialized as GRID-derived features (engine-spec §11.6).
 - Outputs: `docs/03-contracts/engine-output-contract.md` §3 (stat vectors, conditional and
   unconditional, distributions, scoring) and §4.2 (GRID signal block).
 - Parity: `docs/03-contracts/parity-fixture-contract.md` (component `projection-stack` and
@@ -209,7 +213,7 @@ player-season totals + features ──► model.fit_stat_line_model ──► St
 |---|---|---|---|---|
 | Weekly usage history | `player_stats`-shaped frame, one row per player-week, with `VOLUME_COLS`, `position`, `season`, `week` (`volume.py:63-68`) | counts | A missing `VOLUME_COLS` column crashes `groupby.agg` (KI-P3) → typed `ContractError`. Missing weeks are absent rows, so "games" = weeks with a row (KI-NEW-R2) → games from snaps or participation | Rows with `(season, week) ≤ (S, W−1)` (`volume.py:70-72`). Engine: also published before the lock (engine-spec §4.5) |
 | Player-season training frame | one row per (player, season): drivers, downstream stats, `TALENT_FEATURE_COLS` (`model.py:125-131`) | season totals; features in GRID currency | A missing stat or feature column raises `KeyError` (KI-P4) → typed error. NaN features become 0.0 (`model.py:138`; KI-P1) → explicit missing indicator | Labels and features from the training window only (engine-spec §2.4) |
-| `ratings_df` | `layers.run_rapm` output, `[player_id, rating, …]` (`features.py:72-76`) | EP per play | Players absent → 0.0 in `to_frame` (`features.py:64`) → `no_data` | Offseason RAPM only, from seasons whose participation is published (proposed — DR-C1) |
+| `ratings_df` | `layers.run_rapm` output, `[player_id, rating, …]` (`features.py:72-76`) | EP per play | Players absent → 0.0 in `to_frame` (`features.py:64`) → `no_data` | Offseason RAPM only, from seasons whose participation is published (DR-C1) |
 | Weekly credit series | `{pid: {y, snaps, played, interventions?}}` (`features.py:82-86`) | EP per snap; snaps | Absent week MUST be `played = False` **and** `y = NaN` (`features.py:88-93`) | Strictly before the origin (`verdict.py:150-153`) |
 | `priors_df` | `priors.build_priors` output, `[player_id, prior_mean, prior_var]` (`features.py:116-126`) | rating scale | `None` or empty → no priors. Wired to no real data (KI-NEW-P2) | Prior seasons only (`cross-league-priors.md`) |
 | `(credit, points)` pairs | `[season, week, position, credit, fantasy_points]` (`sv_to_points.py:66-69`) | EP per snap; points | NaN passes the spread guard and reaches `polyfit` (KI-P5) → typed error | `AsOf.slice_plays` (`sv_to_points.py:74`) |
@@ -247,11 +251,11 @@ component onto the oracle.
 | `receptions` | `receptions` (volume) | EB-shrunk count, no talent effect | `targets × catch_probability` (Layer D); ≤ targets per draw |
 | `receiving_yards`, `receiving_tds` | rate stats on `receptions` | as above | Layer D yards per target or per reception (rate-base choice under DR-D21) |
 | `fumbles_lost` | `fumbles_lost` | **fixed at 0.0** (`model.py:22-24`, `:99`); label misattributed (KI-NEW-I3) | **Modelled**, strongly shrunk per-touch rate (engine-spec §6.4.7) |
-| `two_point_conversions` | `two_point_conversions` | **fixed at 0.0**; label never populated (KI-NEW-I5) | **Modelled**, strongly shrunk, tied to team scoring draws (proposed — DR-C12) |
+| `two_point_conversions` | `two_point_conversions` | **fixed at 0.0**; label never populated (KI-NEW-I5) | **Modelled**, strongly shrunk, tied to team scoring draws (DR-C12) |
 
 The stat-vector asymmetries (QB has no snap share; RB/WR/TE have no start probability; QB has no
-receiving components) are carried from alpha-spec §5.1 and are open
-(DR-D8; DR-D7).
+receiving components) are carried from alpha-spec §5.1. They are intended and stay binding as
+written (DR-D7, decided 2026-10-08).
 
 ### 3.3 Explanation fields (template: Explanation fields; engine-spec §6.7)
 
@@ -427,7 +431,7 @@ predict(p, x) = a_p + b_p · x   if p fitted, else 0.0                          
   origin, not Layer-1 credit (`verdict.py:89-95`). The map is fitted on pairs from the same
   warm-up weeks the rating was estimated on, so the fit is in-sample within the pre-period
   (KI-NEW-R3). "Credit" denotes Layer-1/1′ only in the engine (`layer1-credit.md` §8 row 18).
-- **Engine role (proposed — DR-C2).** The map outputs fantasy points, so it cannot populate the
+- **Engine role (DR-C2).** The map outputs fantasy points, so it cannot populate the
   stat vector or its draws (engine-spec §6.6, "Not members"). It is a **diagnostic and an ensemble
   candidate only**. It becomes a member only if this spec is amended to define how it enters the
   stat vector, and it then proves incremental value (engine-spec §6.6 requirement 5).
@@ -443,7 +447,7 @@ season_line[i][col] = games · project_stat_line(v̂_i, talent_row_i)[col],   ga
   volume (`preseason.py:14-17`).
 - A missing talent row defaults to `{}`, so every feature predicts as 0.0 (`preseason.py:58`).
 - The constant 17 is a full modern regular season; it ignores byes, availability and week 18.
-- **Engine (proposed — DR-C4).** Preseason is the sum over weeks 1–17 of weekly Layer-F draws,
+- **Engine (DR-C4).** Preseason is the sum over weeks 1–17 of weekly Layer-F draws,
   including Layer A availability, reported as a derived product. `DEFAULT_GAMES` is a parity
   constant only (§10.3 P-7).
 
@@ -493,10 +497,10 @@ profile = (weights over the position's stat vector, offset b, profile_id, versio
 - **Oracle-only modules.** `scoring/vor.py` (value over replacement, tiers) and
   `scoring/format_registry.py` (SQLite format store) are not ported. The engine emits no VOR, tier or
   ranking output. VOR survives only as roster construction inside the lineup simulation
-  (`evaluation-and-leakage.md` §4.10; proposed — DR-C11). The format registry's content-dedup
+  (`evaluation-and-leakage.md` §4.10; DR-C11). The format registry's content-dedup
   idea survives as the profile content hash.
 
-### 4.8 Required engine model (normative; proposed — DR-C2, DR-C3)
+### 4.8 Required engine model (normative; DR-C2, DR-C3)
 
 The oracle seeds Layers C and D. It does not define them. The engine model below is the target for
 P1-07. Every equation family here needs statistical-owner approval of its open parameters before
@@ -506,7 +510,7 @@ code (engine-spec §6.8; Definition of Ready).
 
 1. **Exposure.** Games are counted from snaps or participation (active weeks), never from weeks with
    a stat row (KI-NEW-R2). A week with zero snaps while active is an observation of zero usage.
-2. **Shrinkage (proposed — DR-C5, DR-C3).** Per-game usage and per-snap shares are
+2. **Shrinkage (DR-C3; proposed — DR-C5).** Per-game usage and per-snap shares are
    empirical-Bayes posterior means of the §1.3 item 1 form, with the strength estimated, not fixed:
    - **Proposed default estimator: Gamma–Poisson method of moments**, per position, per driver, on
      the training window, exposure-weighted:
@@ -522,7 +526,8 @@ code (engine-spec §6.8; Definition of Ready).
      `τ̂² ≤ 0` (no detectable between-player variation) is a typed `DegeneratePool` error, never an
      implicit `k = ∞`.
    - **Alternative:** normal–normal EB with `k = σ²_within / τ²_between` (engine-spec §6.4.7 names
-     both candidates). The choice is recorded in this spec before P1-07 is Ready.
+     both candidates). This spec writes the comparison of the two before P1-07 is Ready; the owner
+     chooses once it exists, and the choice is recorded here (DR-C5).
    - The estimated `(m̂, k̂)` per position and driver is a persisted, versioned EB parameter record
      (engine-spec §6.4.7).
 3. **In-season data.** The evidence window is engine-spec §2.4: season-to-date `S[1..W−1]` plus
@@ -543,17 +548,19 @@ code (engine-spec §6.8; Definition of Ready).
 1. **Components** (alpha-spec §6.1 Layer D): completion probability, yards per attempt, catch
    probability, yards per target or reception, yards per carry, touchdown conversion probability
    per opportunity type, interception rate, fumble rate per touch, two-point conversion rate.
-2. **Covariates (proposed — DR-C3, option (a)).**
-   - role-specific GRID talent (dropback, carry, target): filtered talent and form with their
-     predictive variance (`state-space-kalman.md`; `layer1-credit.md` Layer-1′);
-   - the prior-season offseason RAPM rating (`rapm-attribution.md` §2.2; proposed — DR-C1);
+2. **Covariates (DR-C3, option (a)).**
+   - role-specific GRID talent (dropback, carry, target), from one state-space track per player and
+     role (DR-C3): filtered talent and form with their predictive variance (`state-space-kalman.md`;
+     `layer1-credit.md` Layer-1′, per role event under DR-D15);
+   - the prior-season offseason RAPM rating (`rapm-attribution.md` §2.2; DR-C1);
    - the cross-league prior (`cross-league-priors.md`), with an explicit missing indicator.
    - Every covariate has a missing indicator. A missing covariate is never 0.0 (KI-P1).
 3. **Model family (DR-D21).** Each component is an EB-shrunk position rate times a
    covariate effect, fitted with exposure weights:
    - probability components (completion, catch, TD conversion, INT, fumble, two-point):
-     binomial GLM with logit link, trials = exposure;
-   - yardage components: weighted least squares with weight = exposure, or a Gamma GLM with log link.
+     binomial GLM with logit link, trials = exposure (ratified 2026-10-09 on design grounds);
+   - yardage components: weighted least squares with weight = exposure, or a Gamma GLM with log link,
+     chosen on rolling-origin evidence before P1-07 (still open under DR-D21).
    - The oracle's unweighted standardized ridge (`model.py:134-145`) MUST NOT be reproduced in the
      engine path (KI-NEW-R1). It survives as a parity mode only (§10.3 P-3).
 4. **Shrinkage.** Touchdown rates are strongly shrunk and "are not allowed to follow short hot
@@ -563,8 +570,8 @@ code (engine-spec §6.8; Definition of Ready).
 
 #### 4.8.3 Ensemble member 1: the transparent recency-weighted baseline (engine-spec §6.6)
 
-engine-spec §6.6 assigns its weighting scheme to this spec. Proposed form
-(DR-D25):
+engine-spec §6.6 assigns its weighting scheme to this spec. The form below is settled; its values
+are not (DR-D25, ratified in part 2026-10-09):
 
 ```text
 for each player i, stat-vector component c, origin (S, W):
@@ -580,10 +587,11 @@ for each player i, stat-vector component c, origin (S, W):
 
 #### 4.8.4 Stacking level (DR-D20)
 
-Proposed default for the owner: stack the **Layer C share means and the Layer D rate means**
-per position, with ridge-estimated non-negative weights that sum to 1, on out-of-fold
-rolling-origin predictions (engine-spec §6.6 requirements 2 and 4). Stacking component means after
-multiplication is the alternative. Layer F stays downstream of the stacked quantities.
+The engine stacks the **Layer C share means and the Layer D rate means** per position, with
+ridge-estimated non-negative weights that sum to 1, on out-of-fold rolling-origin predictions
+(engine-spec §6.6 requirements 2 and 4). Stacking component means after multiplication was the
+alternative, and is not used. Layer F stays downstream of the stacked quantities (DR-D20, ratified
+2026-10-09).
 
 ### 4.9 Constants and hyperparameters
 
@@ -615,7 +623,8 @@ PR numbers are from cn-docs §2.5 and the PR bodies (critic G-3).
   with an unpenalized intercept; it shrinks toward the pooled position rate. There is no prior on the
   rate itself and no exposure-dependent shrinkage. Required: EB-shrunk position rates (§4.8.2).
 - **Cross-league prior.** Accepted as a covariate (`features.py:20-23`) but never supplied on real
-  data (KI-NEW-P2). Its form is `cross-league-priors.md` (proposed — DR-C9).
+  data (KI-NEW-P2). Its form is `cross-league-priors.md`: NCAA only, under the alpha-spec §6.3 blend
+  (DR-C9). The college-rating source and the blend parameters are still open (DR-C9).
 
 ### 4.11 Constraints (template: Constraints)
 
@@ -665,7 +674,7 @@ PR numbers are from cn-docs §2.5 and the PR bodies (critic G-3).
   evaluation seed changes the forecast being evaluated. Required: model seeds and evaluation seeds
   are separate, recorded inputs (engine-spec §6.8 rule 5); a model seed is part of the model version.
 
-### 5.3 Typed failures (alpha-spec §6.6 rule 4; proposed — DR-B6)
+### 5.3 Typed failures (alpha-spec §6.6 rule 4; DR-B6)
 
 | Condition | Oracle behaviour | Required |
 |---|---|---|
@@ -701,7 +710,7 @@ PR numbers are from cn-docs §2.5 and the PR bodies (critic G-3).
 - **Season boundary.** EB parameter records (Layer C `(m̂, k̂)`, Layer D position rates and
   shrinkage) and the rate-model coefficients are re-estimated on the engine-spec §2.4 window at a
   season boundary or periodic rebuild, and persisted as versioned artifacts (engine-spec §6.4.7,
-  §8.5; proposed — DR-C6, DR-C15).
+  §8.5; DR-C6, DR-C15).
 - **Game week.** Usage EB posteriors update incrementally with the completed week
   (`(Y_i + k̂ m̂)/(g_i + k̂)` is a running sum), under the as-of and publication-lag rules of
   engine-spec §4.5. The GRID covariates update through their own components (`state-space-kalman.md`
@@ -762,15 +771,15 @@ STANDARD scoring, iid CIs):
   every run.
 
 None of these is a parity target or evidence: the labels are biased (KI-NEW-I1..I5, KI-NEW-V0a), the
-CIs are iid (KI-NEW-V1), and the weekly path used current-season participation (proposed —
-DR-C1).
+CIs are iid (KI-NEW-V1), and the weekly path used current-season participation (DR-C1).
 
 ### 7.5 Promotion (engine-spec §8.8)
 
 Layer C and D components are promotable only as part of a projection whose evaluation passes the
 pre-registered gates of engine-spec §9.4 under PB-MAE, the union player pool and the week-clustered
-bootstrap (`evaluation-and-leakage.md`; proposed — DR-C5). Each GRID covariate must show incremental
-value against the same component family without it (engine-spec §6.6 requirement 5).
+bootstrap (`evaluation-and-leakage.md`; DR-C5), against a must-beat baseline set that includes
+last-season per-game actuals (DR-D24). Each GRID covariate must show incremental value against the
+same component family without it (engine-spec §6.6 requirement 5).
 
 ### 7.6 Provenance of measurements first recorded in this spec
 
@@ -791,13 +800,13 @@ are *recorded, not reproducible from the repo*.
 ## 8. Known defects and required engine behaviour (template: Known limitations)
 
 The Rust port MUST NOT reproduce any item in this table. Each correction either lands first as an
-approved oracle correction in the `reference/python/PARITY.md` ledger (proposed — DR-B1), or is
-recorded there as a deliberate divergence (proposed — DR-B6).
+approved oracle correction in the `reference/python/PARITY.md` ledger (DR-B1), or is recorded there
+as a deliberate divergence (DR-B6).
 
 | # | Defect | KI / source | Required behaviour |
 |---|---|---|---|
 | 1 | Rate regressions unweighted: a one-attempt player weighs as much as a 600-attempt player | KI-NEW-R1 | Exposure-weighted fits or count GLMs (§4.8.2; DR-D21) |
-| 2 | "Games" = weeks with a stat row; `k_shrink = 8` fixed although documented as learned; postseason rows included | KI-NEW-R2, KI-NEW-I4 | Games from snaps or participation; `k` estimated (§4.8.1); REG-only labels (proposed — DR-C12) |
+| 2 | "Games" = weeks with a stat row; `k_shrink = 8` fixed although documented as learned; postseason rows included | KI-NEW-R2, KI-NEW-I4 | Games from snaps or participation; `k` estimated (§4.8.1); REG-only labels (DR-C12) |
 | 3 | NaN and inf features become 0.0, conflating "no prior" with "prior = 0" | KI-P1 (residual of the PR #94 fix) | Explicit missing indicators |
 | 4 | `fumbles_lost` and `two_point_conversions` fixed at 0.0 | KI-NEW-Z55; `model.py:22-24`; reconcile-code-first C6; KI-NEW-I5 | Modelled with strongly shrunk rates (§4.8.2) |
 | 5 | Receptions projected as volume; catch rate unmodelled; targets drive nothing | KI-NEW-Z54; §1.3 item 3 | `receptions = targets × catch_probability` |
@@ -805,41 +814,44 @@ recorded there as a deliberate divergence (proposed — DR-B6).
 | 7 | Current-season usage never used (prior season only) | KI-NEW-Z53; `volume.py:86-90`; reconcile-spec-first R28 | Engine-spec §2.4 window with in-season data |
 | 8 | Silent clamping of negative rates; unbounded linear probabilities | KI-NEW-Z56; `model.py:101`, `:107` | Rates on support; typed `ImpossibleStat` |
 | 9 | ROS fit pairs prior-season labels with the first-origin rating while the forecast uses each origin's rating | KI-NEW-Z57; `verdict.py:276-277` vs `tier1.py:161` (new) | One feature definition shared by fit and serve, as-of the label's own period |
-| 10 | Weekly forecast = affine map of the RAPM rating, fitted in-sample within the pre-period; the column is named `credit` | KI-NEW-Z59; KI-NEW-R3; `layer1-credit.md` §8 row 18 | Weekly stat vector from Layers A–F; SV map diagnostic only (proposed — DR-C2) |
-| 11 | `smoothed_talent` documented as smoothed but equal to the filtered endpoint, with a look-ahead initialisation inside the window | KI-NEW-Z51; §1.3 item 2 (new); KI-#15 | Named and computed as end-of-window filtered talent from a prior-based `x0`/`P0` (proposed — DR-C10) |
+| 10 | Weekly forecast = affine map of the RAPM rating, fitted in-sample within the pre-period; the column is named `credit` | KI-NEW-Z59; KI-NEW-R3; `layer1-credit.md` §8 row 18 | Weekly stat vector from Layers A–F; SV map diagnostic only (DR-C2) |
+| 11 | `smoothed_talent` documented as smoothed but equal to the filtered endpoint, with a look-ahead initialisation inside the window | KI-NEW-Z51; §1.3 item 2 (new); KI-#15 | Named and computed as end-of-window filtered talent from a prior-based `x0`/`P0` (DR-C10) |
 | 12 | One seed drives both evaluation resampling and model cross-fitting | KI-NEW-Z62; §5.2 (new) | Separate, recorded model and evaluation seeds |
-| 13 | Two V(s) models in one verdict (walk-forward warm-up vs `smoothed_talent` pre-window) | KI-NEW-Z58; `verdict.py:172` vs `backtest.py:166-168` (new) | One versioned V(s) per data version and as-of (`value-model.md`) |
-| 14 | Priors wired to no real data; `prior_mean` hard-coded 0.0 | KI-NEW-P2 | Cross-league prior covariate per `cross-league-priors.md` (proposed — DR-C9) |
+| 13 | Two V(s) models in one verdict (walk-forward warm-up vs `smoothed_talent` pre-window) | KI-NEW-Z58; `verdict.py:172` vs `backtest.py:166-168` (new) | One versioned V(s) per data version and season, fit on `S−3..S−1` and frozen for that season (`value-model.md`; DR-C6) |
+| 14 | Priors wired to no real data; `prior_mean` hard-coded 0.0 | KI-NEW-P2 | Cross-league prior covariate per `cross-league-priors.md`: NCAA only (DR-C9); the college-rating source and the blend parameters are still open (DR-C9) |
 | 15 | No availability, team environment, allocator, matchup, simulation, quantiles, conditional/unconditional split | reconcile-spec-first R21–R31 | Layers A–F (P1-07, P1-08) |
-| 16 | Season-total `week = 0` sentinel for the preseason product | KI-A4 | Typed `horizon` field (proposed — DR-C4) |
+| 16 | Season-total `week = 0` sentinel for the preseason product | KI-A4 | Typed `horizon` field (DR-C4) |
 | 17 | Scoring: no offset, no version; identity by key-order-sensitive JSON; evaluations use STANDARD | KI-NEW-Z69; KI-NEW-C1; reconcile-code-first C5 | Versioned affine profile with content hash; Half-PPR default |
 | 18 | Missing columns crash with bare errors; NaN reaches `polyfit`; exact-zero spread check; SV map returns 0.0 for unknown positions | KI-NEW-Z60; KI-P3, KI-P4, KI-P5, KI-P7 | §5.3 typed failures |
-| 19 | Labels reconstructed from play-by-play are biased | KI-NEW-I1..I5 | Official nflverse weekly stats as labels (proposed — DR-C12) |
+| 19 | Labels reconstructed from play-by-play are biased | KI-NEW-I1..I5 | Official nflverse weekly stats as labels; the play-by-play rebuild is a required reconciliation source and never changes a label (DR-C12) |
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| Decision | Question | Proposed default |
+Status after the owner's decision interview of 2026-10-08/09
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). The register is authoritative for status.
+
+| Decision | Question | Status |
 |---|---|---|
-| **DR-C2** | Layers A–F skeleton with GRID as signal provider | Yes; this stack is the Layer C/D seed (proposed — DR-C2) |
-| **DR-C3** | Where GRID talent enters Layer D | Role-specific talent as covariates in EB-shrunk per-component rate models (proposed — DR-C3, option (a)) |
-| **DR-C4** | Horizons | Weekly primary; ROS and preseason derived from weekly draws (proposed — DR-C4) |
-| **DR-C5** | EB estimator and shrinkage strength (`n0`, `k`); recency discount | Gamma–Poisson method of moments for usage (§4.8.1), compared against normal–normal in this spec before P1-07 (proposed — DR-C5) |
-| **DR-C12** | Labels and season type | Official nflverse weekly stats, REG only, two-point conversions modelled (proposed — DR-C12) |
-| **DR-C11** | VOR scope | VOR internal to the lineup simulation only (proposed — DR-C11) |
-| **DR-D21** | Binomial/Poisson GLMs vs exposure-weighted least squares per Layer D component; yards per target vs per reception as the receiving rate base | **Open.** Proposed: binomial GLM for probability components, exposure-weighted least squares or Gamma GLM for yardage; decided on rolling-origin evidence before P1-07 |
-| **DR-D25** | `ρ`, minimum games and season-boundary handling for ensemble member 1 (§4.8.3) | **Open.** Form proposed in §4.8.3 |
-| **DR-D20** | Stack shares and rates, or component means | Shares and rates, non-negative weights summing to 1 (§4.8.4) |
-| **DR-D7**, **DR-D8** | The alpha §5.1 asymmetries | Open (engine output contract §12) |
-| **DR-D13** | Whether RB/WR/TE credit measures the player or the unit | Open (`layer1-credit.md`) |
-| **DR-D6** | Threshold bonuses in profiles | Reject with a typed error until decided |
+| **DR-C2** | Layers A–F skeleton with GRID as signal provider | Ratified 2026-10-09: yes; this stack is the Layer C/D seed |
+| **DR-C3** | Where GRID talent enters Layer D | Ratified 2026-10-09: role-specific talent as covariates in EB-shrunk per-component rate models (option (a)); the Kalman state splits by role. Whether RB/WR/TE role credit is an individual signal is DR-D13 |
+| **DR-C4** | Horizons | Ratified 2026-10-08: weekly primary; ROS and preseason derived from weekly draws |
+| **DR-C5** | EB estimator and shrinkage strength (`n0`, `k`); recency discount | Ratified in part 2026-10-09: the evaluation framework and its sub-item defaults. Still open: the Layer C estimator, where Gamma–Poisson method of moments for usage (§4.8.1) stays proposed until this spec writes its comparison against normal–normal, before P1-07 (the owner chose to wait for it; proposed — DR-C5); the estimator for the other shrinkage uses |
+| **DR-C12** | Labels and season type | Overridden 2026-10-09: official nflverse weekly stats are always the label, reconciled against the engine's play-by-play rebuild for every player-week; every disagreement is recorded, and those above a threshold are flagged for review; REG only; two-point conversions included. Still open: the per-dataset nflverse terms (before P1-03), the flag threshold (P1-03 ingestion spec), the canonical weekly-stats release (P1-03), the correction-window length (`freshness-policy.md`) |
+| **DR-C11** | VOR scope | Ratified 2026-10-09: VOR internal to the lineup simulation only |
+| **DR-D21** | Binomial/Poisson GLMs vs exposure-weighted least squares per Layer D component; yards per target vs per reception as the receiving rate base | Ratified in part 2026-10-09: binomial GLM with logit link, trials = exposure, for the probability components. Still open: exposure-weighted least squares or Gamma GLM for yardage, and the receiving rate base, decided on rolling-origin evidence before P1-07 |
+| **DR-D25** | `ρ`, minimum games and season-boundary handling for ensemble member 1 (§4.8.3) | Ratified in part 2026-10-09: the form of §4.8.3. Still open: `ρ`, the minimum game count and the season-boundary treatment, set by rolling-origin calibration |
+| **DR-D20** | Stack shares and rates, or component means | Ratified 2026-10-09: shares and rates, non-negative weights summing to 1 (§4.8.4) |
+| **DR-D7** | The alpha §5.1 asymmetries | Decided 2026-10-08: intended, and binding as written (engine output contract §3.2) |
+| **DR-D13** | Whether RB/WR/TE credit measures the player or the unit | Open (`layer1-credit.md`). Interim rule: outputs carry `role = on_field` and are never described as individual efficiency. Direction recorded: test own-role (Layer-1′) credit first, then teammate subtraction, each promoted only on recovery evidence |
+| **DR-D6** | Threshold bonuses in profiles | Ratified 2026-10-09: rejected with a typed error, never approximated |
 
 ---
 
 ## 10. Rust port plan (template: Tolerances, Reference examples)
 
-### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8 adopted subject to ratification)
+### 10.1 Target crates and work packages (engine-spec §8.1, §9.5; DR-A8, ratified 2026-10-08)
 
 | Piece | Crate::module | WP |
 |---|---|---|
@@ -866,7 +878,7 @@ Component `projection-stack` and component `scoring`:
 Each case is `ledger_independent = true` (parity-fixture contract §7 item 4): no correction-ledger
 entry changes these stages' semantics for injected inputs.
 
-### 10.3 Parity targets (proposed — DR-B3 classes, as defined in `docs/03-contracts/parity-fixture-contract.md` §6)
+### 10.3 Parity targets (DR-B3 classes, as defined in `docs/03-contracts/parity-fixture-contract.md` §6)
 
 | ID | Target | Class | Criterion |
 |---|---|---|---|
@@ -878,7 +890,7 @@ entry changes these stages' semantics for injected inputs.
 | P-6 | SV→points OLS (diagnostic) | A′ | `≤ 1e-9` relative; omitted positions exact |
 | P-7 | Preseason `× DEFAULT_GAMES` parity mode | A | `≤ 1e-12` |
 | P-8 | Typed-failure divergences of §5.3 | divergence | Rust returns the typed error; listed in `reference/python/PARITY.md` |
-| P-9 | Engine Layer C/D models, Layers A, B, E, F, distributions | spec golden | No oracle source. Golden tests on the stat-vector synthetic world (engine-spec §12.2; proposed — DR-B4) |
+| P-9 | Engine Layer C/D models, Layers A, B, E, F, distributions | spec golden | No oracle source. Golden tests on the stat-vector synthetic world (engine-spec §12.2; DR-B4) |
 
 ### 10.4 Reference examples (become golden unit tests)
 
@@ -923,7 +935,7 @@ AsOf(2023, 4): 9 rows < min_rows  → WR omitted
 
 | Superseded section | Requirement | How this spec satisfies it | Gap |
 |---|---|---|---|
-| alpha-spec §2.3 | Half-PPR default; Standard and PPR built in; custom scoring as a versioned affine map | §4.7 | Non-affine rules (DR-D6) |
+| alpha-spec §2.3 | Half-PPR default; Standard and PPR built in; custom scoring as a versioned affine map | §4.7 | None: non-affine rules are rejected with a typed error (DR-D6) |
 | alpha-spec §2.4 | Exact three-season window | §4.8.1 item 3; §6.2 | The oracle reads only the prior season |
 | alpha-spec §5.1 | Stat-vector-first targets | §3.2 coverage table | Availability, snap share, sacks, fumbles, two-point conversions are new work |
 | alpha-spec §5.2, §5.3 | Conditional/unconditional; distributions | §2.1 (Layer A, F) | No oracle source; P1-08 |
