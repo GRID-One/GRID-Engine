@@ -27,6 +27,10 @@ status, and the work packages it blocks.
     `docs/03-contracts/` and `docs/05-model-specs/`.
   - Each A-entry's **Implementation check** records what the P0-01 worktree implemented on 2026-10-07,
     and what must still land before the merge.
+  - **Status as of 2026-10-09.** The owner decision interview
+    (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) settled most entries in full or in part.
+    Each entry's **Status** line names what is settled, and its **Still open** clause names the rest.
+    Not asked: DR-D9 and DR-D10, which need real-data measurements first.
 - **ID scheme.**
   - Critic ID `A-n` maps to `DR-An`; likewise `B-n` → `DR-Bn` and `C-n` → `DR-Cn`. These IDs never change
     meaning and are never reused.
@@ -50,12 +54,19 @@ status, and the work packages it blocks.
 | **Open — awaiting \<role\>** | No source recommends a default. At most an interim rule applies until the owner decides, and the entry states it. Text that relies on the interim rule cites the DR ID. |
 | **Ratified (\<date\>, \<role\>, \<record\>)** | The owner accepted the recommended default. |
 | **Overridden (\<date\>, \<role\>, \<record\>): \<chosen option\>** | The owner chose a different option. The implementing documents must follow it. |
+| **Ratified in part / Decided in part (\<date\>, \<role\>, \<record\>)** | The owner settled the part of the entry that could be decided from evidence already in the repository. The entry's **Still open** clause lists the rest, which stays open, and text relying on it keeps its "(proposed — DR-xx)" tag. |
+| **Decided (\<date\>, \<role\>, \<record\>): \<chosen option\>** | The entry was Open, with no recommended default, and the owner chose an option. It binds like a ratification. |
 | **Superseded by DR-xx / ADR-0NN** | A later decision replaced this one. |
 
 ## How to ratify or override
 
 1. **Only the owner role named in an entry changes its status.** Agents may add evidence, correct facts
-   and propose wording, but they never mark a decision Ratified or Overridden.
+   and propose wording, but they never mark a decision Ratified or Overridden on their own judgment.
+   - **Exception: an owner-directed transcription.** The statuses dated 2026-10-08 and 2026-10-09 that
+     cite `docs/06-sessions/2026-10-09-P0-01-decision-interview.md` were set at the owner's request.
+     The owner answered each question through the harness's question tool, and the implementing
+     agent transcribed the answers. The record quotes every answer verbatim. The owner confirms the
+     record in the P0-01 merge comment. DR-D31 set the precedent.
 2. **To ratify or override,** the owner edits the entry's **Status** line and its row in the summary
    table. The edit records:
    - the date;
@@ -99,69 +110,69 @@ several roles; all are currently held by the repository owner.
 
 | ID | Question (one line) | Owner role | Status | Blocks |
 |---|---|---|---|---|
-| [DR-A1](#dr-a1-spec-consolidation-form-and-filenames) | In what form, and under what filenames, are the two specs consolidated? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge |
-| [DR-A2](#dr-a2-authority-order-and-oracle-placement) | What is the authority order, and where does the Python oracle sit in it? | Product/Architecture, Statistical | Adopted by P0-01 / ADR-011 and ADR-012 — pending owner ratification at merge | P0-01 merge, P1-01 |
-| [DR-A3](#dr-a3-authoritative-ci-platform) | Which CI platform is authoritative for merge and release? | Product/Architecture, Security/Release | Default kept (Windows authoritative); follow-up ADR required | follow-up ADR before P1-11 |
-| [DR-A4](#dr-a4-ai-governance-apparatus) | Keep the AI-governance apparatus (α§1.3–1.6, §8.7–8.12, App. B–E)? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge |
-| [DR-A5](#dr-a5-work-package-id-scheme) | Which work-package ID scheme applies after the pivot? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge, P1-12, P2-00 |
-| [DR-A6](#dr-a6-pr-1-merge-order-and-prs-2-and-3) | How do PR #1 and PRs #2/#3 land? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge (adapted; see entry) | P0-01 merge |
-| [DR-A7](#dr-a7-fix-guard-findings-r4-1-and-r4-2-in-the-pivot-pr) | Fix guard findings R4-1/R4-2 in the pivot PR? | Security/Release | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge |
-| [DR-A8](#dr-a8-crate-set) | Which crates exist, and when do they change? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge, P1-01 |
-| [DR-A9](#dr-a9-vault-slot-for-archived-cautious-nevermore-material) | Where does archived CN material live? | Product/Architecture | Adopted by P0-01 / ADR-011 — pending owner ratification at merge | P0-01 merge |
-| [DR-A10](#dr-a10-licence-for-referencepython) | Which licence covers `reference/python/` (CN has no LICENSE)? | Data/Licensing | Needs owner action: record licence ruling for reference/python/ on the PR | P0-01 merge |
-| [DR-A11](#dr-a11-fixture-licensing-policy) | May real-data-derived fixtures be committed? | Data/Licensing | Adopted by P0-01 / ADR-012 — pending owner ratification at merge | P1-01, P1-03, P1-05 |
-| [DR-A12](#dr-a12-oracle-retirement) | When is the Python oracle retired? | Product/Architecture | Adopted by P0-01 / ADR-012 — pending owner ratification at merge | P2-09 |
-| [DR-B1](#dr-b1-oracle-correction-policy) | Is the oracle corrected before it becomes a parity target, and how? | Statistical | Proposed — awaiting Statistical owner | P1-01, P1-06, P1-09, P1-12 |
-| [DR-B2](#dr-b2-live-oracle-in-ci-vs-committed-fixtures) | Live oracle in CI, committed fixtures, or both? | Statistical, Product/Architecture (Security/Release for CI actions) | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
-| [DR-B3](#dr-b3-parity-tolerance-table) | What are the parity tolerances per stage class? | Statistical | Proposed — awaiting Statistical owner | P1-01, P1-06, P1-12 |
-| [DR-B4](#dr-b4-synthetic-world) | How is the synthetic world fixed and extended? | Statistical | Proposed — awaiting Statistical owner | P1-05, P1-07, P1-08, P1-12 |
-| [DR-B5](#dr-b5-team-strength-estimand-layer-3-rows-and-matchup-grade) | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Proposed — awaiting Statistical owner | P1-07 (real-data market inputs to Layer B), P1-08, P1-12 |
-| [DR-B6](#dr-b6-typed-failure-vs-faithful-port-of-oracle-failure-paths) | Port oracle failure paths faithfully, or fail with a typed error? | Statistical, Product/Architecture | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-02, P1-06, P1-12 |
-| [DR-C1](#dr-c1-rapm-and-participation-on-the-live-path) | How does participation-dependent RAPM relate to the live path? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-05, P1-09, P1-12 |
-| [DR-C2](#dr-c2-which-modeling-architecture-governs) | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | P1-07, P1-08, P1-12 |
-| [DR-C3](#dr-c3-where-grid-talent-enters-layer-d) | Where does GRID talent enter Layer D? | Statistical | Proposed — awaiting Statistical owner | P1-07, P1-08 |
-| [DR-C4](#dr-c4-horizons) | Which projection horizons does the engine contract cover? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-01, P1-08, P1-09 |
-| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Proposed — awaiting Statistical owner | P1-06, P1-07, P1-09, P1-11 (recovery), P1-12 (RAPM domain controls), P2-03, P2-07 |
-| [DR-C6](#dr-c6-three-season-window-for-stateful-components) | How do stateful components honour the three-season window? | Statistical | Proposed — awaiting Statistical owner | P1-05, P1-09, P1-12 |
-| [DR-C7](#dr-c7-gbm-on-grids-critical-path-and-the-vs-estimator) | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-06, P1-12 |
-| [DR-C8](#dr-c8-booster-backend) | Which booster backend? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-06 |
-| [DR-C9](#dr-c9-ncaa-and-feeder-prior-form) | What is the NCAA/feeder prior form, and are feeder leagues beyond NCAA in scope? | Statistical | Proposed — awaiting Statistical owner | P1-04, P1-07, P1-12 |
-| [DR-C10](#dr-c10-kalman-semantics-bundle) | Kalman observation, exposure, initialisation, keying and discount semantics? | Statistical | Proposed — awaiting Statistical owner | P1-06, P1-12, P2-03 |
-| [DR-C11](#dr-c11-vor-and-lineup-simulation-scope) | Are VOR and lineup simulation in engine scope? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-09 |
-| [DR-C12](#dr-c12-stat-definitions-and-season-type) | What are the training-label stat definitions and the season-type policy? | Statistical, Data/Licensing | Proposed — awaiting Statistical owner and Data/Licensing owner | P1-03, P1-05, P1-09 |
-| [DR-C13](#dr-c13-drive_points-vocabulary-and-situation-set) | What are the `drive_points` vocabulary and the canonical situation set? | Statistical | Proposed — awaiting Statistical owner | P1-03, P1-12 |
-| [DR-C14](#dr-c14-engine-operating-model) | What is the engine operating model (scheduler, fetching)? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-03, P1-10, P2-01 |
-| [DR-C15](#dr-c15-storage) | SQLite, Parquet/`.npz`, or both? | Product/Architecture | Proposed — awaiting Product/Architecture owner | P1-02 |
-| [DR-D1](#dr-d1-coaching-changes-source) | What is the source of record for coaching and coordinator changes? | Data/Licensing, Statistical | Proposed — awaiting Data/Licensing owner | real-data scheme resets (P1-12 real-data path, P2-02, P2-03) |
-| [DR-D2](#dr-d2-historical-market-lines) | Which timestamped pre-lock historical line source may backtests use? | Data/Licensing, Statistical | Open — awaiting Data/Licensing owner and Statistical owner | real-data market inputs in P1-07, P1-09, P1-12 |
-| [DR-D3](#dr-d3-participation-derived-output-licensing) | What ShareAlike obligations attach to distributed participation-derived outputs? | Data/Licensing | Open — awaiting Data/Licensing owner | public distribution in P1-10, P1-11, P2-06 |
-| [DR-D4](#dr-d4-postseason-in-window) | May completed prior-season postseason plays feed V(s) and RAPM? | Statistical | Proposed — awaiting Statistical owner | P1-05 (only to relax), P1-12 |
-| [DR-D5](#dr-d5-historical-correction-approximation) | Is "corrected as retrieved" acceptable for the Phase 1 historical proof? | Statistical, Data/Licensing | Open — awaiting Statistical owner and Data/Licensing owner | P1-09 |
-| [DR-D6](#dr-d6-non-affine-scoring) | May scoring profiles contain non-affine rules such as threshold bonuses? | Product/Architecture, Statistical | Proposed — awaiting Product/Architecture owner and Statistical owner | custom profiles (P1-06, P1-10) |
-| [DR-D7](#dr-d7-stat-vector-asymmetry) | Is the superseded §5.1 stat-vector asymmetry intended? | Product/Architecture, Statistical | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 |
-| [DR-D8](#dr-d8-output-open-definitions) | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | Open — awaiting Product/Architecture owner and Statistical owner | P1-01, P1-08 (distributions), P2-07 (change log) |
+| [DR-A1](#dr-a1-spec-consolidation-form-and-filenames) | In what form, and under what filenames, are the two specs consolidated? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A2](#dr-a2-authority-order-and-oracle-placement) | What is the authority order, and where does the Python oracle sit in it? | Product/Architecture, Statistical | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A3](#dr-a3-authoritative-ci-platform) | Which CI platform is authoritative for merge and release? | Product/Architecture, Security/Release | Default kept (Windows authoritative) until the follow-up ADR; direction ratified 2026-10-08: Linux authoritative, Windows additional | follow-up ADR before P1-11 |
+| [DR-A4](#dr-a4-ai-governance-apparatus) | Keep the AI-governance apparatus (α§1.3–1.6, §8.7–8.12, App. B–E)? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A5](#dr-a5-work-package-id-scheme) | Which work-package ID scheme applies after the pivot? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A6](#dr-a6-pr-1-merge-order-and-prs-2-and-3) | How do PR #1 and PRs #2/#3 land? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining (the merge itself must still use a merge commit) |
+| [DR-A7](#dr-a7-fix-guard-findings-r4-1-and-r4-2-in-the-pivot-pr) | Fix guard findings R4-1/R4-2 in the pivot PR? | Security/Release | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A8](#dr-a8-crate-set) | Which crates exist, and when do they change? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining (the `application` → `pipeline` rename and `synth` happen in P1-01) |
+| [DR-A9](#dr-a9-vault-slot-for-archived-cautious-nevermore-material) | Where does archived CN material live? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-A10](#dr-a10-licence-for-referencepython) | Which licence covers `reference/python/` (CN has no LICENSE)? | Data/Licensing | Needs owner action: post the ruling on PR #4 (option 1 chosen 2026-10-08, decision interview) | P0-01 merge |
+| [DR-A11](#dr-a11-fixture-licensing-policy) | May real-data-derived fixtures be committed? | Data/Licensing | Ratified 2026-10-08 (decision interview) | none remaining (no `fixtures/third-party/` ruling has been made, so no real-data fixture may be committed) |
+| [DR-A12](#dr-a12-oracle-retirement) | When is the Python oracle retired? | Product/Architecture | Ratified 2026-10-08 (decision interview) | P2-09 (the retirement review) |
+| [DR-B1](#dr-b1-oracle-correction-policy) | Is the oracle corrected before it becomes a parity target, and how? | Statistical | Ratified 2026-10-08 (decision interview) | none for the policy; each ledger entry is approved as its commit lands (P1-01, P1-06, P1-09 and P1-12 consume the corrected oracle) |
+| [DR-B2](#dr-b2-live-oracle-in-ci-vs-committed-fixtures) | Live oracle in CI, committed fixtures, or both? | Statistical, Product/Architecture (Security/Release for CI actions) | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-B3](#dr-b3-parity-tolerance-table) | What are the parity tolerances per stage class? | Statistical | Overridden 2026-10-09 (decision interview): the table with the C-V/C-L1, Class B and seed-ensemble amendments | the Class D floor values (P1-12), set after ledger entries 2 and 4 on the DR-D26 ensemble |
+| [DR-B4](#dr-b4-synthetic-world) | How is the synthetic world fixed and extended? | Statistical | Ratified 2026-10-09 (decision interview) | the recalibrated QB NIS bands, `r_scale` and Tier-0 floors (after ledger entries 1, 2 and 4); the stat-vector world's parameters before P1-07 |
+| [DR-B5](#dr-b5-team-strength-estimand-layer-3-rows-and-matchup-grade) | What are the team-strength estimand, the Layer-3 market rows and the matchup-grade sign? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining (real-data market inputs still wait on DR-D2 and DR-D10) |
+| [DR-B6](#dr-b6-typed-failure-vs-faithful-port-of-oracle-failure-paths) | Port oracle failure paths faithfully, or fail with a typed error? | Statistical, Product/Architecture | Ratified in part 2026-10-08 (decision interview); see entry for what stays open | the ill-conditioning threshold, proposed in a model spec before P1-06's solver failure semantics are final |
+| [DR-C1](#dr-c1-rapm-and-participation-on-the-live-path) | How does participation-dependent RAPM relate to the live path? | Product/Architecture, Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | real-data snap counts (a Data/Licensing ruling; KI-NEW-Z50) before Layer-1′ runs on real data (P1-12, P2-03) |
+| [DR-C2](#dr-c2-which-modeling-architecture-governs) | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-C3](#dr-c3-where-grid-talent-enters-layer-d) | Where does GRID talent enter Layer D? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining (RB/WR/TE credit as an individual signal is DR-D13) |
+| [DR-C4](#dr-c4-horizons) | Which projection horizons does the engine contract cover? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L (P2-03) |
+| [DR-C6](#dr-c6-three-season-window-for-stateful-components) | How do stateful components honour the three-season window? | Statistical | Overridden 2026-10-09 (decision interview): the Kalman restarts from the prior in production too (DR-D17) | none remaining |
+| [DR-C7](#dr-c7-gbm-on-grids-critical-path-and-the-vs-estimator) | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the V(s) estimator's spec, approved before P1-06 implements it; the Layer-1 context estimator, on recovery evidence (P1-12) |
+| [DR-C8](#dr-c8-booster-backend) | Which booster backend? | Product/Architecture | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the concrete booster crate, approved in the WP that first needs a booster |
+| [DR-C9](#dr-c9-ncaa-and-feeder-prior-form) | What is the NCAA/feeder prior form, and are feeder leagues beyond NCAA in scope? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the college-rating source (CFBD terms) for P1-04's play-by-play scope; q, the baseline and the influence cap before P1-07 |
+| [DR-C10](#dr-c10-kalman-semantics-bundle) | Kalman observation, exposure, initialisation, keying and discount semantics? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-C11](#dr-c11-vor-and-lineup-simulation-scope) | Are VOR and lineup simulation in engine scope? | Product/Architecture | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-C12](#dr-c12-stat-definitions-and-season-type) | What are the training-label stat definitions and the season-type policy? | Statistical, Data/Licensing | Overridden 2026-10-09 (decision interview): official labels reconciled with the play-by-play rebuild | the Data/Licensing terms before P1-03; the reconciliation flag threshold in the P1-03 ingestion spec |
+| [DR-C13](#dr-c13-drive_points-vocabulary-and-situation-set) | What are the `drive_points` vocabulary and the canonical situation set? | Statistical | Overridden 2026-10-09 (decision interview): adds goal_line, goal_line_wr, third_and_long and fourth_down | none remaining |
+| [DR-C14](#dr-c14-engine-operating-model) | What is the engine operating model (scheduler, fetching)? | Product/Architecture | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-C15](#dr-c15-storage) | SQLite, Parquet/`.npz`, or both? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-D1](#dr-d1-coaching-changes-source) | What is the source of record for coaching and coordinator changes? | Data/Licensing, Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the source list and its terms (the coaching-changes contract) before the real-data scheme resets (P1-12 real-data path, P2-02, P2-03) |
+| [DR-D2](#dr-d2-historical-market-lines) | Which timestamped pre-lock historical line source may backtests use? | Data/Licensing, Statistical | Open; interim rule confirmed 2026-10-09 (decision interview) | real-data market inputs in P1-07, P1-09, P1-12 |
+| [DR-D3](#dr-d3-participation-derived-output-licensing) | What ShareAlike obligations attach to distributed participation-derived outputs? | Data/Licensing | Open; interim rule confirmed 2026-10-09 (decision interview) | public distribution in P1-10, P1-11, P2-06 |
+| [DR-D4](#dr-d4-postseason-in-window) | May completed prior-season postseason plays feed V(s) and RAPM? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D5](#dr-d5-historical-correction-approximation) | Is "corrected as retrieved" acceptable for the Phase 1 historical proof? | Statistical, Data/Licensing | Decided 2026-10-09 (decision interview) | none remaining |
+| [DR-D6](#dr-d6-non-affine-scoring) | May scoring profiles contain non-affine rules such as threshold bonuses? | Product/Architecture, Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D7](#dr-d7-stat-vector-asymmetry) | Is the superseded §5.1 stat-vector asymmetry intended? | Product/Architecture, Statistical | Decided 2026-10-08 (decision interview) | none remaining |
+| [DR-D8](#dr-d8-output-open-definitions) | How are the output contract's open definitions (percentiles, thresholds, change attribution) set? | Product/Architecture, Statistical | Decided in part 2026-10-08 (decision interview); see entry for what stays open | P1-08 (the distribution values); P2-07 (the change-log method) |
 | [DR-D9](#dr-d9-low-evidence-thresholds) | What are the §2.5 minimum NFL opportunity thresholds and weights? | Statistical | Open — awaiting Statistical owner | P1-07, P1-12 (priors) |
 | [DR-D10](#dr-d10-market-line-scale) | How does a spread at lock map to the market target in EP per play? | Statistical | Open — awaiting Statistical owner | P1-07 (Layer B), P1-12 (real data) |
-| [DR-D11](#dr-d11-fixed-point-reseed) | What are the fixed point's re-seed set, scale mapping and stopping rule? | Statistical | Open — awaiting Statistical owner | P1-12 |
-| [DR-D12](#dr-d12-rapm-real-data-penalty) | What are the RAPM penalties on the real scale, and how is QB identifiability handled? | Statistical | Open — awaiting Statistical owner | P1-12 (real data) |
-| [DR-D13](#dr-d13-layer1-estimand) | Is Layer-1 credit an on-field-unit or an individual quantity? | Statistical | Open — awaiting Statistical owner | RB/WR/TE credit as an individual signal (P1-12, P1-07) |
-| [DR-D14](#dr-d14-layer1-crossfit-design) | What is the cross-fit design of the Layer-1 context model? | Statistical | Proposed — awaiting Statistical owner | P1-12 |
-| [DR-D15](#dr-d15-layer1prime-definition) | What is the operational definition of Layer-1′? | Statistical | Open — awaiting Statistical owner (partial defaults proposed) | P1-12 (Layer-1′), P1-03 (roles field), P2-03 (Layer-1′ live) |
-| [DR-D16](#dr-d16-predictive-exposure-basis) | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | Open — awaiting Statistical owner | P1-08, P1-12 |
-| [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Open — awaiting Statistical owner | P1-12, P2-03 |
-| [DR-D18](#dr-d18-changepoint-semantics) | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Open — awaiting Statistical owner | P1-12, P2-03 |
-| [DR-D19](#dr-d19-prior-scale-handoff) | On what scale does the feeder prior enter the Kalman state? | Statistical | Open — awaiting Statistical owner | P1-07, P1-12 |
-| [DR-D20](#dr-d20-ensemble-stacking-level) | What does the §6.6 ensemble stack, and under which weight constraints? | Statistical | Proposed — awaiting Statistical owner | P1-08 |
-| [DR-D21](#dr-d21-rate-model-family) | Which model family does each Layer D component use? | Statistical | Proposed — awaiting Statistical owner | P1-07 |
-| [DR-D22](#dr-d22-provider-ep-features) | May nflverse `ep`/`epa` enter features at all? | Statistical | Open — awaiting Statistical owner | no WP named; any feature reading provider `ep`/`epa` |
-| [DR-D23](#dr-d23-missing-provider-projection-policy) | What applies when a provider has no projection for a pooled player-week? | Statistical | Proposed — awaiting Statistical owner | P2-06 |
-| [DR-D24](#dr-d24-last-season-baseline) | Does last-season per-game actuals join the §9.4 gate set? | Statistical | Open — awaiting Statistical owner | P1-09 |
-| [DR-D25](#dr-d25-recency-baseline-weights) | What are the recency weights of ensemble member 1? | Statistical | Open — awaiting Statistical owner | P1-07, P1-08 |
-| [DR-D26](#dr-d26-recovery-gate-seed-ensemble) | What statistic do Class D recovery gates use? | Statistical | Proposed — awaiting Statistical owner | P1-12 (Class D gates) |
-| [DR-D27](#dr-d27-value-parity-envelope) | What does V(s) parity mean against a non-reproducible oracle? | Statistical | Proposed — awaiting Statistical owner | P1-12 (P-V5) |
-| [DR-D28](#dr-d28-synth-draw-tape) | How is the Rust generator proven exact without numpy streams? | Statistical | Proposed — awaiting Statistical owner | P1-12 (Rust-native generator) |
-| [DR-D29](#dr-d29-parity-fixture-format) | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Proposed — awaiting Statistical owner and Product/Architecture owner | P1-01 |
-| [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Proposed — awaiting Security/Release owner and Product/Architecture owner | branch protection (no WP) |
+| [DR-D11](#dr-d11-fixed-point-reseed) | What are the fixed point's re-seed set, scale mapping and stopping rule? | Statistical | Decided 2026-10-09 (decision interview) | none remaining |
+| [DR-D12](#dr-d12-rapm-real-data-penalty) | What are the RAPM penalties on the real scale, and how is QB identifiability handled? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | P1-12 (real data), through the calibration study |
+| [DR-D13](#dr-d13-layer1-estimand) | Is Layer-1 credit an on-field-unit or an individual quantity? | Statistical | Open; interim rule and direction confirmed 2026-10-09 (decision interview) | RB/WR/TE credit as an individual signal (P1-12, P1-07) |
+| [DR-D14](#dr-d14-layer1-crossfit-design) | What is the cross-fit design of the Layer-1 context model? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D15](#dr-d15-layer1prime-definition) | What is the operational definition of Layer-1′? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | penalty-play handling and the snap-count source, before Layer-1′ is promoted (P1-12, P2-03) |
+| [DR-D16](#dr-d16-predictive-exposure-basis) | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | P1-08 (the definition, once Layer C exists) |
+| [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Decided 2026-10-09 (decision interview) | none remaining |
+| [DR-D18](#dr-d18-changepoint-semantics) | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | automatic changepoint adjustments (`z_thresh` and the precision/recall gate; P1-12, P2-03) |
+| [DR-D19](#dr-d19-prior-scale-handoff) | On what scale does the feeder prior enter the Kalman state? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | `P0_form` and `P0_scheme` (P1-12 calibration) |
+| [DR-D20](#dr-d20-ensemble-stacking-level) | What does the §6.6 ensemble stack, and under which weight constraints? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D21](#dr-d21-rate-model-family) | Which model family does each Layer D component use? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the yardage family and the receiving base, before P1-07 |
+| [DR-D22](#dr-d22-provider-ep-features) | May nflverse `ep`/`epa` enter features at all? | Statistical | Decided 2026-10-09 (decision interview) | none |
+| [DR-D23](#dr-d23-missing-provider-projection-policy) | What applies when a provider has no projection for a pooled player-week? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D24](#dr-d24-last-season-baseline) | Does last-season per-game actuals join the §9.4 gate set? | Statistical | Decided 2026-10-09 (decision interview) | none remaining |
+| [DR-D25](#dr-d25-recency-baseline-weights) | What are the recency weights of ensemble member 1? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the calibrated values, before P1-07 and P1-08 |
+| [DR-D26](#dr-d26-recovery-gate-seed-ensemble) | What statistic do Class D recovery gates use? | Statistical | Overridden 2026-10-09 (decision interview): the low quantile is gated too | the pre-registered seed set, quantile and margins, when the floors are re-set (P1-12 Class D gates) |
+| [DR-D27](#dr-d27-value-parity-envelope) | What does V(s) parity mean against a non-reproducible oracle? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | parts 3 and 4 (the DR-C7 estimator spec; the re-set Class D floors) before P1-12 P-V5 |
+| [DR-D28](#dr-d28-synth-draw-tape) | How is the Rust generator proven exact without numpy streams? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
+| [DR-D29](#dr-d29-parity-fixture-format) | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
+| [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Overridden 2026-10-09 (decision interview): always required | owner action after the P0-01 merge: make the check required in branch protection |
 | [DR-D31](#dr-d31-oracle-golden-platform) | How is the oracle golden master made reproducible on CI hardware (KI-NEW-Z78)? | Statistical, Security/Release | Ratified 2026-10-08 — option 1 (owner's written approval in the implementing session); implemented in P0-01 as correction-ledger entry L0 | none remaining |
 
 ---
@@ -196,8 +207,11 @@ several roles; all are currently held by the repository owner.
   - `check-authority-sync.sh` and the `run.sh` fixture are updated in the same commit.
   - An old → new § crosswalk ships with the spec.
   - Fallback if minimal churn is preferred: option 1.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge. Every later WP cites `engine-spec.md` sections.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge. Every later WP cites `engine-spec.md`
+  sections.)
 - **Where implemented.**
   - `engine-spec.md` and `docs/00-meta/specs/engine-spec.md`;
   - `docs/00-meta/specs/superseded/alpha-spec.md` and `final-build-spec.md`;
@@ -247,9 +261,11 @@ several roles; all are currently held by the repository owner.
   - The oracle never overrides the spec.
   - An oracle/spec disagreement is a decision request.
   - An accepted divergence is a Statistical-owner ADR.
-- **Status.** Adopted by P0-01 / ADR-011 (authority order) and ADR-012 (oracle placement) — pending owner
-  ratification at merge.
-- **Blocks.** P0-01 merge; P1-01 (oracle-fixture format and parity-harness skeleton).
+- **Status.** **Ratified (2026-10-08, Product/Architecture and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge; P1-01 (oracle-fixture format and
+  parity-harness skeleton).)
 - **Where implemented.**
   - `engine-spec.md` §1.5 and §1.7;
   - `docs/00-meta/authority-index.md`;
@@ -282,7 +298,13 @@ several roles; all are currently held by the repository owner.
   - A separate ADR then makes Linux authoritative, with Windows as a matrix job.
   - In either case the oracle CI job is **Linux-only**. It is never wired into `verify.ps1` or
     `windows-authoritative`.
-- **Status.** Default kept (Windows authoritative); follow-up ADR required.
+- **Status.** Default kept (Windows authoritative); follow-up ADR required. **Direction ratified
+  (2026-10-08, Product/Architecture and Security/Release owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Direction for the follow-up ADR: Linux
+  becomes the merge- and release-authoritative platform, with Windows kept as an additional (matrix) job.
+  Until that ADR is accepted, the default stays: Windows (`verify.ps1` / `windows-authoritative`) remains
+  merge-authoritative. The ADR must justify the reduced Windows gating that ADR-007/008/009 otherwise
+  refuse.
 - **Blocks.** Nothing in P0-01. The follow-up ADR should land before P1-11 (release-artifact and
   clean-environment evidence), because the declared reference machine and release platform depend on it.
 - **Where implemented.**
@@ -310,8 +332,10 @@ several roles; all are currently held by the repository owner.
   - Existing ADRs, guards and the P1-00 evidence depend on it.
 - **Options considered.** Keep, slim, or drop.
 - **Recommended default.** Keep it.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `engine-spec.md` §1 (constraints and governance), §8.19 (verification) and the
   carried appendices; `CLAUDE.md`; `docs/99-templates/`.
 - **Implementation check (2026-10-07).** No infrastructure change was needed; the guards and evidence
@@ -338,8 +362,11 @@ several roles; all are currently held by the repository owner.
     and a new P1-12 is the GRID component port.
   - Extend the traceability regex to `P[0-9]-[0-9]{2}` in the pivot PR, with a `run.sh` case and control.
   - Generalise `check-evidence-claims.sh`.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge (its own ID must be recognised); P1-12; P2-00 and every P2 WP.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge (its own ID must be recognised); P1-12;
+  P2-00 and every P2 WP.)
 - **Where implemented.** `scripts/check-traceability.sh`; `scripts/check-evidence-claims.sh`;
   `scripts/generate-evidence-manifest.sh`; `tests/guards/run.sh`; `engine-spec.md` §9.5 and §10.5.
 - **Implementation check (2026-10-07).**
@@ -377,15 +404,19 @@ several roles; all are currently held by the repository owner.
   Never squash, in either case.
 - **Recommended default (critic).** Merge PR #1 first with a merge commit, never a squash. Import the four
   reviews verbatim into `docs/06-sessions/`, then close #2 and #3 unmerged.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge, adapted as follows:
-  - This branch contains PR #1's 49 commits as a fast-forward. Verified: PR #1's head `3823478` is the
-    base of the consolidation work; `git rev-list --count origin/main..3823478` = 49; `8d43203` is an
-    ancestor.
-  - Merging this PR with a merge commit (never squash) therefore keeps the attested commit `8d43203`
-    reachable.
-  - PR #1 can then be closed as included.
-  - PRs #2/#3 can be closed after their review records are imported to `docs/06-sessions/`.
-- **Blocks.** P0-01 merge.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  - P0-01 adapted the default as follows:
+    - This branch contains PR #1's 49 commits as a fast-forward. Verified: PR #1's head `3823478` is the
+      base of the consolidation work; `git rev-list --count origin/main..3823478` = 49; `8d43203` is an
+      ancestor.
+    - Merging this PR with a merge commit (never squash) therefore keeps the attested commit `8d43203`
+      reachable.
+    - PR #1 can then be closed as included.
+    - PRs #2/#3 can be closed after their review records are imported to `docs/06-sessions/`.
+- **Blocks.** none remaining (the merge itself must still use a merge commit). (Before the interview:
+  P0-01 merge.)
 - **Where implemented.** `docs/06-sessions/review-P1-00-adversarial-round1.md` to `-round4.md` (imported
   verbatim) and `docs/06-sessions/README.md`. Closing PRs #1–#3 is an owner action on GitHub.
 - **Implementation check (2026-10-07).** The four review records are present in `docs/06-sessions/`.
@@ -413,8 +444,10 @@ several roles; all are currently held by the repository owner.
   - guard-only, with no D5 amendment;
   - new `run.sh` cases with controls;
   - R4-2 applied to both files (ADR-010: guard the shape, not the instance).
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge.
+- **Status.** **Ratified (2026-10-08, Security/Release owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `scripts/check-secrets.sh`; `scripts/check-verify-parity.sh`;
   `tests/guards/run.sh`.
 - **Implementation check (2026-10-07).** Both findings are fixed in the P0-01 worktree, guard-only.
@@ -452,8 +485,11 @@ several roles; all are currently held by the repository owner.
     `application` and `governance` docs.
   - The first engine WP (P1-01) renames `application` → `pipeline` (+ `grid-cli`) and adds `synth`.
   - `persistence` and SQLite stay.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge; P1-01.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining (the `application` → `pipeline` rename and `synth` happen in P1-01). (Before
+  the interview: P0-01 merge; P1-01.)
 - **Where implemented.** `Cargo.toml` workspace members; removal of `crates/ffi/`; the crate list in
   `docs/CLAUDE.md`; `engine-spec.md` §8.1; ADR-011.
 - **Implementation check (2026-10-07).**
@@ -493,8 +529,10 @@ several roles; all are currently held by the repository owner.
   - Phase-4 SDD T1 and T5–T8;
   - `HISTORY.md` (G-3);
   - `real-data-results.md` (G-7), labelled historical and non-parity.
-- **Status.** Adopted by P0-01 / ADR-011 — pending owner ratification at merge.
-- **Blocks.** P0-01 merge.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `docs/07-archive/cautious-nevermore/` (`HISTORY.md`, `real-data-results.md`,
   `MANIFEST.md`, archived docs); `docs/00-meta/authority-index.md`.
 - **Implementation check (2026-10-07).**
@@ -531,7 +569,12 @@ several roles; all are currently held by the repository owner.
   2. Keep `reference/python/` under a separate licence with a NOTICE.
   3. Do not import. This contradicts the owner's decision to import the oracle.
 - **Recommended default.** Option 1, recorded in the same form as PR #1 comment 5357318508.
-- **Status.** Needs owner action: record licence ruling for reference/python/ on the PR.
+- **Status.** Needs owner action: post the licence ruling for `reference/python/` on PR #4. **Option
+  chosen (2026-10-08, Data/Licensing owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The owner chose option 1: as sole
+  substantive author, the owner brings the CN-derived code in `reference/python/` under MIT OR Apache-2.0,
+  recorded in the same form as PR #1 comment 5357318508. The owner will post that ruling on PR #4
+  personally (the agent drafts the text).
 - **Blocks.** P0-01 merge (the import of `reference/python/`).
 - **Where implemented.** After the ruling: the PR comment, ADR-012 citing it, and the provenance section of
   `reference/python/README.md`.
@@ -566,11 +609,13 @@ several roles; all are currently held by the repository owner.
     ≥ 2023) and the CC-BY-SA notice, and only after a ruling.
   - Real inputs used by investigations are fetched with pinned URLs and sha256 by
     `reference/python/tools/investigations/fetch_realdata.py`, never committed.
-- **Status.** Adopted by P0-01 / ADR-012 — pending owner ratification at merge.
-- **Blocks.**
-  - P1-01 (parity-fixture format);
-  - P1-03 (`docs/04-providers/nflverse/access-and-license.md` must exist before provider work);
-  - P1-05 (feature-store fixtures).
+- **Status.** **Ratified (2026-10-08, Data/Licensing owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** none remaining (no `fixtures/third-party/` ruling has been made, so no real-data fixture may
+  be committed). (Before the interview: - P1-01 (parity-fixture format); - P1-03
+  (`docs/04-providers/nflverse/access-and-license.md` must exist before provider work); - P1-05
+  (feature-store fixtures).)
 - **Where implemented.**
   - `docs/04-providers/nflverse/access-and-license.md`;
   - `docs/03-contracts/parity-fixture-contract.md`;
@@ -595,8 +640,10 @@ several roles; all are currently held by the repository owner.
   oracle.
 - **Recommended default.** Keep it as a frozen CI oracle until every ported component has parity evidence
   **and** Phase-2 live evidence exists. Review at P2-09.
-- **Status.** Adopted by P0-01 / ADR-012 — pending owner ratification at merge.
-- **Blocks.** P2-09.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
+  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+- **Blocks.** P2-09 (the retirement review). (Before the interview: P2-09.)
 - **Where implemented.** `engine-spec.md` §1.7 and §10.5 (P2-09); ADR-012.
 - **Implementation check (2026-10-07).** The oracle is imported and frozen by `MANIFEST.tsv`, and runs in the
   Linux `reference-oracle` job. Still required before merge: ADR-012.
@@ -644,11 +691,18 @@ several roles; all are currently held by the repository owner.
   4. `PARITY.md` lists the deliberate typed-failure divergences (DR-B6).
 
   Corrections made under this ledger are not "changing the oracle to make Rust pass".
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.**
-  - P1-01 (fixture format);
-  - every frozen parity target in P1-06, P1-09 and P1-12;
-  - the correction commits themselves.
+- **Status.** **Ratified (2026-10-08, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The correction policy (option 2): verbatim
+  import tagged `oracle-legacy-59bce1d`; Statistical-owner-approved correction commits in Python, each
+  with a failing test first and a golden regeneration with a model-spec note, in the order synth defenders
+  (KI-NEW-Y0) → team-strength convention (DR-B5) → matchup-grade sign (KI-NEW-A2) → causal Kalman init
+  (KI-#15) → ingest bias (KI-NEW-I1 to I4, KI-NEW-V0a); Rust targets the corrected oracle; the legacy
+  golden is kept for audit only; PARITY.md lists the typed-failure divergences (DR-B6). Still to be
+  approved separately: Each individual ledger entry still needs its own Statistical-owner approval as its
+  commit lands; creating the `oracle-legacy-59bce1d` tag is an owner action (P0-01 follow-up 9).
+- **Blocks.** none for the policy; each ledger entry is approved as its commit lands (P1-01, P1-06, P1-09
+  and P1-12 consume the corrected oracle). (Before the interview: - P1-01 (fixture format); - every frozen
+  parity target in P1-06, P1-09 and P1-12; - the correction commits themselves.)
 - **Where implemented (when ratified).** The correction ledger in `reference/python/PARITY.md`;
   `docs/03-contracts/parity-fixture-contract.md`; `engine-spec.md` §7.12.
 
@@ -687,8 +741,14 @@ several roles; all are currently held by the repository owner.
   - The job is never wired into `verify.ps1` or `windows-authoritative`.
   - `actions/setup-python` is used only with Security/Release approval.
   - If the runner's Python fails the golden, escalate to the owner. Do not loosen tolerances.
-- **Status.** Proposed — awaiting Statistical owner and Product/Architecture owner.
-- **Blocks.** P1-01 (oracle-fixture format and parity-harness skeleton).
+- **Status.** **Ratified (2026-10-08, Statistical and Product/Architecture owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Both: committed, sha256-manifested,
+  single-threaded stage fixtures are the Rust contract; the Linux-only reference-oracle CI job (tool-cache
+  CPython 3.11, `OPENBLAS_CORETYPE=Haswell`, threads = 1, the lock) proves they regenerate; never wired
+  into `verify.ps1` or `windows-authoritative`; `actions/setup-python` only with Security/Release
+  approval; escalate rather than loosen tolerances.
+- **Blocks.** none remaining. (Before the interview: P1-01 (oracle-fixture format and parity-harness
+  skeleton).)
 - **Where implemented (when ratified).**
   - `docs/03-contracts/parity-fixture-contract.md`;
   - the oracle CI job in `.github/workflows/`;
@@ -717,7 +777,7 @@ several roles; all are currently held by the repository owner.
   | D | Recovery floors | re-set on the **defender-fixed** synth, calibrated below observed values as the CN gates are |
 
   Everything downstream of a booster is tested by stage-isolated injection of the Python dV and credit.
-- **Amendments proposed after the critic.** They do not change the status.
+- **Amendments proposed after the critic.** The owner adopted them on 2026-10-09 (see **Status**).
   - **Class C is unsatisfiable as written.** The oracle against itself under a seed change never reaches
     corr 0.999, for V(s) or for the Layer-1 context model (KI-NEW-Z74).
   - Two stage-specific replacements are proposed:
@@ -727,8 +787,20 @@ several roles; all are currently held by the repository owner.
       ≥ 0.995; and the downstream Class D gates.
   - Both sit below the oracle's own measured envelope and must be pre-registered by the statistical owner.
   - **Class D** floors use a seed-ensemble statistic, not a single seed (DR-D26; KI-NEW-Z34).
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-01 (harness); P1-06; P1-12.
+- **Status.** **Overridden (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The merged table with the post-critic
+  amendments: A ≤ 1e-12 abs; A′ ≤ 1e-9 rel; Class B requires converged = true, a relative residual ≤
+  `tol_cg` on the oracle's system, and agreement with the dense solve to 1e-9 (`rapm-attribution.md`
+  §10.3); Class C (unattainable) replaced by C-V for V(s) (corr(dV) ≥ 0.98 over all rows; max |V_Rust −
+  V_oracle| ≤ 0.30 EP on states with support ≥ 120; the Rust estimator passes its own spec goldens P-V4;
+  Class D gates hold with Rust dV P-V8) and C-L1 for the Layer-1 context model (corr(residual) ≥ 0.99;
+  weekly credit corr ≥ 0.99 with RMS Δ ≤ 0.05 EP per play; per-position season-credit corr ≥ 0.995;
+  downstream Class D gates); Class D floors re-set on the defender-fixed world, calibrated below observed
+  values, gated over a seed ensemble (DR-D26); downstream of a booster, stage-isolated injection. All
+  thresholds pre-registered before any Rust result. **Still open:** The Class D floor values (set once,
+  after ledger entries 2 and 4 and on the DR-D26 ensemble).
+- **Blocks.** the Class D floor values (P1-12), set after ledger entries 2 and 4 on the DR-D26 ensemble.
+  (Before the interview: P1-01 (harness); P1-06; P1-12.)
 - **Where implemented (when ratified).** The tolerance table in `reference/python/PARITY.md`;
   `docs/03-contracts/parity-fixture-contract.md`; `engine-spec.md` §7.12 and §7.13.
 
@@ -764,11 +836,17 @@ several roles; all are currently held by the repository owner.
   - **Before Layers A–F:**
     - a stat-vector synthetic world: volume, shares, TDs, availability and game coupling;
     - a "realistic" profile: QB about 99% of snaps, at the real RAPM scale.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.**
-  - P1-12 (GRID port parity on the fixed synth);
-  - P1-05 (committed synth fixtures);
-  - P1-07 and P1-08 (spec goldens for Layers A–F).
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 3 (direction): now - fix the
+  defenders, plant net strength (DR-B5), regenerate the goldens, recalibrate the QB NIS bands; before
+  Layers A–F - a stat-vector synthetic world (volume, shares, TDs, availability, game coupling) and a
+  realistic profile (QB ~99% of snaps, real RAPM scale). Still to be approved separately: The recalibrated
+  r_scale, NIS bands and Tier-0 floors; the stat-vector world's distributions and parameters (spec
+  revision before P1-07); ledger entry 1 itself (approved when its commit exists); a WP that builds the
+  stat-vector world.
+- **Blocks.** the recalibrated QB NIS bands, `r_scale` and Tier-0 floors (after ledger entries 1, 2 and
+  4); the stat-vector world's parameters before P1-07. (Before the interview: - P1-12 (GRID port parity on
+  the fixed synth); - P1-05 (committed synth fixtures); - P1-07 and P1-08 (spec goldens for Layers A–F).)
 - **Where implemented (when ratified).**
   - `docs/05-model-specs/synthetic-world.md`;
   - `engine-spec.md` §6.9 and §7.13;
@@ -808,9 +886,13 @@ several roles; all are currently held by the repository owner.
   - Grade = `+E_def` (higher = tougher).
   - Reject `[+1,−1]`.
   - Truth-anchored Layer-A tests on the defender-fixed synth.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-12; ledger positions 2 and 3; P1-08 (Layer E matchup context); P1-07 (real-data market
-  inputs to Layer B; `engine-spec.md` §9.5).
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Net strength (off + def quality) from
+  gauge-invariant aggregates; market rows anchor net strength using the line at lock; matchup grade =
+  +E_def (higher = tougher); [+1,-1] rejected; truth-anchored Layer-A tests on the defender-fixed synth.
+- **Blocks.** none remaining (real-data market inputs still wait on DR-D2 and DR-D10). (Before the
+  interview: P1-12; ledger positions 2 and 3; P1-08 (Layer E matchup context); P1-07 (real-data market
+  inputs to Layer B; `engine-spec.md` §9.5).)
 - **Where implemented (when ratified).**
   - `docs/05-model-specs/rapm-attribution.md` and `synthetic-world.md`;
   - `engine-spec.md` §4.3 (market-line lock rule) and §6.2;
@@ -841,11 +923,15 @@ several roles; all are currently held by the repository owner.
   - The oracle is left unchanged.
   - The divergences go in `PARITY.md`.
   - Parity fixtures exercise only the healthy path.
-- **Status.** Proposed — awaiting Statistical owner and Product/Architecture owner.
-- **Blocks.**
-  - P1-02 (state persistence and atomic writes);
-  - P1-06 (ridge, Cholesky and CG failure semantics);
-  - P1-12.
+- **Status.** **Ratified in part (2026-10-08, Statistical and Product/Architecture owners, decision
+  interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Policy: typed failure in Rust
+  for every oracle silent-failure path; the oracle is left unchanged; divergences listed in PARITY.md (e);
+  parity fixtures exercise only the healthy path; the adopting ADR cites CN PR #53 C3 (and PR #56) as the
+  decisions it reverses. **Still open:** The numeric ill-conditioning (condition-number) threshold, which
+  a model spec proposes before P1-06's solver failure semantics are final.
+- **Blocks.** the ill-conditioning threshold, proposed in a model spec before P1-06's solver failure
+  semantics are final. (Before the interview: - P1-02 (state persistence and atomic writes); - P1-06
+  (ridge, Cholesky and CG failure semantics); - P1-12.)
 - **Where implemented (when ratified).**
   - the divergences list in `reference/python/PARITY.md`;
   - the model specs;
@@ -886,8 +972,16 @@ several roles; all are currently held by the repository owner.
     adjustment.
   - AsOf gains a publication-lag axis.
   - H2 +0.848 is not citable until it is re-run under these rules.
-- **Status.** Proposed — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** P1-05 (publication-lag axis); P1-12; P1-09.
+- **Status.** **Ratified in part (2026-10-09, Product/Architecture and Statistical owners, decision
+  interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Two-tier GRID: RAPM and every
+  stage that reads participation run only after a season's participation is published and never feed a
+  live projection; the live tier reads no participation; a participation-free Layer-1′ credit feeds the
+  Kalman in season; AsOf gains a publication-lag axis; backtests hide current-season participation; H2
+  +0.848 is not citable until re-run. **Still open:** The snap-count source (provider contract,
+  PFR-to-GSIS crosswalk, licence ruling; KI-NEW-Z50). The Layer-1′ exposure basis is now decided under
+  DR-D15 (per event).
+- **Blocks.** real-data snap counts (a Data/Licensing ruling; KI-NEW-Z50) before Layer-1′ runs on real
+  data (P1-12, P2-03). (Before the interview: P1-05 (publication-lag axis); P1-12; P1-09.)
 - **Where implemented (when ratified).**
   - `engine-spec.md` §6.3 and §4.5;
   - `docs/05-model-specs/layer1-credit.md` and `rapm-attribution.md`;
@@ -913,8 +1007,12 @@ several roles; all are currently held by the repository owner.
   3. A hybrid with no single skeleton.
 - **Recommended default.** α§6.1 Layers A–F are the skeleton. GRID is a signal provider: Layer D efficiency
   latent, Layer E matchup, Layer B market anchor, plus the priors.
-- **Status.** Proposed — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** P1-07; P1-08; P1-12.
+- **Status.** **Ratified (2026-10-09, Product/Architecture and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Layers A–F (α§6.1) are the skeleton; GRID
+  is a signal provider: Layer D efficiency latent, Layer E matchup, Layer B market anchor, plus the
+  priors; a GRID signal keeps ensemble weight only if it improves out-of-sample PB-MAE or calibration; the
+  credit-to-points map is a diagnostic and ensemble candidate.
+- **Blocks.** none remaining. (Before the interview: P1-07; P1-08; P1-12.)
 - **Where implemented (when ratified).** `engine-spec.md` §6.1, §6.2, §6.6 and §11.6;
   `docs/05-model-specs/projection-stack.md`.
 
@@ -935,9 +1033,14 @@ several roles; all are currently held by the repository owner.
 
   Also open: whether the Kalman scalar splits by role.
 - **Recommended default.** Option 1.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-07; P1-08 (engine-spec §6.6: P1-08 is not Ready until DR-C2, DR-C3 and DR-D20 are
-  ratified).
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1: role-specific talent (dropback,
+  carry, target) as covariates in EB-shrunk, exposure-weighted per-component rate models, with last
+  season's RAPM and the feeder prior as further covariates, each with a missing indicator. The owner also
+  answered the open sub-question: the Kalman state splits by role (one state-space track per player and
+  role). Still to be approved separately: Whether RB/WR/TE role credit is an individual signal is DR-D13.
+- **Blocks.** none remaining (RB/WR/TE credit as an individual signal is DR-D13). (Before the interview:
+  P1-07; P1-08 (engine-spec §6.6: P1-08 is not Ready until DR-C2, DR-C3 and DR-D20 are ratified).)
 - **Where implemented (when ratified).** `docs/05-model-specs/projection-stack.md`; `engine-spec.md` §6.1
   and §6.2.
 
@@ -958,8 +1061,11 @@ several roles; all are currently held by the repository owner.
   - Weekly is the primary contract.
   - ROS and preseason are derived sums of weekly draws, reported as diagnostics.
   - H1 is no longer a kill criterion.
-- **Status.** Proposed — awaiting Product/Architecture owner.
-- **Blocks.** P1-01 (output-contract skeleton); P1-08; P1-09.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 2: weekly is the primary contract;
+  ROS and preseason are derived sums of weekly draws, reported as diagnostics; H1 is no longer a kill
+  criterion; every projection carries a typed horizon.
+- **Blocks.** none remaining. (Before the interview: P1-01 (output-contract skeleton); P1-08; P1-09.)
 - **Where implemented (when ratified).** `engine-spec.md` §2.2 and §5.5;
   `docs/03-contracts/engine-output-contract.md`.
 
@@ -1010,9 +1116,25 @@ several roles; all are currently held by the repository owner.
       (`rapm-attribution.md` §9).
   - **Proposed in the engine-spec draft** (§8.7.3): fixed-lag smoothing ships as a primitive with its
     parity test in P1-06, and enters the live path in P2-03.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-09; P1-06 (fixed-lag `L`, EB estimator); P1-07 (EB estimator); P1-11 (auto-rollback sanity
-  thresholds, for recovery); P1-12 (RAPM domain controls); P2-03; P2-07 (`engine-spec.md` §8.8, §9.5).
+- **Status.** **Ratified in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The framework: PB-MAE primary; the α§9.4
+  thresholds verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0;
+  calibrate-then-gate only for KPIs without a spec number, on a disjoint calibration period; GRID
+  acknowledged below the gate; FB's open parameters set in the model specs before code. Also the written
+  sub-item defaults: scale_p = within-week mean absolute deviation of actual points among the top N by
+  actual over a training period disjoint from evaluation; strongest naive baseline = lowest overall
+  PB-MAE; every player tied at rank N is pooled; a baseline with no history falls back to the
+  position/depth-chart median with the fallback count reported. **Still open:** The Layer C EB estimator
+  (Gamma–Poisson stays proposed until projection-stack.md writes the comparison against normal–normal,
+  before P1-07 - the owner chose to wait for it); the estimator for the other shrinkage uses; the ROS
+  clustering scheme; numeric meanings of 'materially worse' etc.; the non-inferiority margin;
+  auto-rollback thresholds; fixed-lag L; the RAPM home-field, garbage-time, overtime, minimum-exposure and
+  play-weight controls; NIS bands (re-set under DR-B4).
+- **Blocks.** the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings
+  (P1-09); the RAPM domain controls (P1-12); auto-rollback thresholds (P1-11, P2-07); the non-inferiority
+  margin and calibration band (P2-07); fixed-lag L (P2-03). (Before the interview: P1-09; P1-06 (fixed-lag
+  `L`, EB estimator); P1-07 (EB estimator); P1-11 (auto-rollback sanity thresholds, for recovery); P1-12
+  (RAPM domain controls); P2-03; P2-07 (`engine-spec.md` §8.8, §9.5).)
 - **Where implemented (when ratified).**
   - `engine-spec.md` §7.4, §8.8 and §9.4;
   - `docs/05-model-specs/evaluation-and-leakage.md`;
@@ -1042,8 +1164,16 @@ several roles; all are currently held by the repository owner.
 - **Proposed after the critic** (engine-spec §8.6.2 draft). In-season production RAPM at `(S, W > 1)` uses
   the blocks for S−2 and S−1 only, because season-S participation is unpublished. Preseason and week 1
   use S−3..S−1. How the state-space filter crosses the offseason is DR-D17.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-05; P1-12; P1-09.
+- **Status.** **Overridden (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: (a) RAPM sufficient statistics stored in
+  per-(season, week) blocks; the window is the exact sum of the in-window blocks; live in-season RAPM at
+  (S, W > 1) uses the S−2 and S−1 blocks only; preseason and week 1 use S−3..S−1. (b) V(s) is fit once per
+  season on the three completed seasons S−3..S−1 and frozen for that season (accepted known gap: after
+  week 1 it still carries season S−3, which in-season RAPM has dropped). (c) The Kalman clause overridden
+  via DR-D17: instead of carry-with-discount in production plus re-initialisation on replay, every
+  player's filter restarts from the windowed prior at each season boundary in both production and backtest
+  replay, so the two paths agree by construction.
+- **Blocks.** none remaining. (Before the interview: P1-05; P1-12; P1-09.)
 - **Where implemented (when ratified).**
   - `engine-spec.md` §2.4;
   - `docs/05-model-specs/rapm-attribution.md`, `state-space-kalman.md`, `value-model.md` and
@@ -1073,8 +1203,16 @@ several roles; all are currently held by the repository owner.
   - V(s) is a deterministic in-house estimator behind a `Regressor` trait.
   - No nflfastR `ep`.
   - For the Layer-1 context model, ridge/GAM is a candidate against GBM, decided on recovery evidence.
-- **Status.** Proposed — awaiting Statistical owner and Product/Architecture owner.
-- **Blocks.** P1-06 (boosting-adapter scope); P1-12.
+- **Status.** **Ratified in part (2026-10-09, Product/Architecture and Statistical owners, decision
+  interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: nflfastR ep is never V(s); V(s)
+  is a deterministic in-house estimator behind a Regressor trait (not a booster), which must satisfy
+  `value-model.md` §10.2 (deterministic, no hidden modes, hull-respecting, support-aware, versioned, earns
+  its place against the oracle booster on held-out-season label error and downstream Class D, specified
+  before code). **Still open:** Which in-house estimator and whether monotonicity is imposed (decided on
+  pre-registered held-out evidence); booster versus ridge/GAM for the Layer-1 context model (decided on
+  recovery evidence).
+- **Blocks.** the V(s) estimator's spec, approved before P1-06 implements it; the Layer-1 context
+  estimator, on recovery evidence (P1-12). (Before the interview: P1-06 (boosting-adapter scope); P1-12.)
 - **Where implemented (when ratified).** `docs/05-model-specs/value-model.md` and `layer1-credit.md`;
   `engine-spec.md` §6.4.
 
@@ -1095,8 +1233,14 @@ several roles; all are currently held by the repository owner.
   3. No booster until one is needed.
 - **Recommended default.** Pure-Rust first, with no native artifacts. `xgb` is optional, behind a feature,
   once a booster earns its place (α§6.2).
-- **Status.** Proposed — awaiting Product/Architecture owner.
-- **Blocks.** P1-06.
+- **Status.** **Ratified in part (2026-10-09, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Pure-Rust first with no native artifacts;
+  `xgb` only as a later optional feature once a booster earns its place. Policy for the DR-C8 ADR: a work
+  package may propose an existing crate (e.g. linfa-trees) as a documented exception to engine-spec
+  §6.4.3, with its API verified against source, subject to the normal dependency approval. **Still open:**
+  The concrete crate or implementation, approved in the WP that first needs a booster.
+- **Blocks.** the concrete booster crate, approved in the WP that first needs a booster. (Before the
+  interview: P1-06.)
 - **Where implemented (when ratified).** `engine-spec.md` §6.4 and §8.1 (`models` crate); the dependency
   policy.
 
@@ -1127,11 +1271,16 @@ several roles; all are currently held by the repository owner.
   - The α§6.3 form, with feeder-SV equivalency as one translated component. This needs a CFBD PBP pass.
   - NCAA only for alpha. The UFL/USFL/XFL/CFL `LEAGUE_FACTORS` are documented but unused.
   - The age and draft step functions (KI-#49) go back to the Statistical owner and are not ported as-is.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.**
-  - P1-04 (NCAA adapter: CFBD PBP vs box score);
-  - P1-07 (rookie priors);
-  - P1-12 (cross-league priors port).
+- **Status.** **Ratified in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: NCAA is the only feeder league
+  (UFL/USFL/XFL/CFL LEAGUE_FACTORS documented but unused); the oracle's hand-set age and draft step
+  functions (KI-#49) are not ported and go back to the Statistical owner; the α§6.3 blend governs the
+  prior's overall form. **Still open:** Whether the college rating comes from a CFBD play-by-play GRID
+  pass or from box-score features (waits for the CFBD terms check); the blend weight q, the position/draft
+  baseline, the influence cap and exposure weighting.
+- **Blocks.** the college-rating source (CFBD terms) for P1-04's play-by-play scope; q, the baseline and
+  the influence cap before P1-07. (Before the interview: - P1-04 (NCAA adapter: CFBD PBP vs box score); -
+  P1-07 (rookie priors); - P1-12 (cross-league priors port).)
 - **Where implemented (when ratified).**
   - `docs/05-model-specs/cross-league-priors.md`;
   - `engine-spec.md` §6.5;
@@ -1162,8 +1311,12 @@ several roles; all are currently held by the repository owner.
   - Prior-based x0/P0, with no look-ahead.
   - State keyed by (season, week).
   - The component discount documented exactly as implemented (`P[0,0] /= d`).
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-06 (Kalman primitives); P1-12; P2-03.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The bundle: weekly credit as the
+  observation; R from real exposures; one filter core with a persisted `games_since_event`; prior-based
+  x0/P0 with no look-ahead; state keyed by (season, week); the component discount documented exactly as
+  implemented (P[0,0] /= d).
+- **Blocks.** none remaining. (Before the interview: P1-06 (Kalman primitives); P1-12; P2-03.)
 - **Where implemented (when ratified).** `docs/05-model-specs/state-space-kalman.md`; `engine-spec.md`
   §6.2 and §6.4.
 
@@ -1183,8 +1336,11 @@ several roles; all are currently held by the repository owner.
 - **Recommended default.** Option 2:
   - Keep the H2 lineup simulation as the start/sit decision metric in `evaluation`, with VOR internal to it.
   - The engine outputs no VOR or tiers.
-- **Status.** Proposed — awaiting Product/Architecture owner.
-- **Blocks.** P1-09.
+- **Status.** **Ratified (2026-10-09, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 2: the H2 lineup simulation stays
+  in evaluation as the start/sit decision metric, with VOR internal to it (drafting the simulated
+  rosters); the engine outputs no VOR, tiers or rankings.
+- **Blocks.** none remaining. (Before the interview: P1-09.)
 - **Where implemented (when ratified).** `engine-spec.md` §7 (secondary metrics) and §7.14;
   `docs/05-model-specs/evaluation-and-leakage.md`.
 
@@ -1217,8 +1373,19 @@ several roles; all are currently held by the repository owner.
   - Two-point conversions are modelled.
   - Official attempt and rush definitions apply.
   - PBP aggregates are features or cross-checks only.
-- **Status.** Proposed — awaiting Statistical owner and Data/Licensing owner.
-- **Blocks.** P1-03; P1-05; P1-09.
+- **Status.** **Overridden (2026-10-09, Statistical and Data/Licensing owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Statistical policy: labels come from both
+  sources, reconciled - nflverse official weekly player stats and the engine's play-by-play rebuild are
+  both ingested and compared for every player-week; the official figure is always the label; every
+  disagreement is recorded, and disagreements above a threshold are flagged for review. Training labels
+  use REG weeks only; two-point conversions are included; official attempt and rush definitions apply; a
+  stat correction creates a new data version and never overwrites one. (Override of the default's 'PBP
+  aggregates are features or cross-checks only': the rebuild is now a required reconciliation source,
+  though it never changes a label.) **Still open:** The Data/Licensing half (per-dataset nflverse terms
+  for player stats and play-by-play) before P1-03; the flag threshold (set in the P1-03 ingestion spec);
+  which weekly-stats release is canonical (P1-03); the correction-window length (freshness-policy.md).
+- **Blocks.** the Data/Licensing terms before P1-03; the reconciliation flag threshold in the P1-03
+  ingestion spec. (Before the interview: P1-03; P1-05; P1-09.)
 - **Where implemented (when ratified).** `engine-spec.md` §4.7; `docs/04-providers/nflverse/README.md`.
 
 ### DR-C13 drive_points vocabulary and situation set
@@ -1245,8 +1412,15 @@ several roles; all are currently held by the repository owner.
   - Keep 7/3/0 for v1, documented.
   - The code's situation set is canonical.
   - `two_minute` uses `half_seconds_remaining`, which the adapter must emit.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-03 (plays-contract adapter); P1-12.
+- **Status.** **Overridden (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Target: keep 7/3/0 for v1, documented as a
+  limitation; an unknown drive result is a typed error, not 0. Clock: two_minute uses
+  `half_seconds_remaining` ≤ 120, which the adapter must emit. Situations (override): the canonical set is
+  the code set (red_zone: `yardline_100` ≤ 20; passing_downs; rushing_downs; two_minute) plus goal_line:
+  `yardline_100` ≤ 5; goal_line_wr: `yardline_100` ≤ 8, a separate mask used by WR situational features
+  and ratings; third_and_long: `down == 3` and `ydstogo` ≥ 7; fourth_down: `down == 4`. They are plain
+  play filters and overlap the existing set by design.
+- **Blocks.** none remaining. (Before the interview: P1-03 (plays-contract adapter); P1-12.)
 - **Where implemented (when ratified).** `docs/03-contracts/plays-contract.md`;
   `docs/05-model-specs/value-model.md`; `engine-spec.md` §6.2.
 
@@ -1271,8 +1445,12 @@ several roles; all are currently held by the repository owner.
   - The engine fetches itself, with a once-per-day-per-source cap and raw retention plus hashing
     (α§4.1.1).
   - It has an offline mode that runs from the raw cache.
-- **Status.** Proposed — awaiting Product/Architecture owner.
-- **Blocks.** P1-03 (fetch); P1-10 (CLI); P2-01.
+- **Status.** **Ratified (2026-10-09, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: A one-shot `grid update` CLI under an
+  external scheduler; the engine fetches itself, with at most one successful fetch per source per local
+  day, raw retention plus hashing, and an offline mode that runs from the raw cache. (An HTTP client
+  dependency is approved separately in the WP that needs it.)
+- **Blocks.** none remaining. (Before the interview: P1-03 (fetch); P1-10 (CLI); P2-01.)
 - **Where implemented (when ratified).** `engine-spec.md` §8.6.
 
 ### DR-C15 Storage
@@ -1291,8 +1469,12 @@ several roles; all are currently held by the repository owner.
   3. SQLite as source of truth, with registered bulk artifacts.
 - **Recommended default.** Option 3: SQLite is the source of truth. Bulk artifacts (Parquet and `.npz`
   equivalents) are registered in a SQLite manifest.
-- **Status.** Proposed — awaiting Product/Architecture owner.
-- **Blocks.** P1-02.
+- **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 3: SQLite is the source of truth;
+  bulk artifacts (Parquet and `.npz` equivalents, raw payloads, model-state arrays) are immutable,
+  content-addressed files registered in a SQLite `artifact_manifest` and written by the §8.11 protocol
+  (temp, fsync, rename, record sha256, commit); a missing or mismatched listed file is StateCorrupt.
+- **Blocks.** none remaining. (Before the interview: P1-02.)
 - **Where implemented (when ratified).** `engine-spec.md` §8.5.
 
 ---
@@ -1348,9 +1530,17 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   3. No explicit coaching changes; rely on innovation-based changepoint detection.
 - **Recommended default.** Option 1. This is critic G-4's recommendation. Each record carries an
   information timestamp (announced-at) separate from the effective week.
-- **Status.** Proposed — awaiting Data/Licensing owner.
-- **Blocks.** Any use of real coaching changes: the real-data scheme-reset path in P1-12, and P2-02/P2-03.
-  Synthetic and unit tests, which pass explicit rows, are not blocked.
+- **Status.** **Ratified in part (2026-10-09, Data/Licensing and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1's form: coaching and coordinator
+  changes enter only as hand-entered, versioned records under a new provider contract
+  `docs/04-providers/coaching-changes/`, each with a public source and an announced-at timestamp kept
+  separate from the effective week; undated records are rejected; the oracle's
+  `coaching_changes_2025.json` is excluded. **Still open:** The actual public sources and their terms (the
+  work that writes the contract); which roles count as a scheme change (state-space-kalman.md).
+- **Blocks.** the source list and its terms (the coaching-changes contract) before the real-data scheme
+  resets (P1-12 real-data path, P2-02, P2-03). (Before the interview: Any use of real coaching changes:
+  the real-data scheme-reset path in P1-12, and P2-02/P2-03. Synthetic and unit tests, which pass explicit
+  rows, are not blocked.)
 - **Where implemented (when ratified).** `docs/04-providers/coaching-changes/` (to be created);
   `engine-spec.md` §4.3 and §4.5; `docs/05-model-specs/state-space-kalman.md`;
   `docs/05-model-specs/evaluation-and-leakage.md` §3.1.
@@ -1379,7 +1569,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
      live.
 - **Recommended default.** None — open. Interim rule (engine-spec §4.3 rule 6): historical backtests treat
   market inputs as unavailable, with a missingness indicator, and never substitute closing lines.
-- **Status.** Open — awaiting Data/Licensing owner and Statistical owner.
+- **Status.** Open — awaiting Data/Licensing and Statistical owners. **Interim rule confirmed (2026-10-09,
+  Data/Licensing and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The owner kept DR-D2 open and confirmed
+  the interim rule (historical backtests treat market inputs as unavailable, with a missingness indicator,
+  and never substitute closing lines). Direction recorded: P1-03 documents what the nflverse schedule
+  spread/total fields represent and when they were captured, and a timestamped pre-lock source is sought
+  for owner approval.
 - **Blocks.** Real-data market inputs in P1-07 (Layer B), P1-09 and P1-12.
 - **Where implemented (when decided).** `docs/04-providers/market-lines/` (to be created); `engine-spec.md`
   §4.3 and §4.6; `docs/05-model-specs/evaluation-and-leakage.md` §4.2 (G7).
@@ -1401,7 +1597,11 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
 - **Recommended default.** None — open. Interim rule: no public distribution of participation-derived
   outputs before the ruling. Attribution is carried into every output derived from attributed data
   (engine-spec §4.8).
-- **Status.** Open — awaiting Data/Licensing owner.
+- **Status.** Open — awaiting Data/Licensing owner. **Interim rule confirmed (2026-10-09, Data/Licensing
+  owner, decision interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The owner kept
+  DR-D3 open and confirmed the interim rule (no public distribution of participation-derived outputs;
+  attribution carried) until a first public release is actually planned; the full ruling and the NFL/FTN
+  rights review happen then.
 - **Blocks.** Public distribution of participation-derived outputs in P1-10, P1-11 and P2-06 (public
   reports).
 - **Where implemented (when decided).** `engine-spec.md` §4.8 and §5.6;
@@ -1421,8 +1621,10 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   1. The literal reading: postseason excluded from features and labels.
   2. Admit completed prior-season postseason plays to V(s) and RAPM; labels stay REG only.
 - **Recommended default.** Option 1, which engine-spec §2.4 applies until a decision relaxes it.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-05 (only to relax the REG-only reading); P1-12.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1: the literal reading - postseason
+  plays are excluded from V(s), RAPM, features and labels (`season_type = REG` only).
+- **Blocks.** none remaining. (Before the interview: P1-05 (only to relax the REG-only reading); P1-12.)
 - **Where implemented (when ratified).** `engine-spec.md` §2.4; the `season_type` policy of
   `docs/03-contracts/plays-contract.md`; `value-model.md` and `rapm-attribution.md`.
 
@@ -1450,8 +1652,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
      files cannot supply.
 - **Recommended default.** None — open. Interim rule: the approximation is declared in every backtest
   report and is not extended to any other data class.
-- **Status.** Open — awaiting Statistical owner and Data/Licensing owner.
-- **Blocks.** P1-09.
+- **Status.** **Decided (2026-10-09, Statistical and Data/Licensing owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default: The
+  'corrected as retrieved' approximation is accepted for the Phase 1 historical proof, declared in every
+  backtest report, for stat corrections only (engine-spec §4.5 wording); publication times of other
+  back-filled data follow each provider's declared publication-lag rule (P1-03). Live seasons use the
+  engine's own snapshots.
+- **Blocks.** none remaining. (Before the interview: P1-09.)
 - **Where implemented (when decided).** `engine-spec.md` §4.5; `evaluation-and-leakage.md` §4.1.
 
 ### DR-D6 non-affine-scoring
@@ -1469,8 +1676,11 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   1. Affine profiles only; non-affine rules are rejected with a typed error.
   2. Support non-affine rules by applying them to each Layer-F stat-vector draw.
 - **Recommended default.** Option 1 until decided (engine-spec §2.3 and §5.4; `projection-stack.md` §9).
-- **Status.** Proposed — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** Custom profiles that need a non-affine rule (P1-06, P1-10).
+- **Status.** **Ratified (2026-10-09, Product/Architecture and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1: affine profiles only; a
+  non-affine rule (e.g. threshold bonus) is rejected with a typed error, never approximated.
+- **Blocks.** none remaining. (Before the interview: Custom profiles that need a non-affine rule (P1-06,
+  P1-10).)
 - **Where implemented (when ratified).** `engine-spec.md` §2.3 and §5.4;
   `docs/03-contracts/engine-output-contract.md` §3.7; `projection-stack.md` §4.7.
 
@@ -1489,8 +1699,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   1. Keep the vectors as written.
   2. Make them symmetric across positions.
 - **Recommended default.** None — open. Interim rule: the vectors are binding as written.
-- **Status.** Open — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** P1-01 (output-contract skeleton); P1-08.
+- **Status.** **Decided (2026-10-08, Product/Architecture and Statistical owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default: The
+  superseded §5.1 stat-vector asymmetry is intended and stays binding as written: QBs carry start
+  probability but no snap share and no receiving components; RB/WR/TE carry snap share but no start
+  probability.
+- **Blocks.** none remaining. (Before the interview: P1-01 (output-contract skeleton); P1-08.)
 - **Where implemented (when decided).** `engine-spec.md` §5.1; `engine-output-contract.md` §3.2.
 - **Note.** Decide the asymmetry once, here. DR-D8 keeps its other four items.
 
@@ -1510,9 +1724,17 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   None of them is fixed by any spec. Each is recorded per output version.
 - **Options considered.** No source records options.
 - **Recommended default.** None — open. Interim rule: each value is recorded per output version.
-- **Status.** Open — awaiting Product/Architecture owner and Statistical owner.
-- **Blocks.** P1-01 (output-contract skeleton); P1-08 (distributions); P2-07 (the change log; `engine-spec.md`
-  §5.6, §10.2.6).
+- **Status.** **Decided in part (2026-10-08, Product/Architecture and Statistical owners, decision
+  interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended
+  default for this part: The interim rule is the basis for the P1-01 output-contract skeleton: every open
+  definition (floor/ceiling percentiles, default exceedance thresholds, positional starter thresholds,
+  change-attribution method) is a versioned setting recorded per output version and set with
+  Statistical-owner approval before the package that uses it is Ready (P1-08 for the distribution labels,
+  P2-07 for the change-log method). **Still open:** The values themselves and the change-attribution
+  method.
+- **Blocks.** P1-08 (the distribution values); P2-07 (the change-log method). (Before the interview: P1-01
+  (output-contract skeleton); P1-08 (distributions); P2-07 (the change log; `engine-spec.md` §5.6,
+  §10.2.6).)
 - **Where implemented (when decided).** `engine-output-contract.md` §3.6 and §6; the model spec that
   defines the change attribution.
 
@@ -1574,8 +1796,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   2. Drop the fixed-point claim (a single pass).
 - **Recommended default.** None — open. Interim rule: `fit` is ported as is, with parity only in
   fixture-injected mode.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-12.
+- **Status.** **Decided (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default: Drop
+  the fixed-point claim: GRID's fit is a single pass (rounds fixed at 1) with no Layer-1 credit fed back
+  into RAPM prior means; the 'fixed point' claim is removed from engine-spec §6.2; feedback may be
+  reintroduced only by ADR with recovery evidence. How oracle parity fixtures treat the oracle's own
+  three-round loop is a rapm-attribution.md matter; the engine does not implement the loop.
+- **Blocks.** none remaining. (Before the interview: P1-12.)
 - **Where implemented (when decided).** `rapm-attribution.md` §4.7; `layer1-credit.md` §4.6;
   `engine-spec.md` §6.2 Component 7.
 - **Note.** This entry absorbed the duplicate slug `fixed-point-scope` (`rapm-attribution.md`).
@@ -1597,8 +1824,15 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   3. Layer-1 event credit for QBs.
 - **Recommended default.** None — open. Method: calibrate by rolling origin on completed seasons,
   pre-registered before results.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-12 (real data); any real-RAPM golden.
+- **Status.** **Decided in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default for
+  this part: Method: the real-scale λ, μ_team and any `lambda_by_pos` multipliers, and the
+  QB-identifiability remedy, are chosen by pre-registered rolling-origin calibration on completed seasons.
+  The study must compare all three listed remedies: multi-season pooling (DR-C6 window), a QB-specific
+  penalty or prior (`lambda_by_pos` / own prior; needs the DR-B4 realistic profile), and Layer-1 event
+  credit as the QB signal. **Still open:** The values and which remedy wins (from the study).
+- **Blocks.** P1-12 (real data), through the calibration study. (Before the interview: P1-12 (real data);
+  any real-RAPM golden.)
 - **Where implemented (when decided).** `rapm-attribution.md` §4.9 and §4.10; `engine-spec.md` §6.4.
 
 ### DR-D13 layer1-estimand
@@ -1619,7 +1853,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   3. Restrict individual credit to Layer-1′ role events.
 - **Recommended default.** None — open. Interim rule: outputs carry `role = on_field`, and explanations do
   not describe the credit as individual (`layer1-credit.md` §3.3).
-- **Status.** Open — awaiting Statistical owner.
+- **Status.** Open — awaiting Statistical owner. **Interim rule confirmed and direction recorded
+  (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Kept open with the interim rule (outputs
+  carry `role = on_field`; explanations never describe it as individual efficiency). Direction recorded:
+  pursue an individual estimand - test own-role (Layer-1′) credit first, now per event under DR-D15, then
+  teammate subtraction; each is promoted only on recovery evidence (stat-vector world, DR-B4).
 - **Blocks.** Promotion of RB/WR/TE credit as an individual signal: P1-12 outputs and the P1-07 Layer-D
   covariates.
 - **Where implemented (when decided).** `layer1-credit.md` §1.3 and §3.3; `projection-stack.md` §4.4.
@@ -1655,8 +1894,11 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - `K = 5`;
   - seed 0, recorded;
   - a single-season frame.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-12.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The cross-fit design of `layer1-credit.md`
+  §§4.4 and 9: week-grouped folds keyed by play identity with the fold map persisted; fold-wise opponent
+  ratings; early stopping explicit; K = 5; seed 0, recorded; a single-season frame.
+- **Blocks.** none remaining. (Before the interview: P1-12.)
 - **Where implemented (when ratified).** `layer1-credit.md` §4.3, §4.4 and §5.2; `engine-spec.md` §6.2
   Component 6; `evaluation-and-leakage.md` §4.2 (G12).
 
@@ -1692,9 +1934,19 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
 
   The per-event vs per-snap choice has **no default**. Until it is decided, Rust implements both behind an
   explicit enum and promotes neither.
-- **Status.** Open — awaiting Statistical owner (partial defaults proposed).
-- **Blocks.** Layer-1′ in P1-12; the involvement-roles field of the plays contract (P1-03); Layer-1′ in live
-  operation (P2-03).
+- **Status.** **Decided in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default for
+  this part: The partial defaults (`layer1-credit.md` §4.8): roles dropback (sacks and scrambles
+  included), carry and target; each role event gets the full residual with no passer/target split; every
+  target is attributed to the receiver; no eligibility rule (exposure carries the weight); g′ frozen per
+  season, fitted on S−3..S−1 with features (s, δ^team) only; the opponent is the team-level E_def as of
+  week w − 1. and the exposure basis: per role event (value per dropback/carry/target, with the event
+  count setting precision), not per snap. **Still open:** Penalty-play handling; the snap-count provider
+  contract and licence (still needed for Layer C and played flags; KI-NEW-Z50); recovery evidence on the
+  stat-vector world.
+- **Blocks.** penalty-play handling and the snap-count source, before Layer-1′ is promoted (P1-12, P2-03).
+  (Before the interview: Layer-1′ in P1-12; the involvement-roles field of the plays contract (P1-03);
+  Layer-1′ in live operation (P2-03).)
 - **Where implemented (when decided).** `layer1-credit.md` §4.8; `engine-spec.md` §6.2 Component 6 and
   §6.3.
 
@@ -1714,8 +1966,14 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - Mark a did-not-play week's predictive as not applicable.
 - **Recommended default.** None — open. Interim rule: a did-not-play predictive is never published as a
   forecast of an observation.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-08; P1-12.
+- **Status.** **Decided in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default for
+  this part: A did-not-play week's predictive is reported as not applicable (never the oracle's
+  floor-based range). Principle: the published pre-game predictive is conditioned on the exposure
+  projected by Layer C and graded against realised exposure afterwards; calibration reports show both the
+  known- and forecast-exposure views. **Still open:** The exact definition, which waits for Layer C's
+  projected exposure (P1-07).
+- **Blocks.** P1-08 (the definition, once Layer C exists). (Before the interview: P1-08; P1-12.)
 - **Where implemented (when decided).** `state-space-kalman.md` §4.3 and §9; `layer1-credit.md` §4.7;
   `evaluation-and-leakage.md`.
 
@@ -1733,8 +1991,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   2. An offseason discount.
   3. Re-initialisation.
 - **Recommended default.** None — open.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-12; P2-03.
+- **Status.** **Decided (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default:
+  Option 3 (re-initialisation): at every season boundary, in both live production and backtest replay,
+  each player's filter restarts from the prior built on the new three-season window; no offseason predict
+  steps or offseason discount. This also settles DR-C6's Kalman clause.
+- **Blocks.** none remaining. (Before the interview: P1-12; P2-03.)
 - **Where implemented (when decided).** `state-space-kalman.md` §6.6.
 
 ### DR-D18 changepoint-semantics
@@ -1752,8 +2014,14 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
     pre-detection `(m_w, S_w)` (`state-space-kalman.md` §8.2 D-8).
 - **Options considered.** Same-week or next-week application; the threshold value; the gate's form.
 - **Recommended default.** None — open.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-12; P2-03.
+- **Status.** **Decided in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default for
+  this part: A changepoint flagged from week w's result takes effect from week w + 1 only; it never
+  changes week w's own update (the published week-w forecast is the pre-detection one). **Still open:**
+  `z_thresh` and the precision/recall gate, until a synthetic world plants changepoints; until then flags
+  stay informational and never trigger production adjustments.
+- **Blocks.** automatic changepoint adjustments (`z_thresh` and the precision/recall gate; P1-12, P2-03).
+  (Before the interview: P1-12; P2-03.)
 - **Where implemented (when decided).** `state-space-kalman.md` §4.6 and §9.
 
 ### DR-D19 prior-scale-handoff
@@ -1772,8 +2040,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
      smoothed talent, which `priors.py:83-90` already allows.
   2. An explicit, versioned scale map.
 - **Recommended default.** None — open.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-07; P1-12.
+- **Status.** **Decided in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default for
+  this part: Option 1: the feeder translation is fitted directly against the tracker's own talent scale -
+  end-of-season (smoothed) talent computed without the college prior, so the prior never trains on itself;
+  no separate scale map. **Still open:** `P0_form` and `P0_scheme` (need P1-12 washout/calibration
+  measurements).
+- **Blocks.** `P0_form` and `P0_scheme` (P1-12 calibration). (Before the interview: P1-07; P1-12.)
 - **Where implemented (when decided).** `cross-league-priors.md` §4.3, §4.4 and §9; `state-space-kalman.md`
   §6.5; `engine-spec.md` §6.5.
 
@@ -1796,8 +2069,11 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - ridge-estimated non-negative weights that sum to 1;
   - fitted on out-of-fold rolling-origin predictions;
   - Layer F stays downstream of the stacked quantities.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-08.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1: stack Layer C share means and
+  Layer D rate means, per position, with ridge-estimated non-negative weights summing to 1, fitted on
+  out-of-fold rolling-origin predictions; Layer F stays downstream of the stacked quantities.
+- **Blocks.** none remaining. (Before the interview: P1-08.)
 - **Where implemented (when ratified).** `projection-stack.md` §4.8.4; `engine-spec.md` §6.6.
 
 ### DR-D21 rate-model-family
@@ -1818,8 +2094,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - exposure-weighted least squares, or a Gamma GLM with log link, for yardage.
 
   The receiving rate base has no default.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-07.
+- **Status.** **Ratified in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The probability components (completion,
+  catch, touchdown, interception, fumble, two-point) use a binomial GLM with logit link and trials =
+  exposure (accepted on design grounds, ahead of rolling-origin evidence). **Still open:** The yardage
+  family (exposure-weighted least squares or Gamma GLM, log link) and the receiving rate base (per target
+  or per catch), on rolling-origin evidence.
+- **Blocks.** the yardage family and the receiving base, before P1-07. (Before the interview: P1-07.)
 - **Where implemented (when ratified).** `projection-stack.md` §4.8.2 and §9.
 
 ### DR-D22 provider-ep-features
@@ -1833,8 +2114,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   1. Allow provider `ep`/`epa` as features.
   2. Compute EPA-type features from GRID dV only.
 - **Recommended default.** None — open. Interim rule: EPA-type features are computed from GRID dV only.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** No source names a WP. Any feature that would read nflverse `ep`/`epa` waits for it.
+- **Status.** **Decided (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default: The
+  interim rule is permanent: EPA-type features are computed from GRID dV only; nflverse ep/epa never enter
+  features. Reopened only by ADR (for example if a point-in-time nflfastR model ever exists).
+- **Blocks.** none. (Before the interview: No source names a WP. Any feature that would read nflverse
+  `ep`/`epa` waits for it.)
 - **Where implemented (when decided).** `value-model.md` §9; `engine-spec.md` §11.6.
 
 ### DR-D23 missing-provider-projection-policy
@@ -1852,8 +2137,14 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - report the imputed-cell count per provider and comparison;
   - a pooled player-week with no engine projection is a typed
     `EvaluationError::MissingEngineProjection`, never imputed.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P2-06. No §7.8 or §7.9 result is admissible until it is ratified.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Impute the provider's lowest published
+  projection at that position and week; same rule for every provider; report the imputed-cell count per
+  provider and comparison; a missing engine projection is `EvaluationError::MissingEngineProjection`,
+  never imputed. Added by the owner: if a provider published nothing at that position that week, the
+  player-week is excluded for that provider and the exclusions are counted.
+- **Blocks.** none remaining. (Before the interview: P2-06. No §7.8 or §7.9 result is admissible until it
+  is ratified.)
 - **Where implemented (when ratified).** `evaluation-and-leakage.md` §4.7; `engine-spec.md` §7.3.
 
 ### DR-D24 last-season-baseline
@@ -1872,8 +2163,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   2. Keep it as a reported diagnostic.
 - **Recommended default.** None — open. Interim rule: every Phase 1 scorecard reports it as a diagnostic
   baseline, and the gate set stays the four superseded naive baselines.
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-09.
+- **Status.** **Decided (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**; the entry had no recommended default:
+  Last-season per-game actuals joins the §9.4 must-beat naive baseline set (a fifth gate baseline); if it
+  is the strongest naive baseline, the 3% overall and 1% per-position margins are measured against it;
+  players with no prior season fall back to the position/depth-chart median (DR-C5).
+- **Blocks.** none remaining. (Before the interview: P1-09.)
 - **Where implemented (when decided).** `engine-spec.md` §9.2.4 and §9.4; `evaluation-and-leakage.md`
   §4.4.
 
@@ -1890,8 +2185,14 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
 - **Options considered.** The parameter values only. The form is proposed.
 - **Recommended default.** None for the parameters. They are set by rolling-origin validation on a
   calibration period disjoint from evaluation (`evaluation-and-leakage.md` §4.11).
-- **Status.** Open — awaiting Statistical owner.
-- **Blocks.** P1-07; P1-08.
+- **Status.** **Ratified in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The form of `projection-stack.md` §4.8.3:
+  a weighted average of the player's active games in the three-season window, weights decaying with age in
+  team game-weeks (byes skipped), one decay rate per position and stat class (usage vs efficiency), no
+  GRID inputs; the values are set by rolling-origin calibration on a period disjoint from evaluation.
+  **Still open:** The decay rates, the minimum game count and the season-boundary treatment (from
+  calibration).
+- **Blocks.** the calibrated values, before P1-07 and P1-08. (Before the interview: P1-07; P1-08.)
 - **Where implemented (when decided).** `projection-stack.md` §4.8.3; `engine-spec.md` §6.6.
 
 ### DR-D26 recovery-gate-seed-ensemble
@@ -1915,9 +2216,15 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   - optionally also gate a declared low quantile;
   - the statistical owner pre-registers the ensemble and the margins when the floors are re-set;
   - the seed-7 world stays the fixture-injected golden.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** The Class D gates of P1-12 (`synthetic-world.md` S-5, `value-model.md` P-V8,
-  `layer1-credit.md` P-L1-7).
+- **Status.** **Overridden (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Class D recovery gates use the median over
+  a declared generator-seed set, calibrated below the corrected oracle's ensemble median, and a declared
+  low quantile is also gated (required, not optional); the statistical owner pre-registers the ensemble,
+  quantile and margins when the floors are re-set; the seed-7 world stays the fixture-injected golden.
+  **Still open:** The seed set, quantile and margins (pre-registered when the floors are re-set).
+- **Blocks.** the pre-registered seed set, quantile and margins, when the floors are re-set (P1-12 Class D
+  gates). (Before the interview: The Class D gates of P1-12 (`synthetic-world.md` S-5, `value-model.md`
+  P-V8, `layer1-credit.md` P-L1-7).)
 - **Where implemented (when ratified).** `synthetic-world.md` §7.6 and §10.3; `engine-spec.md` §7.13;
   `reference/python/PARITY.md`.
 
@@ -1944,8 +2251,14 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
 
   The fixture stores the seeds 1–10 envelope. The thresholds are pre-registered by the statistical owner
   before any Rust V(s) is evaluated.
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** P1-12 (P-V5).
+- **Status.** **Ratified in part (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Via the DR-B3 answer: C-V replaces Class C
+  for V(s), with its two numeric limits pre-registered now: corr(dV) ≥ 0.98 over all rows, and max |V_Rust
+  − V_oracle| ≤ 0.30 EP on states with support ≥ 120; plus parts 3 (P-V4 goldens) and 4 (P-V8 Class D).
+  **Still open:** Parts 3-4 wait on DR-C7's estimator spec and the re-set Class D floors; the reference
+  envelope is computed on the corrected world once it exists.
+- **Blocks.** parts 3 and 4 (the DR-C7 estimator spec; the re-set Class D floors) before P1-12 P-V5.
+  (Before the interview: P1-12 (P-V5).)
 - **Where implemented (when ratified).** `value-model.md` §10.3; `docs/03-contracts/parity-fixture-contract.md`
   §6; `reference/python/PARITY.md` (d); `engine-spec.md` §7.12.
 
@@ -1968,8 +2281,13 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
     process (`synth.py` is never edited);
   - the Rust generator takes its randomness through an injectable draw source;
   - fed the tape, it reproduces `plays`, `players`, `gt` and `college` exactly (S-2).
-- **Status.** Proposed — awaiting Statistical owner.
-- **Blocks.** The Rust-native generator in P1-12.
+- **Status.** **Ratified (2026-10-09, Statistical owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 3: the oracle exporter records each
+  draw's result in order by wrapping the generator in its own process (`synth.py` never edited); the Rust
+  generator takes randomness through an injectable draw source and, fed the tape, reproduces plays,
+  players, gt and college exactly (S-2); seed-ensemble statistical checks still apply. If recording proves
+  impossible without editing `synth.py`, that is a new decision request.
+- **Blocks.** none remaining. (Before the interview: The Rust-native generator in P1-12.)
 - **Where implemented (when ratified).** `synthetic-world.md` §5.3 and §10.3 (S-2); the exporter under
   `reference/python/tools/parity/` (parity-fixture-contract §9).
 
@@ -1996,8 +2314,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   Reading it needs no new Rust dependency: `serde_json` is already in `[workspace.dependencies]`. Hash
   verification runs in a shell guard. An in-Rust check would need owner approval of a hashing crate.
   Fixture directories are marked `-text` in `.gitattributes`.
-- **Status.** Proposed — awaiting Statistical owner and Product/Architecture owner.
-- **Blocks.** P1-01.
+- **Status.** **Ratified (2026-10-08, Statistical and Product/Architecture owners, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Option 1: one deterministic JSON manifest
+  per case; one raw little-endian file per array; UTF-8 JSON arrays for strings; offsets + values for
+  ragged lists; no new Rust dependency (`serde_json`); hash verification in a shell guard; fixture
+  directories marked `-text`.
+- **Blocks.** none remaining. (Before the interview: P1-01.)
 - **Where implemented (when ratified).** `parity-fixture-contract.md` §2–§4; `.gitattributes` (with the
   first fixture).
 
@@ -2022,8 +2344,12 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   3. Informational only.
 - **Recommended default.** Option 2 (engine-spec §8.19 draft). Interim rule: the job is not
   merge-authoritative while DR-A3 stands.
-- **Status.** Proposed — awaiting Security/Release owner and Product/Architecture owner.
-- **Blocks.** No WP. It decides the branch-protection configuration.
+- **Status.** **Overridden (2026-10-09, Security/Release and Product/Architecture owners, decision
+  interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Always required: the
+  reference-oracle job becomes a required status check for every PR to main (not only parity-touching
+  PRs). The owner applies it in GitHub branch protection after PR #4 merges; no workflow edit is needed.
+- **Blocks.** owner action after the P0-01 merge: make the check required in branch protection. (Before
+  the interview: No WP. It decides the branch-protection configuration.)
 - **Where implemented (when ratified).** `engine-spec.md` §8.19; `.github/workflows/alpha-ci.yml`; the
   repository's branch-protection settings.
 
@@ -2082,6 +2408,9 @@ keeps its slug as its short name. DR-D31 was raised afterwards, from the first `
   (critic G-3).
 - If an originating GRID design conversation or document exists outside git, the Product/Architecture
   owner should supply it for archiving in `docs/07-archive/cautious-nevermore/`.
+- **Closed (2026-10-09, owner, decision interview,
+  `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`).** The owner answered "Nothing to add": no
+  originating design document exists outside git.
 
 ---
 
@@ -2092,7 +2421,7 @@ implemented, or scheduled, as follows. Each is still reviewed in its implementin
 
 | # | Item | Where implemented or scheduled |
 |---|---|---|
-| 1 | Matchup-grade sign fix (critic X-3; KI-NEW-A2). The estimand (`+E_def` vs `+β_def`) is part of DR-B5 | Oracle: correction-ledger position 3 in `reference/python/PARITY.md` (after DR-B1 ratification). Rust: `docs/05-model-specs/rapm-attribution.md`, ported in P1-12 with a truth-anchored GM-A test |
+| 1 | Matchup-grade sign fix (critic X-3; KI-NEW-A2). The estimand (`+E_def` vs `+β_def`) is part of DR-B5 | Oracle: correction-ledger position 3 in `reference/python/PARITY.md` (DR-B1, ratified 2026-10-08). Rust: `docs/05-model-specs/rapm-attribution.md`, ported in P1-12 with a truth-anchored GM-A test |
 | 2 | Kalman observation = weekly credit (critic X-13; KI-NEW-W3) | `docs/05-model-specs/state-space-kalman.md` and `layer1-credit.md`; `engine-spec.md` §6.2; P1-12. The oracle's `weekly_update` is not a parity source (`known-issues.md` §2) |
 | 3 | Causal Kalman initialisation (KI-#15) | Oracle: ledger position 4. Rust: `state-space-kalman.md` (x0/P0 from the prior); P1-06 and P1-12 |
 | 4 | Remove `except Exception: pass` in `layer1_all_qbs`, or drop the function (KI-G6) | Not ported (dead in production). The P1-12 port scope excludes `layer1_all_qbs`; the oracle is unchanged |
