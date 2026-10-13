@@ -12,8 +12,8 @@
     "sha": "3d8448215afeee60c177ad7656b2c462a4bce788",
     "branch": "claude/grid-engine-consolidation-e7kmh9",
     "range": "origin/main...HEAD",
-    "generated_at": "2026-10-13T21:44:11Z",
-    "state": "uncommitted: 6 path(s) not yet in 3d8448215afeee60c177ad7656b2c462a4bce788"
+    "generated_at": "2026-10-13T21:48:09Z",
+    "state": "uncommitted: 2 path(s) not yet in 3d8448215afeee60c177ad7656b2c462a4bce788"
   },
   "model_and_harness": {
     "project_alias": "unrecorded",
@@ -36,11 +36,6 @@
     ".ai/evidence/P1-00/PR-BODY.md",
     ".ai/evidence/P1-00/manifest.json",
     ".ai/evidence/P1-00/verification-input.json",
-    ".claude/autoharness/drain.lock",
-    ".claude/autoharness/requests",
-    ".claude/autoharness/requests.lock",
-    ".claude/autoharness/session-693e74a1-f8af-5256-86e9-2299b8697223",
-    ".claude/autoharness/session-693e74a1-f8af-5256-86e9-2299b8697223.lock",
     ".claude/settings.json",
     ".env",
     ".gitattributes",
@@ -385,7 +380,7 @@
         "command": "./scripts/check-traceability.sh origin/main",
         "exit_status": 0,
         "run_against_commit": "3d8448215afeee60c177ad7656b2c462a4bce788",
-        "summary": "All 270 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
+        "summary": "All 268 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
       },
       {
         "command": "bash tests/guards/run.sh",

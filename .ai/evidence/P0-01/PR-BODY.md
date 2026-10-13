@@ -83,7 +83,7 @@ plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where someth
   command with `Assert-Ok` (15/15).
 - `Cargo.lock` resolves 171 crates (only `grid-ffi` removed; no version changed). A fresh clone
   compiles offline.
-- Traceability: all 270 non-trivial paths traced against `origin/main`.
+- Traceability: all 268 non-trivial paths traced against `origin/main`.
 - Reference oracle:
   - `verify_manifest.py` OK (102 verbatim, 3 patched), also with `--upstream` against
     cautious-nevermore;
@@ -129,7 +129,7 @@ Human approvals:                 2026-10-01 direction (Rust target + Python refe
                                  DR-D31 option 1 / ledger entry L0; 2026-10-08/09 the decision
                                  interview (62 answers); no diff sign-off yet
 Known limitations:               see below
-Evidence manifest hash:          sha256:a22450da0edd0d1492d57adf0f7d982d0f759dca2454e91dd4f1d9289376d9cf
+Evidence manifest hash:          sha256:0e2b5ed1ce62388d0746b2ec6bc2a29a0bdc5216422306476123b1c905463b7e
 Oracle parity result:            no Rust component yet; the oracle's own goldens pass under the pin
 Reference-oracle job result:     red on the first two heads (KI-NEW-Z78); green on 05aba0a
 Owner decisions depended on:     DR-A1..A12 and the interview outcomes (see Decisions); DR-A10 ruling pending

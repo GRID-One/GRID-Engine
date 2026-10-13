@@ -26,7 +26,7 @@
         "command": "./scripts/check-traceability.sh origin/main",
         "exit_status": 0,
         "run_against_commit": "3d8448215afeee60c177ad7656b2c462a4bce788",
-        "summary": "All 270 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
+        "summary": "All 268 non-trivial paths traced individually, without PR_BODY, against base origin/main (48ee320)."
       },
       {
         "command": "bash tests/guards/run.sh",
