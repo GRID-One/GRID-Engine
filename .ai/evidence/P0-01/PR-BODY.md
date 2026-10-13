@@ -26,7 +26,8 @@ this one repository:
 - **Knowledge is preserved and indexed:**
   - eight model specs and three contracts;
   - nflverse and CFBD provider docs;
-  - a decision register of 64 owner decisions;
+  - a decision register of 64 owner decisions, most of them settled by your decision interview of
+    2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`);
   - a known-issues backlog, re-verified against code;
   - lessons learned;
   - the cautious-nevermore engine history (non-authoritative) in `docs/07-archive/`;
@@ -37,13 +38,22 @@ this one repository:
 
 ## Decisions
 
+You answered every open register entry except DR-D9 and DR-D10 in a decision interview (62 questions,
+2026-10-08/09). The record quotes every answer verbatim, and `docs/00-meta/decision-register.md` carries
+the outcomes. The spec, model specs, contracts and governance documents now cite a settled decision
+plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where something is still open.
+
 | Decision | Status |
 |---|---|
-| DR-A1, A2, A4–A9, A11, A12 | Adopted by this PR; in force once your merge comment ratifies them (or overrides any) |
-| DR-A3 | The default is kept (Windows stays merge-authoritative); the follow-up ADR is due before P1-11 |
-| DR-A10 | **Your licence ruling for `reference/python/` is needed on this PR before merge** |
-| DR-D31 | **Ratified 2026-10-08**, in writing: "I approve DR-D31 option 1: regenerate the Layer C golden under Python 3.11 with the Haswell pin, recorded as ledger entry LO" (L0). Implemented here as correction-ledger entry L0 |
-| DR-B1..B6, DR-C1..C15, DR-D1..D30 | Proposed or open. Not settled. A work package is not Ready while a decision it depends on is unratified |
+| DR-A1, A2, A4–A9, A11, A12 | **Ratified 2026-10-08** in the interview; to be named again in your merge comment |
+| DR-A3 | Direction ratified (Linux authoritative, Windows kept as an extra job); Windows stays merge-authoritative until the follow-up ADR, due before P1-11 |
+| DR-A10 | **Option 1 chosen** (MIT OR Apache-2.0, you as sole author); **your ruling comment on this PR is still needed before merge** |
+| ADR-011, ADR-012 | Still Proposed; you chose to accept them in the merge comment |
+| DR-D31 | Ratified 2026-10-08 (ledger entry L0) |
+| B, C and D: settled | 27: 18 ratified as recommended; 3 overridden (DR-B3, DR-D26, DR-D30); 6 decided where the register had no default (DR-D5, D7, D11, D17, D22, D24). Some still name follow-on work: each DR-B1 ledger entry needs its own approval, and DR-B4's recalibrated values come later |
+| B, C and D: settled in part | 19, each with its open part named in the register: 10 ratified in part, 3 overridden in part (DR-C6, DR-C12, DR-C13), 6 decided in part |
+| Still open | DR-D2, DR-D3, DR-D13 (interim rules and directions confirmed); DR-D9, DR-D10 (not asked: they need real-data measurements) |
+| Found in review, for you before P1-12 | DR-D17: the starting prior for a player with NFL history; DR-D14: plays whose defender has no fold-wise rating |
 
 ## Things you should know before reading the specs
 
@@ -73,21 +83,27 @@ this one repository:
   command with `Assert-Ok` (15/15).
 - `Cargo.lock` resolves 171 crates (only `grid-ffi` removed; no version changed). A fresh clone
   compiles offline.
-- Traceability: all 267 non-trivial paths traced against `origin/main`.
+- Traceability: all 270 non-trivial paths traced against `origin/main`.
 - Reference oracle:
   - `verify_manifest.py` OK (102 verbatim, 3 patched), also with `--upstream` against
     cautious-nevermore;
   - 446 passed under the pin, with 0 isolation-guard violations;
   - the new Linux-only `reference-oracle` CI job runs it outside the frozen verify chain, on the
-    runner's tool-cache CPython 3.11 with the Haswell pin, and is expected green on this head.
-- Fresh-context review: one round, three independent lenses, 26 findings (0 blockers). All are
-  dispositioned as fixed in `docs/06-sessions/review-P0-01-adversarial-round1.md`.
+    runner's tool-cache CPython 3.11 with the Haswell pin. It passed on head `05aba0a`, with all four
+    CI jobs green.
+- Fresh-context review:
+  - consolidation: one round, three independent lenses, 26 findings (0 blockers), all fixed
+    (`docs/06-sessions/review-P0-01-adversarial-round1.md`);
+  - decision recording: a drafter and an adversarial verifier per document chunk, then seven reviewers
+    over the applied diff, 79 findings (0 blockers). 74 were applied, 2 were judged correct as written,
+    and 3 needed your input: one (DR-D14) is now recorded as open, and two were answered from the
+    session transcript.
 
 ## Completion record (Appendix C)
 
 ```text
 Work package:                    P0-01 (docs/01-work-packages/p0-01-engine-consolidation.md)
-Final commit:                    ee4a7e411050  (the commit the manifest attests to; the evidence
+Final commit:                    3d8448215afe  (the commit the manifest attests to; the evidence
                                  commit carrying it follows and is not self-covered)
 Model/harness identifier:        unrecorded (see Known limitations); harness Claude Code on the web
 Environment:                     Linux 6.18.44-fc-v80; rustc 1.98.1; CPython 3.11.15 + OPENBLAS_CORETYPE=Haswell for the oracle
@@ -105,15 +121,18 @@ Golden files changed and approval: reference/python/tests/grid/golden/snapshot.n
                                  2026-10-08 (DR-D31 option 1)
 Performance evidence:            n/a (no engine computation yet)
 Security/licensing review:       check-secrets OK; reference/python licence ruling pending (DR-A10)
-Fresh-context reviewer:          three independent read-only agents, round 1 at f3fb390
-Reviewer findings resolved:      26/26 (docs/06-sessions/review-P0-01-adversarial-round1.md)
+Fresh-context reviewer:          independent read-only agents: round 1 at f3fb390; the
+                                 decision-recording review at a60e970 and b8f600c
+Reviewer findings resolved:      round 1 26/26; decision recording 79/79 dispositioned (74 applied,
+                                 2 kept as written, 3 needed owner input)
 Human approvals:                 2026-10-01 direction (Rust target + Python reference); 2026-10-08
-                                 DR-D31 option 1 / ledger entry L0; no diff sign-off yet
+                                 DR-D31 option 1 / ledger entry L0; 2026-10-08/09 the decision
+                                 interview (62 answers); no diff sign-off yet
 Known limitations:               see below
-Evidence manifest hash:          sha256:69aaeaa502b6ba02a3ecf7afeaecc2edc13c610b1aee90eb42c6a5eb740b83cd
+Evidence manifest hash:          sha256:a22450da0edd0d1492d57adf0f7d982d0f759dca2454e91dd4f1d9289376d9cf
 Oracle parity result:            no Rust component yet; the oracle's own goldens pass under the pin
-Reference-oracle job result:     red on the first two heads (KI-NEW-Z78); expected green on this head
-Owner decisions depended on:     DR-A1..A12 (see Decisions); DR-D31 ratified 2026-10-08
+Reference-oracle job result:     red on the first two heads (KI-NEW-Z78); green on 05aba0a
+Owner decisions depended on:     DR-A1..A12 and the interview outcomes (see Decisions); DR-A10 ruling pending
 ```
 
 ## Non-goals
@@ -135,19 +154,23 @@ in cautious-nevermore, and `verify_manifest --upstream` proves the L0 patch.
   may record the real values.
 - **The branch name was set by the harness** (`claude/grid-engine-consolidation-e7kmh9`), not `wp/P0-01-…`.
 - **Windows is proven only by this PR's CI.**
-- **Drafts and unratified decisions.** The contracts and model specs are drafts. B, C and D decisions
-  are proposed or open, except DR-D31.
+- **Drafts and open decisions.** The contracts and model specs are drafts with unapproved equations.
+  Most B, C and D decisions are settled in full or in part; what stays open is named in each register
+  entry.
+- **Agent-only review of the decision recording.** The edits that carry your answers were checked by
+  agents against the interview record. Your merge comment confirms the record.
 
 ## Before merging
 
-1. **Licence ruling (DR-A10).** Record a licence ruling on this PR for `reference/python/`; the
-   cautious-nevermore repository has no LICENSE file.
-2. **Accept and ratify.** Accept ADR-011 and ADR-012, and ratify (or override) the A-decisions in the
-   merge comment.
+1. **Licence ruling (DR-A10).** Post your licence ruling for `reference/python/` as a comment on this PR
+   (you chose option 1 in the interview). The cautious-nevermore repository has no LICENSE file.
+2. **Merge comment.** Accept ADR-011 and ADR-012, name DR-A1, A2, A4–A9, A11 and A12 as ratified, and
+   confirm `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`.
 3. **Merge with a merge commit, never squash.** That keeps PR #1's attested commit `8d43203` reachable
    (DR-A6).
 4. **Close the earlier PRs.** Close PR #1 as included, and close PRs #2 and #3 unmerged; their review
    records are already in `docs/06-sessions/`.
+5. **After merge (DR-D30).** Make `reference-oracle (Linux only)` a required status check on `main`.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
