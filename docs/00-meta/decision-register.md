@@ -54,7 +54,7 @@ status, and the work packages it blocks.
 | **Open — awaiting \<role\>** | No source recommends a default. At most an interim rule applies until the owner decides, and the entry states it. Text that relies on the interim rule cites the DR ID. |
 | **Ratified (\<date\>, \<role\>, \<record\>)** | The owner accepted the recommended default. |
 | **Overridden (\<date\>, \<role\>, \<record\>): \<chosen option\>** | The owner chose a different option. The implementing documents must follow it. |
-| **Ratified in part / Decided in part (\<date\>, \<role\>, \<record\>)** | The owner settled the part of the entry that could be decided from evidence already in the repository. The entry's **Still open** clause lists the rest, which stays open, and text relying on it keeps its "(proposed — DR-xx)" tag. |
+| **Ratified in part / Decided in part (\<date\>, \<role\>, \<record\>)** | The owner settled the part of the entry that could be decided from evidence already in the repository. The entry's **Still open** clause lists the rest, which stays open. Text relying on a still-open part keeps "(proposed — DR-xx)" when that part has a recommended default, and is tagged "(open — DR-xx)" when it has none. |
 | **Decided (\<date\>, \<role\>, \<record\>): \<chosen option\>** | The entry was Open, with no recommended default, and the owner chose an option. It binds like a ratification. |
 | **Superseded by DR-xx / ADR-0NN** | A later decision replaced this one. |
 
