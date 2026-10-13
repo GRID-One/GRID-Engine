@@ -6,7 +6,7 @@ defects, and where Rust deliberately differs. Read `README.md` first.
 Status words used here:
 
 - **DR-A** decisions were ratified on 2026-10-08 in the owner's decision interview
-  (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and are named again in the P0-01
+  (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and are to be named again in the P0-01
   merge comment. Two exceptions: DR-A3 is ratified as a direction only, so Windows stays
   merge-authoritative until its follow-up ADR, and the DR-A10 licence ruling is still owed (the
   owner posts it on PR #4).

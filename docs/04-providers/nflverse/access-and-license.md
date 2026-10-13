@@ -13,7 +13,7 @@ pending-rulings: real-data provider fixtures under fixtures/third-party/nflverse
 **Status: Draft.** This document records what was **verified** on 2026-10-01 and marks
 everything else as requiring a ruling by the Data/Licensing owner. It is required before the
 P1-03 adapter is Ready ([README.md](README.md)) and implements critic.md G-5 and owner decision
-DR-A11 (ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment).
+DR-A11 (ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment).
 
 Nothing here is legal advice. Where a question turns on interpreting a licence, this document
 names the question and leaves the answer to the Data/Licensing owner.
@@ -24,7 +24,7 @@ names the question and leaves the answer to the Data/Licensing owner.
 |---|---|
 | Host | `github.com`, release assets of `nflverse/nflverse-data`, over HTTPS |
 | Authentication | none |
-| Engine fetch budget | at most once per local calendar day per source (DR-C14) |
+| Engine fetch budget | at most one successful fetch per source per local calendar day (DR-C14) |
 | Robots and scraping | Release assets are a published download channel. Restricted pages are never scraped to fill a gap (superseded alpha-spec §4.3) |
 | Credentials in code, logs or fixtures | none exist for this provider; none may be introduced |
 

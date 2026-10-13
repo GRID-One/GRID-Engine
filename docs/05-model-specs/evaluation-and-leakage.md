@@ -11,7 +11,7 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: evaluation and leakage (as-of information model, leakage guards, walk-forward backtest, baselines, metrics, player pool, bootstrap, diagnostics, gates)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it is
+(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment) it is
 an authority-level-3 document. The statistical owner approves the definitions. The implementing
 agent may not redefine them, and may not change a metric, threshold or evaluation population after
 seeing results (alpha-spec §7.7 and §12.7, superseded; carried into engine-spec §7.7 and §12.7).
@@ -870,7 +870,7 @@ decision interview (2026-10-08/09).
 | **DR-C4** | Horizons | Ratified 2026-10-08: weekly primary; H1 no longer a kill criterion |
 | **DR-C6** | Three-season window in backtests | Overridden in part 2026-10-09: per-(season, week) RAPM blocks summed over the per-origin window, in season the `S−2` and `S−1` blocks only; V(s) fit once per season on `S−3..S−1` and frozen (an accepted gap); every Kalman filter restarts from the windowed prior at each season boundary, in production and replay (DR-D17; §4.3) |
 | **DR-C11** | VOR and lineup simulation | Ratified 2026-10-09: lineup simulation kept as the start/sit metric, VOR internal |
-| **DR-C12** | Labels, season type | Overridden in part 2026-10-09: official stats are the labels, reconciled against the engine's play-by-play rebuild for every player-week (the official figure always wins; every disagreement recorded; those above a threshold flagged); REG only. Open: the Data/Licensing terms, the flag threshold and the canonical release (P1-03), the correction-window length |
+| **DR-C12** | Labels, season type | Overridden in part 2026-10-08: official stats are the labels, reconciled against the engine's play-by-play rebuild for every player-week (the official figure always wins; every disagreement recorded; those above a threshold flagged); REG only. Open: the Data/Licensing terms, the flag threshold and the canonical release (P1-03), the correction-window length |
 | **DR-B2** | Live oracle in CI vs committed fixtures | Ratified 2026-10-08: both; committed fixtures are the Rust contract; a Linux oracle job proves they regenerate |
 | **DR-B5** | Grade sign for Tier 2 | Ratified 2026-10-09: `+E_def` |
 | **DR-D23** | Imputation for missing provider projections | Ratified 2026-10-09: provider's lowest published projection at that position and week; counts reported; a player-week at a position where the provider published nothing that week is excluded for that provider, and the exclusions are counted (§4.7) |

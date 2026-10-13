@@ -10,7 +10,7 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Synthetic world (planted ground truth and the recovery-gate contract)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it is
+(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment) it is
 an authority-level-3 document. It defines the planted-truth generator that every GRID estimator is
 validated against (engine-spec §6.9, §7.13).
 The statistical owner approves the generative model. The implementing agent may not redefine it
@@ -937,7 +937,7 @@ lands.
 |---|---|---|
 | **DR-B4** | How is the synthetic world corrected and extended? | Ratified 2026-10-09: §4.10 now; §4.11 and §4.12 before Layers A–F. Still open: the recalibrated `r_scale`, NIS bands and Tier-0 floors; the stat-vector world's distributions and parameters (spec revision before P1-07); ledger entry 1 itself (approved when its commit exists); a work package that builds the stat-vector world |
 | **DR-B5** | Team-strength estimand, Layer-3 rows, grade sign | Ratified 2026-10-09: planted net = off + def quality (G-2); gates on E_off + E_def and `+E_def` |
-| **DR-B1** | Oracle correction order | Ratified 2026-10-08: §8.4. Still open: each ledger entry's own statistical-owner approval as its commit lands |
+| **DR-B1** | Oracle correction order | Ratified 2026-10-08: the oracle ledger order of §8.4 (steps 1–3, ledger entries 1 to 5). Still open: each ledger entry's own statistical-owner approval as its commit lands |
 | **DR-B3** | Parity tolerances | Overridden 2026-10-09 (the merged table with the post-critic amendments): Class D floors re-set on the corrected world, calibrated below observed values, over a seed ensemble (next row). Still open: the floor values, set once after ledger entries 2 and 4 |
 | **DR-D26** | Single-seed floors fail on every other seed (§7.6). What statistic do Class D gates use? | Overridden 2026-10-09: gate the median over a declared generator-seed ensemble, calibrated below the corrected oracle's ensemble median, and also a declared low quantile (required, not optional). Still open: the ensemble, quantile and margins, pre-registered by the statistical owner when the floors are re-set. The seed-7 world stays the fixture-injected golden |
 | **DR-D28** | How is the Rust generator proven to implement §4 exactly without matching numpy streams? | Ratified 2026-10-09: draw-tape replay (§5.3 (b)): the exporter records draw results by wrapping the generator in its own process; Rust replays them through an injectable draw source. If recording proves impossible without editing `synth.py`, that is a new decision request |

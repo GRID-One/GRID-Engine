@@ -14,9 +14,10 @@ permission-profile: unrecorded
 
 The owner asked the implementing agent to "interview me to close any decisions that I can make right
 now". The owner holds every owner role (`docs/00-meta/decision-register.md`, "Owner roles"). The agent
-asked about every open register entry, one question at a time, through the harness's structured
-question tool. Each question offered two to four options. The first option was marked
-"(Recommended)", and the tool always offered free text ("Other") as well. This record gives every
+asked about every open register entry except DR-D9 and DR-D10 (see "Not asked" below), one question
+at a time, through the harness's structured question tool. Each question offered two to four options.
+The first option was marked "(Recommended)", except in question 56 (a multi-select) and question 62
+(an information request), and the tool always offered free text ("Other") as well. This record gives every
 question, the options offered and the owner's verbatim answer. The register's Status lines cite it.
 
 What the agent did and did not do:
@@ -25,8 +26,9 @@ What the agent did and did not do:
   did not decide any entry itself. The owner names the ratified entries again in the P0-01 merge
   comment, so the ratification also stands in the owner's own words on GitHub.
 - **Who recommended.** Where an option was marked "(Recommended)" but the register had no default, or
-  the agent recommended against the register's literal default, the question said so. Those cases
-  are marked *agent's recommendation* below.
+  the agent recommended against the register's literal default, the record marks it *agent's
+  recommendation* below. Some of those questions said so in their own text; for the others the mark
+  is added here, so the record shows who recommended what.
 - **Not asked.** DR-D9 and DR-D10 were not asked: both need real-data measurements that no work
   package has produced yet. DR-D31 was already ratified (2026-10-08).
 
@@ -51,7 +53,7 @@ Answers are verbatim from the question tool. Options are listed in the order off
 | 4 | DR-A3 | With no Windows app, which platform's run should count for merge and release? (Follow-up ADR before P1-11; PR #4 changes nothing.) | Linux counts; Windows extra (Recommended) · Keep Windows deciding · Both must pass · Decide later | "Linux counts; Windows extra (Recommended)" |
 | 5 | ADR-011, ADR-012 | Accept both? (An agent never marks an ADR Accepted.) | Accept in merge comment (Recommended) · Accept now; mark files · Not yet | "Accept in merge comment (Recommended)" |
 
-### B, C and D decisions
+### B, C and D decisions (answers 6–20 on 2026-10-08, answers 21–62 on 2026-10-09, UTC)
 
 | # | Entry | Question (condensed) | Options offered | Owner's answer |
 |---|---|---|---|---|
@@ -60,16 +62,16 @@ Answers are verbatim from the question tool. Options are listed in the order off
 | 8 | DR-D29 | On-disk format for parity fixtures? | JSON index + raw binary (Recommended) · NumPy .npz archives · Parquet · Plain JSON throughout | "JSON index + raw binary (Recommended)" |
 | 9 | DR-C4 | Which horizons does the engine promise? | Weekly primary, ROS derived (Recommended) · Weekly only · Rest-of-season primary · Keep open | "Weekly primary, ROS derived (Recommended)" |
 | 10 | DR-D7 | Is the per-position stat-list asymmetry intended? | Keep as written (Recommended; *agent's recommendation*, register had none) · Make symmetric · Keep open | "Keep as written (Recommended)" |
-| 11 | DR-D8 | Build the P1-01 output skeleton on the rule "every open definition is versioned and set with owner approval before the package that uses it is Ready"? | Rule now, values later (Recommended) · Set the values now · Keep open | "Rule now, values later (Recommended)" |
+| 11 | DR-D8 | Build the P1-01 output skeleton on the rule "every open definition is versioned and set with owner approval before the package that uses it is Ready"? | Rule now, values later (Recommended; *agent's recommendation*, register had none) · Set the values now · Keep open | "Rule now, values later (Recommended)" |
 | 12 | DR-B6 | Policy: copy the oracle's silent-failure paths, or stop with a typed error? (Numeric cut-off excluded.) | Stop with named error (Recommended) · Copy the oracle · Keep open | "Stop with named error (Recommended)" |
 | 13 | DR-C15 | Where does the engine keep its saved state? | SQLite + registered files (Recommended) · SQLite only · Data files only · Keep open | Free text: "Show me the pros and cons of each option" |
 | 14 | DR-C15 | (Asked again after a written pros-and-cons comparison.) | SQLite + registered files (Recommended) · SQLite only · Data files only · Keep open | "SQLite + registered files (Recommended)" |
 | 15 | DR-C12 | Statistical half: where do the training labels come from? | Official stats, regular season (Recommended) · Both, reconciled · Fixed play-by-play rebuild · Keep open | "Both, reconciled" |
-| 16 | DR-C12 | When the official line and the play-by-play rebuild disagree, what is the label? | Official wins, gap flagged (Recommended) · Quarantine until reviewed · Rebuild wins · Leave rule to model spec | "Official wins, gap flagged (Recommended)" |
+| 16 | DR-C12 | When the official line and the play-by-play rebuild disagree, what is the label? | Official wins, gap flagged (Recommended; *agent's recommendation*, register had no reconciliation rule) · Quarantine until reviewed · Rebuild wins · Leave rule to model spec | "Official wins, gap flagged (Recommended)" |
 | 17 | DR-C12 | Keep labels regular-season only, with two-point conversions included? | Regular season + 2-pt (Recommended) · Include playoff weeks · Regular season, no 2-pt | "Regular season + 2-pt (Recommended)" |
 | 18 | DR-C13 | Drive value, official situations, two-minute clock? | All three defaults (Recommended) · Defaults, signed points now · Defaults + 3 situations · Defaults, quarter clock | "Defaults + 3 situations" |
 | 19 | DR-C13 | Definitions of the three added situations? | Suggested cut-offs (Recommended; *agent's suggestion*: goal_line ≤ 5 yards, third_and_long = 3rd and ≥ 7, fourth_down = every 4th down) · Tighter goal line · Defer to value-model spec | Free text: "Suggested but with a goal_line wr carve-out set at 8" |
-| 20 | DR-C13 | Clarification: two plain masks (5 yards, and a separate 8-yard WR mask), or one position-aware mask? | Two masks: 5 and 8 (Recommended) · One mask, position-aware · Something else | "Two masks: 5 and 8 (Recommended)" |
+| 20 | DR-C13 | Clarification: two plain masks (5 yards, and a separate 8-yard WR mask), or one position-aware mask? | Two masks: 5 and 8 (Recommended; *agent's recommendation*) · One mask, position-aware · Something else | "Two masks: 5 and 8 (Recommended)" |
 | 21 | DR-C14 | Run-once command or resident scheduler; self-fetch or pre-downloaded files? | Run-once command, self-fetch (Recommended) · Always-running scheduler · Read pre-downloaded files · Keep open | "Run-once command, self-fetch (Recommended)" |
 | 22 | DR-C9 | NCAA only; drop the oracle's age/draft steps; alpha §6.3 blend governs (source of the college rating left open)? | NCAA only, drop, blend (Recommended) · Add other leagues too · Box scores only, no PBP · Keep open | "NCAA only, drop, blend (Recommended)" |
 | 23 | DR-C1 | Structure: RAPM only between seasons; in season, participation-free inputs only? | Two-tier: RAPM offseason (Recommended) · RAPM in season if data exists · Licensed in-season feed · Estimate lineups from snaps | "Two-tier: RAPM offseason (Recommended)" |
@@ -79,28 +81,28 @@ Answers are verbatim from the question tool. Options are listed in the order off
 | 27 | DR-C10 | The Kalman bundle, and how old evidence is faded? | Bundle, oracle's fade (Recommended) · Bundle, textbook fade · Bundle, wide start · Keep open | "Bundle, oracle's fade (Recommended)" |
 | 28 | DR-D6 | Allow non-affine scoring rules (threshold bonuses)? | Points-per-stat only (Recommended) · Support bonuses · Keep open | "Points-per-stat only (Recommended)" |
 | 29 | DR-C5 | The evaluation framework (PB-MAE, pre-set gates, week-clustered intervals, union pool) and four written sub-items? | PB-MAE, preset gates (Recommended) · PB-MAE, no tuned gates · cautious-nevermore's H1/H2 · Keep open | "PB-MAE, preset gates (Recommended)" |
-| 30 | DR-C5 | Accept the Layer C Gamma–Poisson shrinkage now, or wait for the written comparison? | Wait for the comparison (Recommended) · Accept Gamma–Poisson now · Prefer normal–normal | "Wait for the comparison (Recommended)" |
+| 30 | DR-C5 | Accept the Layer C Gamma–Poisson shrinkage now, or wait for the written comparison? | Wait for the comparison (Recommended; *agent's recommendation* over the register's proposed Gamma–Poisson) · Accept Gamma–Poisson now · Prefer normal–normal | "Wait for the comparison (Recommended)" |
 | 31 | DR-C7 | V(s): a deterministic in-house estimator, nflfastR `ep` ruled out? | Deterministic in-house (Recommended) · Keep a booster · Use nflfastR ep · Keep open | Free text: "Which would be best for model accuracy?" |
 | 32 | DR-C7 | (Asked again after a written accuracy comparison.) | Deterministic in-house (Recommended) · Keep a booster · Use nflfastR ep · Keep open | "Deterministic in-house (Recommended)" |
 | 33 | DR-C8 | Booster backend? | Pure Rust first (Recommended) · XGBoost primary · No booster until needed · Keep open | "Pure Rust first (Recommended)" |
-| 34 | DR-C8 | May a WP propose an existing crate (linfa-trees) as an exception to spec §6.4.3? | May propose a crate (Recommended) · Hand-written only · Decide when proposed | "May propose a crate (Recommended)" |
+| 34 | DR-C8 | May a WP propose an existing crate (linfa-trees) as an exception to spec §6.4.3? | May propose a crate (Recommended; *agent's recommendation*, register had none) · Hand-written only · Decide when proposed | "May propose a crate (Recommended)" |
 | 35 | DR-C2 | Which architecture governs: Layers A–F with GRID feeding in, or GRID as the projection? | Six steps, GRID feeds in (Recommended) · GRID is the projection · Hybrid · Keep open | "Six steps, GRID feeds in (Recommended)" |
 | 36 | DR-C3 | How does GRID talent enter Layer D, and does the tracker split by role? | Per-role talent as inputs (Recommended; includes the role split) · One tracker per stat · One talent number (oracle) · Keep open | "Per-role talent as inputs (Recommended)" |
 | 37 | DR-B5 | Team-strength estimand, market anchor rows, matchup-grade sign? | Net strength, team totals (Recommended) · Net strength, baselines only · Oracle's offense minus defense · Keep open | "Net strength, team totals (Recommended)" |
 | 38 | DR-B3 | Parity pass lines? | Table + amendments (Recommended; *agent's recommendation* over the register's literal default) · Table as written · An earlier proposal · Keep open | "Table + amendments (Recommended)" |
 | 39 | DR-D26 | Statistic for the end-to-end recovery gates? | Median, plus low-quantile (Recommended; *agent's recommendation*, the register made the low quantile optional) · Median only · Single world, as now · Keep open | "Median, plus low-quantile (Recommended)" |
 | 40 | DR-D15 | The proposed Layer-1′ rules, and per role event or per snap? | Rules + per event (Recommended; *agent's recommendation*, the register had no default for this part) · Rules + per snap · Rules only · Keep all open | "Rules + per event (Recommended)" |
-| 41 | DR-D13 | Keep RB/WR/TE credit a unit number, or work toward an individual one? | Pursue individual (Recommended) · Unit meaning, permanently · Keep open, no direction | "Pursue individual (Recommended)" |
+| 41 | DR-D13 | Keep RB/WR/TE credit a unit number, or work toward an individual one? | Pursue individual (Recommended; *agent's recommendation*, register had none) · Unit meaning, permanently · Keep open, no direction | "Pursue individual (Recommended)" |
 | 42 | DR-D19 | How is the feeder prior put on the tracker's scale? | Fit to tracker talent (Recommended; *agent's suggestion*, computed without the college prior) · Rating + versioned map · Keep open | "Fit to tracker talent (Recommended)" |
 | 43 | DR-D21 | Binomial GLM for the probability components? | Binomial for rates (Recommended) · Poisson counts · Weighted regression throughout · Wait for evidence | "Binomial for rates (Recommended)" |
-| 44 | DR-D25 | Approve the recency-baseline form; values by calibration? | Approve form (Recommended) · Keep fully open | "Approve form (Recommended)" |
-| 45 | DR-D2 | Historical betting lines in backtests? | Keep open, seek a source (Recommended) · Never use historical lines · Use nflverse schedule lines | "Keep open, seek a source (Recommended)" |
+| 44 | DR-D25 | Approve the recency-baseline form; values by calibration? | Approve form (Recommended; *agent's recommendation*, register had none for the values) · Keep fully open | "Approve form (Recommended)" |
+| 45 | DR-D2 | Historical betting lines in backtests? | Keep open, seek a source (Recommended; *agent's recommendation*, register had none) · Never use historical lines · Use nflverse schedule lines | "Keep open, seek a source (Recommended)" |
 | 46 | DR-D16 | What the published range assumes; did-not-play weeks? | Projected time; DNP = n/a (Recommended; *agent's suggestion*) · DNP = n/a only · Keep open (interim) | "Projected time; DNP = n/a (Recommended)" |
 | 47 | DR-D20 | Ensemble stacking level and weight rules? | Blend shares and rates (Recommended) · Blend finished stats · Blend at both levels · Keep open | "Blend shares and rates (Recommended)" |
 | 48 | DR-C11 | VOR and tiers: publish, test-league only, or neither? | VOR only inside test league (Recommended) · Publish VOR and tiers · Neither | "VOR only inside test league (Recommended)" |
 | 49 | DR-D5 | Accept "corrected as retrieved" for the Phase 1 proof? | Accept; corrections only (Recommended; *agent's suggestion*, register had none) · Accept; wider scope · Reject · Keep open | "Accept; corrections only (Recommended)" |
 | 50 | DR-D24 | Does last-season per-game join the must-beat baselines? | Add to must-beat list (Recommended; *agent's pick* given the owner's accuracy priority, register had none) · Report only · Keep open | "Add to must-beat list (Recommended)" |
-| 51 | DR-D3 | ShareAlike terms on participation-derived outputs? | Keep private until release (Recommended) · Also fix notices now · Full ruling now | "Keep private until release (Recommended)" |
+| 51 | DR-D3 | ShareAlike terms on participation-derived outputs? | Keep private until release (Recommended; *agent's recommendation*, register had none) · Also fix notices now · Full ruling now | "Keep private until release (Recommended)" |
 | 52 | DR-D14 | Layer-1 cross-fit design? | Proposed design (Recommended) · Last window's ratings · Pool seasons · Keep open | "Proposed design (Recommended)" |
 | 53 | DR-D28 | How to prove the Rust generator exact? | Draw tape + statistics (Recommended) · Statistics only · Match numpy streams · Keep open | "Draw tape + statistics (Recommended)" |
 | 54 | DR-D1 | Source of coaching-change records (form only)? | Dated hand-kept list (Recommended) · Licensed data feed · No explicit changes · Keep open | "Dated hand-kept list (Recommended)" |
@@ -109,7 +111,7 @@ Answers are verbatim from the question tool. Options are listed in the order off
 | 57 | DR-D17 | At a season boundary: restart from the prior, or carry the state? (Also settles DR-C6's Kalman clause.) | Restart from prior (Recommended; *agent's suggestion*, register had none) · Carry, with offseason steps · Carry, offseason discount · Keep open | "Restart from prior (Recommended)" |
 | 58 | DR-D18 | Does a changepoint act in the same week or from the next week? | From next week (Recommended; *agent's suggestion*, register had none) · Same week · Keep open | "From next week (Recommended)" |
 | 59 | DR-D23 | Stand-in for a provider's missing projection? | Service's lowest at position (Recommended; adds: a provider with nothing at that position that week is excluded and counted) · Zero points · Keep open | "Service's lowest at position (Recommended)" |
-| 60 | DR-D22 | May nflverse ep/epa be used as features anywhere? | Engine's own values only (Recommended) · Allow ep/epa · Keep open | "Engine's own values only (Recommended)" |
+| 60 | DR-D22 | May nflverse ep/epa be used as features anywhere? | Engine's own values only (Recommended; *agent's recommendation*, register had none) · Allow ep/epa · Keep open | "Engine's own values only (Recommended)" |
 | 61 | DR-D30 | Is the reference-oracle job a required merge check? | Always required (Recommended; *agent's pick* over the register's parity-touching default) · Only parity-touching PRs · Informational only · Keep open | "Always required (Recommended)" |
 | 62 | Owner information request | Does an originating GRID design document exist outside git? | Nothing to add · Yes, I'll supply it · Not sure | "Nothing to add" |
 
@@ -147,7 +149,8 @@ P0-01`), not here.
 ## Blockers and escalations
 
 None new. DR-A10 needs the owner's own licence-ruling comment on PR #4 (the agent drafted the text).
-ADR-011 and ADR-012 are accepted in the owner's merge comment, as `docs/02-adr/README.md` requires.
+ADR-011 and ADR-012 stay Proposed until the owner accepts them in the P0-01 merge comment (answer 5), as
+`docs/02-adr/README.md` requires.
 
 ## Follow-ups
 

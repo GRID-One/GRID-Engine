@@ -35,8 +35,9 @@ No criterion is claimed as passing here. Each is to be run against the final com
   1. **Product/Architecture owner.** In one merge review or comment that names each DR ID, name again
      DR-A1, DR-A2, DR-A4, DR-A5, DR-A6, DR-A8, DR-A9 and DR-A12, which the owner ratified on 2026-10-08
      in the decision interview; confirm the interview record
-     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); and accept or override ADR-011 and
-     ADR-012 (`docs/00-meta/decision-register.md`, "How to ratify or override", steps 1 and 3).
+     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); and accept ADR-011 and
+     ADR-012, as the owner chose in the decision interview (`docs/00-meta/decision-register.md`, "How to
+     ratify or override", steps 1 and 3).
   2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1.
   3. **Security/Release owner.** DR-A7 and the guard changes (ADR-011 D7). Also the design of the
      `reference-oracle` job: the runner image's tool-cache CPython 3.11, failing if it is absent, and no
@@ -66,7 +67,8 @@ No criterion is claimed as passing here. Each is to be run against the final com
 
 ## Owner decisions depended on
 
-**Adopted by this package, and ratified by the owner on 2026-10-08 in the decision interview**
+**Adopted by this package, and ratified by the owner on 2026-10-08 in the decision interview, except
+DR-A3 (direction only; the follow-up ADR is owed) and DR-A10 (the ruling is still to be posted)**
 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). This package is gated on its own
 A-decisions being ratified (engine-spec §9.5), not on Ready; the owner names them again in the merge
 comment.

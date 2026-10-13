@@ -282,8 +282,9 @@ alpha-spec Appendix D #8).
 4. `off_team ≠ def_team`. `off_team` and `def_team` are constant within a drive.
 5. `down ∈ 1..=4`, `ydstogo ≥ 1`, `yardline_100 ≥ 1`.
 6. Every `off_team`/`def_team` value is in `players.team`. Every participant id is in
-   `players.player_id`, or the frame fails with `UnknownParticipant { count }` (DR-B6). Dropping
-   unknown ids is allowed only under an explicit, logged run policy *(proposed — DR-B6)*.
+   `players.player_id`, or the frame fails with `UnknownParticipant { count }` (DR-B6). Unknown
+   ids are never silently dropped, as the oracle does: ingestion quarantines such rows upstream
+   and reports them in the data-quality report (engine-spec §6.2 Component 3; DR-B6).
 7. Keys are unique: `player_id` within `players`; `(game_id, play_id)` within `plays`.
 
 **Real-data profile (nflverse and the corrected synthetic world):**

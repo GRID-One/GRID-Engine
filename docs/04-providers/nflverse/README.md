@@ -99,7 +99,7 @@ verified in code.
 The release tag and file name of every other dataset are **not verified here**. P1-03 pins them
 in `source-manifest.yaml` from the nflverse-data release index. They are never guessed.
 
-**Cadence and budget.** The engine fetches each source **at most once per local calendar day**,
+**Cadence and budget.** The engine makes **at most one successful fetch of each source per local calendar day**,
 with catch-up on invocation after a missed interval. The engine itself enforces this cap. There
 is no continuous polling (engine-spec §1; DR-C14). No nflverse-specific rate limit
 was found; GitHub's own download limits apply, and P1-03 records them in `source-manifest.yaml`.

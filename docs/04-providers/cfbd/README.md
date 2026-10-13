@@ -128,7 +128,7 @@ item. Call-limit exhaustion is a failure test (`engine-spec.md` §12.5). It surf
 and never as a silent empty prior.
 
 **Cadence.** CFBD is never polled. External data is fetched at most once per local calendar day
-(`engine-spec.md` §1.1), with the cap enforced per source (DR-C14), and every fetch counts
+(`engine-spec.md` §1.1), with the cap counting successful fetches per source (DR-C14), and every fetch counts
 against the monthly budget. A CFBD fetch happens only on:
 
 - the initial backfill;
@@ -186,7 +186,8 @@ into an NFL weekly projection."
 **How the features become a prior.** The alpha-spec §6.3 (superseded) blend governs the form (DR-C9):
 `theta_prior = q · theta_ncaa_translated + (1 − q) · theta_position_draft_prior`, with an
 empirical-Bayes update by NFL evidence (`engine-spec.md` §6.5). The oracle's feeder-SV equivalency
-`a_pos + b_pos · feeder_sv` is one translated component. Several items are still open under DR-C9:
+`a_pos + b_pos · feeder_sv` is one translated component (proposed — DR-C9). Several items are still
+open under DR-C9:
 
 - `q`;
 - the draft prior (the position/draft baseline);

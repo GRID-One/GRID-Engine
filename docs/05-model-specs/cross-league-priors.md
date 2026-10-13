@@ -419,6 +419,7 @@ NCAA influence capped for components with weak translation evidence
 - Priors are immutable for a season except through an identity-link version change.
 - The prior is applied to the Kalman state at the player's first slot in the evidence window and at every
   season-boundary re-initialisation, in production and backtest replay alike (DR-C6, DR-D17; SSK §6.6).
+  The windowed prior for a player with NFL history is still to be specified (open — DR-D17).
 
 ---
 

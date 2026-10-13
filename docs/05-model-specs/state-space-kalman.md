@@ -580,7 +580,8 @@ The divergence is scenario-dependent. On the canonical trajectory it is about 0.
    NOT be fed as observations.
 3. **Initial state.** `x0`/`P0` come from a prior (§6.5). They MUST NOT be computed from any observation
    of the same series.
-4. **State record.** The persisted state is keyed by (player, season, week). It holds
+4. **State record.** The persisted state is keyed by (player, role, season, week), one record per role
+   track (DR-C3). It holds
    `x`, `P`, `games_since_event`, the `SSParams` version, the prior provenance and the input-data version.
    Storage is SQLite with bulk artifacts registered in a manifest (DR-C15). Writes MUST be
    atomic: a new version, never an in-place overwrite (final-build-spec §12.3, §12.4 (superseded)).
@@ -618,6 +619,8 @@ P0 = diag(σ²_prior, P0_form, P0_scheme)
   (superseded alpha-spec §6.3 `θ_position_draft_prior`; its form is still open — DR-C9).
 - The filter is seeded this way at the player's first slot in the window and again at every season
   boundary, in production and backtest replay alike (§6.6; DR-D17).
+- The windowed prior for a player with NFL history is still to be specified by the statistical owner
+  before P1-12; this section defines only the feeder and population priors (open — DR-D17).
 
 This makes the update the dynamic form of alpha-spec §6.3's EB posterior with `n0 = R/σ²_prior`
 (reconcile-spec-first R40).
@@ -819,7 +822,7 @@ from the oracle, listed in `reference/python/PARITY.md`.
 | DR-B3 Parity tolerances | Overridden 2026-10-09: classes A / A′ / B, C-V and C-L1 in place of C, and D over a seed ensemble (DR-D26). Open: the Class D floor values | §10.3 |
 | DR-B4 Synthetic world | Ratified 2026-10-09: fix defenders, plant net strength, regenerate the goldens and re-calibrate the QB NIS bands now; a stat-vector world and a "realistic" profile before Layers A–F. Open: the recalibrated `r_scale`, NIS bands and Tier-0 floors | §7, §1 caveat |
 | DR-B6 Typed failures vs faithful port | Ratified in part 2026-10-08: typed failure; oracle unchanged; divergences in `PARITY.md`. Open: the condition-number threshold | §8.3 |
-| **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount | §6.6 |
+| **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount. Open: the windowed prior for a player with NFL history (§6.5 defines only the feeder and population priors), specified by the statistical owner before P1-12 | §6.5, §6.6 |
 | **DR-D16** | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the published pre-game predictive is conditioned on Layer C's projected exposure and graded against realized exposure, with calibration shown in both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (P1-07) | §4.3, §8.2 D-9 |
 | **DR-D18** | Decided in part 2026-10-09: next-week application; a changepoint flagged from week w's result takes effect from week w+1, and the published week-w predictive is the pre-detection one. Open: `z_thresh` and the precision/recall gate; flags stay informational until then | §4.6, §8.2 D-8 |
 | **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Open: `P0_form` / `P0_scheme` for prior-seeded players (P1-12 measurements) | §6.5 |

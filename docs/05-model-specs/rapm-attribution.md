@@ -10,9 +10,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: RAPM attribution (Layer 2), market reconciliation (Layer 3), team strength and the single-pass GRID fit
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; named again in the merge comment) it is an
-authority-level-3 document. The statistical owner approves the equations. The implementing agent
-may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec §1).
+(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge
+comment) it is an authority-level-3 document. The statistical owner approves the equations. The
+implementing agent may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec
+§1).
 
 **How to read this spec**
 
@@ -52,7 +53,8 @@ points. RAPM is also never a live in-season dependency (§2.3; DR-C1).
 
 ### 1.2 What it treats as nuisance (load-bearing intent, preserved verbatim)
 
-The oracle's comments state the intent. The Rust port MUST keep it.
+The oracle's comments state the intent. The Rust port MUST keep it, except the fixed point (§4.7;
+DR-D11).
 
 - **The offensive line is a nuisance, not an estimand.** `reference/python/backend/grid/layers.py:4-9`:
 
@@ -826,7 +828,7 @@ divergence (DR-B6).
 | **DR-B6** | Typed failure vs faithful port | Typed failure. The ADR cites PR #53 C3. **Ratified in part** 2026-10-08 (DR-B6). The condition-estimate threshold value is open |
 | **DR-B1** | Oracle correction order | G-1 synth → B-5 convention → grade sign → …; **ratified** 2026-10-08 (DR-B1). Each ledger entry is still approved by the statistical owner as its commit lands |
 | **DR-C2 / DR-C3** | GRID as signal provider; where talent enters Layer D | Layers A–F skeleton. Role-specific talent covariates, with last season's RAPM as a further covariate; the Kalman splits by role. **Ratified** 2026-10-09 (DR-C2, DR-C3) |
-| **DR-C13** | Situation vocabulary | Code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.8); `two_minute` via `half_seconds_remaining` ≤ 120. **Overridden** 2026-10-09 (DR-C13) |
+| **DR-C13** | Situation vocabulary | Code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.8); `two_minute` via `half_seconds_remaining` ≤ 120. **Overridden** 2026-10-08 (DR-C13) |
 | **DR-C15** | Storage | SQLite source of truth; bulk blocks registered in a manifest. **Ratified** 2026-10-08 (DR-C15) |
 | **DR-D10** | How a spread (points per game) at lock maps to `s_t` in EP per play over the window, and whether totals also enter (Layer B implied points) | **Open, no default.** Requires a calibration study |
 | **DR-D12** | `λ`, `μ_team`, `lambda_by_pos`, and QB identifiability on the real scale. Options: multi-season pooling (DR-C6), a QB-specific penalty or prior, or Layer-1 event credit for QBs | **Decided in part** 2026-10-09 (DR-D12): calibrate by rolling origin on completed seasons, pre-registered before results (engine-spec §7); the study compares all three remedies. The values and the winning remedy stay open |

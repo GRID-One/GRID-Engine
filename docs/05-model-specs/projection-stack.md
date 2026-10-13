@@ -10,7 +10,7 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: projection stack (volume, stat-line rates, talent features, SV→points map, preseason assembly, scoring)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge comment) it
+(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment) it
 is an authority-level-3 document. The statistical owner approves the equations. The implementing
 agent may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec §1).
 
@@ -838,7 +838,7 @@ Status after the owner's decision interview of 2026-10-08/09
 | **DR-C3** | Where GRID talent enters Layer D | Ratified 2026-10-09: role-specific talent as covariates in EB-shrunk per-component rate models (option (a)); the Kalman state splits by role. Whether RB/WR/TE role credit is an individual signal is DR-D13 |
 | **DR-C4** | Horizons | Ratified 2026-10-08: weekly primary; ROS and preseason derived from weekly draws |
 | **DR-C5** | EB estimator and shrinkage strength (`n0`, `k`); recency discount | Ratified in part 2026-10-09: the evaluation framework and its sub-item defaults. Still open: the Layer C estimator, where Gamma–Poisson method of moments for usage (§4.8.1) stays proposed until this spec writes its comparison against normal–normal, before P1-07 (the owner chose to wait for it; proposed — DR-C5); the estimator for the other shrinkage uses |
-| **DR-C12** | Labels and season type | Overridden 2026-10-09: official nflverse weekly stats are always the label, reconciled against the engine's play-by-play rebuild for every player-week; every disagreement is recorded, and those above a threshold are flagged for review; REG only; two-point conversions included. Still open: the per-dataset nflverse terms (before P1-03), the flag threshold (P1-03 ingestion spec), the canonical weekly-stats release (P1-03), the correction-window length (`freshness-policy.md`) |
+| **DR-C12** | Labels and season type | Overridden 2026-10-08: official nflverse weekly stats are always the label, reconciled against the engine's play-by-play rebuild for every player-week; every disagreement is recorded, and those above a threshold are flagged for review; REG only; two-point conversions included. Still open: the per-dataset nflverse terms (before P1-03), the flag threshold (P1-03 ingestion spec), the canonical weekly-stats release (P1-03), the correction-window length (`freshness-policy.md`) |
 | **DR-C11** | VOR scope | Ratified 2026-10-09: VOR internal to the lineup simulation only |
 | **DR-D21** | Binomial/Poisson GLMs vs exposure-weighted least squares per Layer D component; yards per target vs per reception as the receiving rate base | Ratified in part 2026-10-09: binomial GLM with logit link, trials = exposure, for the probability components. Still open: exposure-weighted least squares or Gamma GLM for yardage, and the receiving rate base, decided on rolling-origin evidence before P1-07 |
 | **DR-D25** | `ρ`, minimum games and season-boundary handling for ensemble member 1 (§4.8.3) | Ratified in part 2026-10-09: the form of §4.8.3. Still open: `ρ`, the minimum game count and the season-boundary treatment, set by rolling-origin calibration |

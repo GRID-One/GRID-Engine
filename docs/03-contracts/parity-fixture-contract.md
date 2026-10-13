@@ -32,7 +32,7 @@ owner decisions. A part the table marks open is not settled:
 | Class D over a seed ensemble | DR-D26 (overridden 2026-10-09: a declared low quantile is gated as well as the ensemble median). Open: the seed set, quantile and margins |
 | Synthetic world | DR-B4 (ratified 2026-10-09). Open: the recalibrated values and the stat-vector world's parameters |
 | Typed-failure divergences | DR-B6 (ratified in part 2026-10-08). Open: the ill-conditioning threshold |
-| Synthetic-only fixtures | DR-A11 (ratified 2026-10-08; named again in the P0-01 merge comment) |
+| Synthetic-only fixtures | DR-A11 (ratified 2026-10-08; to be named again in the P0-01 merge comment) |
 | Fixture format | DR-D29 (ratified 2026-10-08) |
 | `reference-oracle` as a required check | DR-D30 (overridden 2026-10-09: required for every PR; the owner applies it in branch protection after P0-01 merges) |
 | Oracle golden platform (interpreter and OpenBLAS kernel) | DR-D31 (ratified 2026-10-08, option 1; ledger entry L0) |
@@ -56,9 +56,10 @@ settled law until its named owner sets it.
    - skip-on-failure in `weekly_update`;
    - non-atomic saves.
 
-   Rust raises typed errors there *(DR-B6)*. The ADR making ill-conditioning a typed failure
-   cites cautious-nevermore PR #53 audit item C3, which added the fallback deliberately, and
-   PR #56, as the decisions it reverses. The condition-number threshold is still open: a model
+   Rust raises typed errors there *(DR-B6)*. The ADR that adopts these typed failures
+   cites cautious-nevermore PR #53 audit item C3, which added the `lstsq` fallback deliberately,
+   and PR #56, which made re-initialization on corrupt state deliberate, as the decisions it
+   reverses. The condition-number threshold is still open: a model
    spec proposes it before P1-06's solver failure semantics are final (DR-B6). Each divergence
    is listed in `PARITY.md`.
 4. **The oracle is never edited to make a Rust test pass** (engine-spec Appendix D item 13
@@ -76,7 +77,7 @@ settled law until its named owner sets it.
 
 | Option | New Rust dependencies | Exact float round-trip | NaN | Strings, ragged lists | Byte-stable across library versions | Verdict |
 |---|---|---|---|---|---|---|
-| **Manifest JSON + raw LE binary** (recommended) | **none** to read. `std` decodes the arrays (`f64::from_le_bytes`); the manifest uses `serde_json`, already in `[workspace.dependencies]` | yes (bit-exact) | yes | strings as a JSON array; ragged lists as offsets + values | yes. NumPy `tofile` writes only data bytes | ✓ |
+| **Manifest JSON + raw LE binary** (ratified, DR-D29) | **none** to read. `std` decodes the arrays (`f64::from_le_bytes`); the manifest uses `serde_json`, already in `[workspace.dependencies]` | yes (bit-exact) | yes | strings as a JSON array; ragged lists as offsets + values | yes. NumPy `tofile` writes only data bytes | ✓ |
 | `.npz` read via an npy reader | yes: an ndarray crate, an npy reader and a zip reader | yes | yes | npy unicode (`<U…`) and object dtypes have no portable Rust reader guarantee (the existing golden `snapshot.npz` stores `player_id`, `position` and `team` as `<U21`/`<U3`); ragged participation needs an offsets encoding anyway | mostly | ✗ |
 | Parquet | yes: an arrow/parquet stack (large) | yes | yes | native | **no**: the writer embeds library-version metadata, so the sha256 changes on any `pyarrow` bump | ✗ |
 | Plain JSON for everything | none | serde_json's default float parsing is best-effort; exact parsing needs a feature change | **no**. Strict JSON has no NaN, yet `terminal_value` is NaN on every non-terminal row | native | yes | ✗ |
@@ -219,6 +220,7 @@ therefore takes the oracle's realized intermediate as an **injected input**.
 | Component / stage | Injected from the oracle | Rust computes | Compared outputs | Class |
 |---|---|---|---|---|
 | `synthetic-world` canonical world | — (exported frames are the input) | loads v0 frames and upgrades them (`from_legacy_v0`) | round-trip of every column and id order | exact |
+| `synthetic-world` generator (draw tape) | the oracle's recorded draw tape (each draw's result in order, recorded by wrapping the generator in its own process; `synth.py` is never edited) and the configuration | the Rust generator, fed the tape through its injectable draw source | `plays`, `players`, `gt`, `college` | exact (DR-D28) |
 | `value-model` dV | per-row V(s) (`value.py:92`) and V(s′) for continuing rows (`value.py:99-102`) | `compute_dv` | `dv` | A |
 | `value-model` V(s) estimator | the plays frame; the oracle V on a declared state grid, with per-cell support counts; the oracle's seed envelope (V on the grid and `dv` for seeds 1–10) | Rust V(s) (C-7 estimator) | V on grid cells with support ≥ `min_samples_leaf` (120 in the oracle, `value.py:53`); `dv` on all rows | C-V (DR-D27; `value-model.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `rapm-attribution` design | plays + players + `dv` | `build_design` | COO/CSR triplets, player and team index maps, y | exact (values in {−1, +1, +2}, [plays-contract.md](plays-contract.md) D-8) |
@@ -227,7 +229,7 @@ therefore takes the oracle's realized intermediate as an **injected input**.
 | `rapm-attribution` situations | plays | situation masks | boolean masks for the oracle's `red_zone`, `passing_downs` and `rushing_downs`. `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (DR-C13) have no oracle counterpart, and `two_minute` is a `PARITY.md` divergence ([plays-contract.md](plays-contract.md) D-1) | exact |
 | `layer1-credit` context model | play features `x_i`, `dv` and the fold map (`layers.py:497-519`) | the Rust context model's out-of-fold residual (booster or ridge/GAM: open, DR-C7) | the residual, weekly credit, per-position season credit | C-L1 (DR-B3; `layer1-credit.md` §10.3), not Class C (§6; KI-NEW-Z74) |
 | `layer1-credit` weekly credit | plays + `dv` + the out-of-fold residual `_resid` (`layers.py:497-519`); fold ids for audit | per-player weekly mean residual and snaps | `credit`/`qb_credit`, `snaps`, week set | A (credit), exact (snaps, weeks) |
-| `layer1-credit` `fit`, a single pass (DR-D11) | `_resid` for that pass and V(s)/dV | one RAPM solve, then Layer-1 credit, with no credit fed back into RAPM prior means. The engine does not implement the oracle's three-round loop `fit(n_iter=3)`, in which the defender-rating feature changes per iteration; how cases treat that loop is set in `rapm-attribution.md` §4.7 | ratings, team ratings, `qb_weekly` | A′/B + A |
+| `layer1-credit` `fit`, a single pass (DR-D11) | `_resid` for that pass and V(s)/dV | one RAPM solve, then Layer-1 credit, with no credit fed back into RAPM prior means. The engine does not implement the oracle's three-round loop `fit(n_iter=3)`, in which the defender-rating feature changes per iteration; how cases treat that loop is for `rapm-attribution.md` §4.7 to define and is not yet specified (its P-7 target) | ratings, team ratings, `qb_weekly` | A′/B + A |
 | `state-space-kalman` | `y`, `snaps`, `played`, interventions, scheme resets, `SSParams`, and the **effective** `x0` and `P0` | filter, RTS, predictive variance | `total_filt`, `total_smooth`, `tau_smooth`, `var_total_filt`, `total_pred`, `var_total_pred`, NIS terms | A |
 | `cross-league-priors` | college frame, ratings, the equivalency **permutation indices** (`priors.py:104-105`) | equivalency, priors, washout | slope, intercept, `oos_r2`, prior mean and variance, washout table | A′ (least squares), A |
 | `evaluation-and-leakage` metrics | inputs; **bootstrap resample indices** | closed-form metrics; CIs on injected resamples | metric values, CIs | A |

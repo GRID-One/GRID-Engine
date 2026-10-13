@@ -413,8 +413,8 @@ on, and "Enforced in" says where that requirement lives or will live.
   - The synthetic world includes a profile at the real scale before any constant is calibrated on it.
 - **Enforced in.**
   - the "Priors: where they come from" section of `template-model-spec.md` (in place);
-  - DR-B4; DR-C9 for the prior's form (proposed — DR-C9 for its blend weight, baseline and influence
-    cap);
+  - DR-B4; DR-C9 for the prior's form (open — DR-C9 for its blend weight, baseline, influence cap and
+    exposure weighting);
   - `docs/05-model-specs/cross-league-priors.md` and `state-space-kalman.md`.
 
 ## D. Records, process and evidence

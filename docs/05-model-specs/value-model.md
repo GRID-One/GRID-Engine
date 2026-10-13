@@ -10,9 +10,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Situational value V(s), play value dV, and situation masks
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; named again in the merge comment) it is an
-authority-level-3 document. The statistical owner approves the equations. The implementing agent
-may not redefine them (superseded alpha-spec §6.6; carried into engine-spec §6.8).
+(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge
+comment) it is an authority-level-3 document. The statistical owner approves the equations. The
+implementing agent may not redefine them (superseded alpha-spec §6.6; carried into engine-spec
+§6.8).
 
 **How to read this spec**
 
@@ -372,7 +373,7 @@ Measured dV:
   fixed 1,676 / 2,851 / 1,899; real 2023 5,187 / 4,346 / 3,103 (historical).
 - **Not in the oracle code.** CN documentation listed `goal_line`, `third_and_long` and
   `fourth_down` (cn-docs §14 item 3). They do not exist in code. The engine adds them, with a
-  separate `goal_line_wr`, as defined below (DR-C13, 2026-10-09). Adding any further situation
+  separate `goal_line_wr`, as defined below (DR-C13, 2026-10-08). Adding any further situation
   requires a revision of this spec.
 - **Required.**
   - The canonical set is the code set (`red_zone`, `passing_downs`, `rushing_downs`, `two_minute`)
@@ -412,7 +413,7 @@ Provenance key: **hand-set v0** = present at `f3b641f`, the oldest shallow-clone
 | `passing_downs` | down 3 and ≥ 7, or down 4 | `situations.py:32` | as above |
 | `rushing_downs` | down ≤ 2 and ≤ 4 | `situations.py:33` | as above |
 | `two_minute` | ≤ 120 s on `quarter_seconds_remaining` | `situations.py:23,58` | as above; replaced (§4.3) |
-| `goal_line`, `goal_line_wr`, `third_and_long`, `fourth_down` | `yardline_100` ≤ 5; `yardline_100` ≤ 8; down 3 and ≥ 7; down 4 | not in the oracle (§4.3) | owner decision (DR-C13, 2026-10-09) |
+| `goal_line`, `goal_line_wr`, `third_and_long`, `fourth_down` | `yardline_100` ≤ 5; `yardline_100` ≤ 8; down 3 and ≥ 7; down 4 | not in the oracle (§4.3) | owner decision (DR-C13, 2026-10-08) |
 
 ### 4.5 Priors
 
@@ -680,9 +681,9 @@ for status; this table records what applies to V(s) and what stays open.
 |---|---|---|
 | **DR-C7** | Which estimator produces V(s)? | **Ratified in part (2026-10-09).** A deterministic in-house estimator behind a `Regressor` trait, not a booster, that satisfies §10.2. No nflfastR `ep`. **Still open:** which estimator (binned-and-smoothed or monotone-constrained) and whether monotonicity in yardline, distance and down is imposed (§4.6, N-6), decided on pre-registered held-out-season label error and downstream recovery (§7.5) |
 | **DR-C8** | Booster backend, if any booster is used | **Ratified in part (2026-10-09).** Pure Rust first, with no native artifacts; `xgb` only as a later optional feature once a booster earns its place. A work package may propose an existing crate (for example `linfa-trees`) as a documented exception to engine-spec §6.4.3, with its API verified against source, under the normal dependency approval. **Still open:** the concrete crate, approved in the WP that first needs a booster. V(s) needs no booster (DR-C7) |
-| **DR-C13** | `drive_points` vocabulary; situation set; clock column | **Overridden (2026-10-09).** 7/3/0 for v1, documented as a limitation; an unknown drive result is a typed error, not 0; `two_minute` on `half_seconds_remaining ≤ 120`. The override: the code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.3) |
+| **DR-C13** | `drive_points` vocabulary; situation set; clock column | **Overridden (2026-10-08).** 7/3/0 for v1, documented as a limitation; an unknown drive result is a typed error, not 0; `two_minute` on `half_seconds_remaining ≤ 120`. The override: the code set plus `goal_line`, `goal_line_wr`, `third_and_long` and `fourth_down` (§4.3) |
 | **DR-C6** | Three-season window for stateful components | **Overridden (2026-10-09).** V(s) is fit once per season on `S−3..S−1` and frozen for the season, with the accepted `S−3` gap (§6.2). The override concerns the Kalman clause (DR-D17), not V(s) |
-| **DR-C12** | Season type for labels | **Overridden (2026-10-09).** REG only, which DR-D4 also decides for V(s). The override (official labels reconciled against the play-by-play rebuild) concerns the stat labels, not `drive_points` |
+| **DR-C12** | Season type for labels | **Overridden (2026-10-08).** REG only, which DR-D4 also decides for V(s). The override (official labels reconciled against the play-by-play rebuild) concerns the stat labels, not `drive_points`. **Still open:** the Data/Licensing half (per-dataset nflverse terms for player stats and play-by-play), before P1-03; the other open parts concern the stat labels |
 | **DR-B3** | Parity tolerances | **Overridden (2026-10-09).** Class C does not fit V(s) (§7.3) and is replaced by C-V (§10.3; DR-D27). **Still open:** the Class D floor values |
 | **DR-B6** | Typed failure vs faithful port | **Ratified in part (2026-10-08).** Typed failures of §5.4; refit-every-run is a divergence listed in `reference/python/PARITY.md`. The open part, the ill-conditioning threshold, does not concern V(s) |
 | **DR-D27** | What does V(s) parity mean when the Rust estimator is, by DR-C7, a different estimator, and the oracle is not reproducible against itself under a seed change? | **Ratified in part (2026-10-09).** The four-part criterion C-V of §10.3, with its two numeric limits pre-registered. **Still open:** parts 3 and 4 wait on the DR-C7 estimator spec and the re-set Class D floors; the reference envelope is computed on the corrected world once it exists |

@@ -95,13 +95,14 @@ The owner asked to be interviewed "to close any decisions that I can make right 
 at a time, through the harness's question tool; the record, with every answer verbatim, is
 `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`.
 
-- Asked: DR-A1 to DR-A12, every B, C and D entry except DR-D9 and DR-D10 (both need real-data
-  measurements first), ADR-011/012 acceptance and the owner information request. DR-D27 was settled
-  by the DR-B3 answer.
-- Ratified as the A-decisions stand: DR-A1, A2, A4 to A9, A11, A12 (named again in the merge comment).
-  DR-A3: direction ratified (Linux authoritative, Windows additional); the follow-up ADR is still owed
-  before P1-11. DR-A10: option 1 chosen; the owner posts the ruling on the PR. ADR-011 and ADR-012 are
-  accepted in the merge comment.
+- Asked: DR-A1 to DR-A12; every B, C and D entry except DR-D9 and DR-D10 (both need real-data
+  measurements first), DR-D27 and DR-D31; ADR-011/012 acceptance; and the owner information request.
+  DR-D27 was not asked separately: the DR-B3 answer settled its decidable part (C-V and its two numeric
+  limits). DR-D31 was already ratified (2026-10-08).
+- Ratified as the A-decisions stand: DR-A1, A2, A4 to A9, A11, A12 (to be named again in the merge
+  comment). DR-A3: direction ratified (Linux authoritative, Windows additional); the follow-up ADR is
+  still owed before P1-11. DR-A10: option 1 chosen; the owner posts the ruling on the PR. ADR-011 and
+  ADR-012 are to be accepted in the merge comment (the owner's answer).
 - Overrides of a recommended default: DR-B3 (adopt the C-V/C-L1, Class B and seed-ensemble
   amendments), DR-C6 (the Kalman restarts from the prior in production too, via DR-D17), DR-C12
   (official labels reconciled against the play-by-play rebuild), DR-C13 (adds `goal_line`,

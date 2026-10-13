@@ -238,7 +238,9 @@ the logic is rule-based (for example, `OUT` ⇒ zero).
 
 GRID is a signal provider inside Layers A–F (DR-C2). It enters Layer D as role-specific talent
 covariates, and the state-space layer keeps one track per player and role (DR-C3). Whether
-RB/WR/TE role credit is an individual signal is still open (DR-D13). The explanation record
+RB/WR/TE role credit is an individual signal is still open (DR-D13); until it is decided,
+explanations never describe that credit as individual efficiency (the DR-D13 interim rule,
+confirmed 2026-10-09). The explanation record
 carries the block below. All values are in GRID's dV currency (expected points per play). They are
 explanation and diagnostic fields, never fantasy points.
 
