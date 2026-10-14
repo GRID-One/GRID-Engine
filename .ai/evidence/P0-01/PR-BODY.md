@@ -26,8 +26,9 @@ this one repository:
 - **Knowledge is preserved and indexed:**
   - eight model specs and three contracts;
   - nflverse and CFBD provider docs;
-  - a decision register of 64 owner decisions, most of them settled by your decision interview of
-    2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`);
+  - a decision register of 65 owner decisions, most of them settled by your decision interview of
+    2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and your decisions of
+    2026-10-14 (`docs/06-sessions/2026-10-14-P0-01.md`);
   - a known-issues backlog, re-verified against code;
   - lessons learned;
   - the cautious-nevermore engine history (non-authoritative) in `docs/07-archive/`;
@@ -39,9 +40,12 @@ this one repository:
 ## Decisions
 
 You answered every open register entry except DR-D9 and DR-D10 in a decision interview (62 questions,
-2026-10-08/09). The record quotes every answer verbatim, and `docs/00-meta/decision-register.md` carries
-the outcomes. The spec, model specs, contracts and governance documents now cite a settled decision
-plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where something is still open.
+2026-10-08/09). On 2026-10-14 you settled the two parts that review had found undecided (DR-D14's
+uncovered defenders and DR-D17's windowed prior), plus two more questions that review raised from them
+(11 questions; `docs/06-sessions/2026-10-14-P0-01.md`). Both records quote every answer verbatim, and
+`docs/00-meta/decision-register.md` carries the outcomes. The spec, model specs, contracts and governance
+documents cite a settled decision plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where
+something is still open.
 
 | Decision | Status |
 |---|---|
@@ -49,11 +53,16 @@ plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where someth
 | DR-A3 | Direction ratified (Linux authoritative, Windows kept as an extra job); Windows stays merge-authoritative until the follow-up ADR, due before P1-11 |
 | DR-A10 | **Option 1 chosen** (MIT OR Apache-2.0, you as sole author); **your ruling comment on this PR is still needed before merge** |
 | ADR-011, ADR-012 | Still Proposed; you chose to accept them in the merge comment |
+| ADR-013 | **Proposed** (DR-D19, answer 10 of the 2026-10-14 record); binds only once you accept it; until then DR-D19's 2026-10-09 text governs |
 | DR-D31 | Ratified 2026-10-08 (ledger entry L0) |
-| B, C and D: settled | 27: 18 ratified as recommended; 3 overridden (DR-B3, DR-D26, DR-D30); 6 decided where the register had no default (DR-D5, D7, D11, D17, D22, D24). Some still name follow-on work: each DR-B1 ledger entry needs its own approval, and DR-B4's recalibrated values come later |
-| B, C and D: settled in part | 19, each with its open part named in the register: 10 ratified in part, 3 overridden in part (DR-C6, DR-C12, DR-C13), 6 decided in part |
+| DR-D14 (2026-10-14) | Decided in part: an uncovered defender takes his RAPM prior mean as a declared, counted substitute; a missing entry stays a typed failure; synthetic requirement R-7 and a pre-registered recovery check gate real-data promotion; the training rows stay as ratified and are compared with a nested design under DR-C7 |
+| DR-D17 (2026-10-14) | Decided in part: the windowed prior is a recency-weighted pooled mean over window-local prior-builder records (details confirmed in answer 9); the NCAA base decays for every feeder-linked player |
+| DR-D32 (new, 2026-10-14) | Decided: two priors per season boundary, a strict window and two canaries, with the model version held fixed (answer 11) |
+| DR-D19 (2026-10-14) | Decided in part: the feeder-equivalency target becomes the season level with no seed, a reversal in part through ADR-013 (Proposed) |
+| B, C and D: settled | 26: 17 ratified as recommended; 3 overridden (DR-B3, DR-D26, DR-D30); 6 decided where the register had no default (DR-D5, D7, D11, D22, D24, D32). Some still name follow-on work: each DR-B1 ledger entry needs its own approval, and DR-B4's recalibrated values come later |
+| B, C and D: settled in part | 21, each with its open part named in the register: 10 ratified in part, 3 overridden in part (DR-C6, DR-C12, DR-C13), 6 decided in part, and DR-D14 and DR-D17, settled in the interview and given new open parts by the 2026-10-14 decisions |
 | Still open | DR-D2, DR-D3, DR-D13 (interim rules and directions confirmed); DR-D9, DR-D10 (not asked: they need real-data measurements) |
-| Found in review, for you before P1-12 | DR-D17: the starting prior for a player with NFL history; DR-D14: plays whose defender has no fold-wise rating |
+| Still to raise | A decision request for KI-NEW-Z79 (which team data the live context model's training features may carry) |
 
 ## Things you should know before reading the specs
 
@@ -83,30 +92,35 @@ plainly, and keep "(proposed — DR-xx)" or "(open — DR-xx)" only where someth
   command with `Assert-Ok` (15/15).
 - `Cargo.lock` resolves 171 crates (only `grid-ffi` removed; no version changed). A fresh clone
   compiles offline.
-- Traceability: all 268 non-trivial paths traced against `origin/main`.
+- Traceability: all 270 non-trivial paths traced against `origin/main`.
 - Reference oracle:
   - `verify_manifest.py` OK (102 verbatim, 3 patched), also with `--upstream` against
     cautious-nevermore;
   - 446 passed under the pin, with 0 isolation-guard violations;
   - the new Linux-only `reference-oracle` CI job runs it outside the frozen verify chain, on the
-    runner's tool-cache CPython 3.11 with the Haswell pin. It passed on head `05aba0a`, with all four
-    CI jobs green.
+    runner's tool-cache CPython 3.11 with the Haswell pin. It has passed on every head since `05aba0a`,
+    most recently `07b6b06`, with all four CI jobs green.
 - Fresh-context review:
   - consolidation: one round, three independent lenses, 26 findings (0 blockers), all fixed
     (`docs/06-sessions/review-P0-01-adversarial-round1.md`);
   - decision recording: a drafter and an adversarial verifier per document chunk, then seven reviewers
     over the applied diff, 79 findings (0 blockers). 74 were applied, 2 were judged correct as written,
-    and 3 needed your input: one (DR-D14) is now recorded as open, and two were answered from the
-    session transcript.
+    and 3 needed your input: one (DR-D14) was put to you and decided in part on 2026-10-14, and two
+    were answered from the session transcript;
+  - the 2026-10-14 recording: per decision, a research workflow (two research lenses, a drafter, two
+    adversarial verifiers and a finalizer) drafted the questions; per file group, a drafter and an
+    adversarial verifier proposed the edits; three more review rounds over the applied diff confirmed
+    49, 37 and 10 findings (16, 9 and 10 major), all fixed. Three of them went back to you (answers 9,
+    10 and 11).
 
 ## Completion record (Appendix C)
 
 ```text
 Work package:                    P0-01 (docs/01-work-packages/p0-01-engine-consolidation.md)
-Final commit:                    3d8448215afe  (the commit the manifest attests to; the evidence
+Final commit:                    6cc6bbb75690  (the commit the manifest attests to; the evidence
                                  commit carrying it follows and is not self-covered)
 Model/harness identifier:        unrecorded (see Known limitations); harness Claude Code on the web
-Environment:                     Linux 6.18.44-fc-v80; rustc 1.98.1; CPython 3.11.15 + OPENBLAS_CORETYPE=Haswell for the oracle
+Environment:                     Linux 6.18.44-fc-v114; rustc 1.98.1; CPython 3.11.15 + OPENBLAS_CORETYPE=Haswell for the oracle
 Authority documents read:        alpha-spec.md, final-build-spec.md (now superseded), ADR-001..010,
                                  PR #1 reviews rounds 1-4, cautious-nevermore@59bce1d code and docs
 Contracts changed:               new docs/03-contracts/{plays-contract,engine-output-contract,
@@ -122,17 +136,21 @@ Golden files changed and approval: reference/python/tests/grid/golden/snapshot.n
 Performance evidence:            n/a (no engine computation yet)
 Security/licensing review:       check-secrets OK; reference/python licence ruling pending (DR-A10)
 Fresh-context reviewer:          independent read-only agents: round 1 at f3fb390; the
-                                 decision-recording review at a60e970 and b8f600c
+                                 decision-recording review at a60e970 and b8f600c; the 2026-10-14
+                                 recording review over the uncommitted diff on 07b6b06, three rounds
 Reviewer findings resolved:      round 1 26/26; decision recording 79/79 dispositioned (74 applied,
-                                 2 kept as written, 3 needed owner input)
+                                 2 kept as written, 3 needed owner input); 2026-10-14 recording
+                                 96/96 confirmed findings fixed (3 led to owner answers 9-11)
 Human approvals:                 2026-10-01 direction (Rust target + Python reference); 2026-10-08
                                  DR-D31 option 1 / ledger entry L0; 2026-10-08/09 the decision
-                                 interview (62 answers); no diff sign-off yet
+                                 interview (62 answers); 2026-10-14 decisions (11 answers); no diff
+                                 sign-off yet
 Known limitations:               see below
-Evidence manifest hash:          sha256:0e2b5ed1ce62388d0746b2ec6bc2a29a0bdc5216422306476123b1c905463b7e
+Evidence manifest hash:          sha256:f5582ed68184045c5ac5c0f9c4c0adfdd12010e4741031f30abd2994f739cb34
 Oracle parity result:            no Rust component yet; the oracle's own goldens pass under the pin
-Reference-oracle job result:     red on the first two heads (KI-NEW-Z78); green on 05aba0a
-Owner decisions depended on:     DR-A1..A12 and the interview outcomes (see Decisions); DR-A10 ruling pending
+Reference-oracle job result:     red on the first two heads (KI-NEW-Z78); green on 05aba0a and since
+Owner decisions depended on:     DR-A1..A12, the interview and 2026-10-14 outcomes (see Decisions);
+                                 DR-A10 ruling pending; ADR-013 ruling pending
 ```
 
 ## Non-goals
@@ -158,14 +176,16 @@ in cautious-nevermore, and `verify_manifest --upstream` proves the L0 patch.
   Most B, C and D decisions are settled in full or in part; what stays open is named in each register
   entry.
 - **Agent-only review of the decision recording.** The edits that carry your answers were checked by
-  agents against the interview record. Your merge comment confirms the record.
+  agents against the two records. Your merge comment confirms both records.
 
 ## Before merging
 
 1. **Licence ruling (DR-A10).** Post your licence ruling for `reference/python/` as a comment on this PR
    (you chose option 1 in the interview). The cautious-nevermore repository has no LICENSE file.
 2. **Merge comment.** Accept ADR-011 and ADR-012, name DR-A1, A2, A4–A9, A11 and A12 as ratified, and
-   confirm `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`.
+   confirm `docs/06-sessions/2026-10-09-P0-01-decision-interview.md` and
+   `docs/06-sessions/2026-10-14-P0-01.md`. Accept or reject ADR-013 (DR-D19, Proposed); until you accept
+   it, DR-D19's 2026-10-09 text governs.
 3. **Merge with a merge commit, never squash.** That keeps PR #1's attested commit `8d43203` reachable
    (DR-A6).
 4. **Close the earlier PRs.** Close PR #1 as included, and close PRs #2 and #3 unmerged; their review
