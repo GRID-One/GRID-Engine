@@ -13,8 +13,10 @@ Status words used here:
 - **DR-B**, **DR-C** and **DR-D** decisions were settled in the same interview (2026-10-08 and
   2026-10-09), in full or in part; what an entry leaves open stays open. The exceptions: DR-D2,
   DR-D3 and DR-D13 stay open under their interim rules, DR-D9 and DR-D10 were not asked, and
-  DR-D31 was ratified on 2026-10-08 (option 1). `docs/00-meta/decision-register.md` is
-  authoritative for status.
+  DR-D31 was ratified on 2026-10-08 (option 1). On 2026-10-14 the owner settled further parts of
+  DR-D14 and DR-D17, decided the new DR-D32, and chose a reversal in part of DR-D19 that binds once
+  the owner accepts ADR-013 (Proposed) (`docs/06-sessions/2026-10-14-P0-01.md`).
+  `docs/00-meta/decision-register.md` is authoritative for status.
 - One correction-ledger entry has been applied: **L0**, the golden master's platform pin
   (KI-NEW-Z78), which implements DR-D31. It changes no engine code, test or tolerance.
   Entries 1 to 5 are proposed and not applied; each needs its own Statistical-owner approval as
@@ -344,6 +346,7 @@ model spec proposes before P1-06's solver failure semantics are final.
 | 4 | **V(s) refit every run.** `weekly_update.run` refits V(s) on the whole season on every call (`weekly_update.py:213`). In backfill that also leaks future weeks into dV (KI-NEW-W4). | A versioned, as-of V(s) artifact, fit once per season on the window `S-3..S-1` and frozen for that season (DR-C6, DR-C7). | Parity for V(s) uses class C-V on a pinned training window, not a per-run refit. |
 | 5 | **Non-atomic saves.** <ul><li>`ParquetCache.put` writes with `to_parquet` in place (`cache.py:25-28`, KI-G9);</li><li>accumulators and Kalman state use `np.savez` in place (`layers.py:117`, `statespace.py:61`);</li><li>`ingest_grid` writes its snapshots and then the manifest last (`ingest_grid.py:63-81`, KI-V10);</li><li>`health_check.write_health` writes in place (`health_check.py:40`).</li></ul> | Temp file + rename, content hashes, and a SQLite-registered manifest (DR-C15). | A crash mid-write leaves a "fresh" partial file in the oracle. |
 | 6 | **Accumulators saved before the solve.** `weekly_update.run` saves the RAPM accumulators (`weekly_update.py:259`, `np.savez` in place via `layers.py:117`) before the solve (`:278`) and the Kalman step (`:389-398`). A failure after the save leaves the week marked done, and the watermark skips the re-run (`:240-244`). KI-NEW-Z14. | Stage outputs commit atomically after the run succeeds, with a run record (DR-B6, DR-C15). | Same family as rows 3 and 5; excluded from parity like them. |
+| 7 | **Missing defender rating.** `layers._onfield_rating_sums` reads each on-field defender's rating with `ratings_lookup.get(p, 0.0)` (`layers.py:493`), so a defender with no rating silently contributes 0.0 to the Layer-1 opponent feature (KI-NEW-Z4). | `CreditError::UncoveredDefender{count, plays}` when a listed defender has no entry in the fold-wise ratings that compute the play's opponent feature. The run is not promotable (`docs/05-model-specs/layer1-credit.md` §5.4). The variant's name predates DR-D14's term: it is never raised for an uncovered defender. | The oracle scores plays with ratings from one in-sample fit (KI-NEW-A5), so only an id without a rating reaches this path. A defender who has an entry but no defensive play among the fold's training plays, or whose coefficient there carries the RAPM `no_data` flag, is not a failure: under DR-D14 (2026-10-14) he is uncovered, and his term in the opponent feature is his RAPM prior mean `m_p`, a declared, counted substitute (`layer1-credit.md` §4.3) that the oracle never reaches. That value equals the oracle's 0.0 today. It is an owner decision on its merits, not parity. |
 
 ## (f) Non-gating checks
 

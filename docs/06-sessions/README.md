@@ -61,6 +61,7 @@ Date is the record's own `date:` front matter where it has one.
 | 2026-10-08 | P0-01 adversarial review, round 1 (three fresh-context lenses), at `f3fb390` | 26 findings (0 blockers, 9 major, 17 minor), all dispositioned | [`review-P0-01-adversarial-round1.md`](review-P0-01-adversarial-round1.md) | written in this repository by P0-01 (not imported) |
 | 2026-10-01 | P0-01 consolidation inventory: 8 inventory reports plus a completeness critic | — | [`2026-10-01-consolidation-inventory/`](2026-10-01-consolidation-inventory/README.md) | `claude/grid-engine-consolidation-e7kmh9` |
 | 2026-10-08 to 2026-10-09 | P0-01 owner decision interview (62 questions; DR-D9 and DR-D10 not asked) | — | [`2026-10-09-P0-01-decision-interview.md`](2026-10-09-P0-01-decision-interview.md) | `claude/grid-engine-consolidation-e7kmh9` |
+| 2026-10-14 | P0-01 owner decisions on DR-D14, DR-D17 and DR-D19 (11 questions; new DR-D32; ADR-013 proposed) | — | [`2026-10-14-P0-01.md`](2026-10-14-P0-01.md) | `claude/grid-engine-consolidation-e7kmh9` |
 
 ¹ Round 3's front matter says 2026-08-20. The commit that wrote it, `c220a69`, is dated
 2026-08-29.

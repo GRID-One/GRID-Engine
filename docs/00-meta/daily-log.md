@@ -112,3 +112,69 @@ at a time, through the harness's question tool; the record, with every answer ve
   DR-D10. Every "in part" entry's register line names what stays open.
 - The register's Status lines, the summary table and the documents that tagged these decisions
   "(proposed — DR-xx)" were updated to match.
+
+## 2026-10-14 — P0-01 owner decisions on DR-D14, DR-D17 and DR-D19
+
+The owner asked the agent to "settle d14 and d17 before the PR". Eleven questions, through the
+harness's question tool and in chat; the record, with every answer verbatim, is
+`docs/06-sessions/2026-10-14-P0-01.md`. No register entry had a recommended default for these parts;
+every recommendation was the agent's.
+
+- DR-D14, decided in part (the uncovered-defender policy in both DR-B6 roles): a defender with no
+  defensive play among the fold's training plays, or with a `no_data` coefficient, takes his RAPM
+  prior mean m_p, a declared, counted substitute; a defender missing from the fold's ratings stays
+  `CreditError::UncoveredDefender`. No real-data Layer-1 run that used a substitute is promoted
+  until a pre-registered recovery check of the substitute against planted truth on synthetic-world
+  requirement R-7 passes. The ratified training rows stand (answer 4 superseded answer 3); the
+  DR-C7 context-model comparison also compares them with nested out-of-fold rows, on weekly-credit
+  recovery and out-of-sample forecasting, with statistics and a margin pre-registered first.
+- DR-D17, decided in part: the windowed prior for a player with NFL history is the recency-weighted
+  pooled mean. For a player with a feeder prior, that prior is the base of his windowed prior in
+  every season; every other player's base is the population prior. Answer 9 confirmed three
+  details found in review as part of the decision: the window evidence (participation-free
+  prior-builder records), the per-season observation variance v_s = r_c/N_s + ω_c·Σ_w (n_{s,w}/N_s)²,
+  and the population prior N(m, σ²_c) per (position class, role), estimated on the window (its
+  covariates stay open, DR-C9).
+- DR-D32, new and decided: two priors, strict window. Each season-boundary prior is built twice from
+  the same data version, on S−3..S−1 for the preseason and week-1 forecast and on S−2..S−1 for the
+  state the filter restarts from. Two canaries prove the window; answer 11 confirmed that both hold
+  the model version's learned constants fixed (κ_c, λ_c and the filter's `SSParams`), which are
+  calibrated by rolling origin, generally on seasons before the window, and are not window evidence.
+  S−3's weight after week 1 and the three- against two-season comparison stay open as P1-12
+  measurements.
+- Still open, before P1-12 tunes or gates anything or implements the windowed-prior builder: the
+  R-7 check's rates, offsets, statistics, margins, pass rule and gate kind, and the training-row
+  comparison's statistics and margin (DR-D14, DR-C7); the tuning criterion of κ_c and λ_c (the base
+  scale and the recency weight), the window-hyperparameter estimator (DR-D17, DR-C5), and the
+  minimum class size and the degenerate-pool thresholds (DR-D17). None of them blocks the start of
+  P1-12. The comparison's worlds and seed ensemble also stay open.
+- Review also found that the live context model `g′_S` trains on a stored `δ^team` that carries team
+  data from before the window (KI-NEW-Z79). It needs a decision request.
+- Review also found that a stored production track cannot supply the DR-D19 targets that each
+  DR-D32 build needs from its own seasons. Such a track restarted from a prior built around the
+  player's own college prior and used inputs fitted before the build's window, so for a
+  feeder-linked track neither canary could pass. Answer 10 (DR-D19, with DR-D32) chose a
+  season-level target with no seed. Each build computes its targets from its own window only, and a
+  stored production track never supplies one. Every option offered computed each build's targets
+  from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with
+  DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does
+  not wait on ADR-013.
+- Under answer 10, in each build, a feeder-linked, non-ambiguous track's target is the mean of its
+  prior-builder residuals over its role events in its first window season with regular-season role
+  events. Its known variance comes from the build's own r_c and ω_c. No filter run and no prior of
+  any kind enter the target. Per equivalency class, a Fay–Herriot-type measurement-error regression
+  on `feeder_sv` fits the translation. In DR-C9's proposed engine form, the equivalency's residual
+  variance is σ̂²_u, net of the known target noise, and the §6.5 widening applies to it.
+- Answer 10 reverses DR-D19's 2026-10-09 decision in part: the estimand moves from end-of-season
+  smoothed talent to the season level. The Kalman credit scale, no separate scale map and "the
+  prior never trains on itself" are kept. Register rule 6 requires a reversing ADR that cites
+  DR-D19, and the option as offered named that route, so ADR-013 is written as Proposed. It binds
+  once the owner accepts it; until then DR-D19's 2026-10-09 text stands. Once it binds, both DR-D32
+  canaries can hold for feeder-linked tracks. P1-12 implements the fit only after the owner's ruling
+  on ADR-013 and once the estimator, including its weighting (DR-C5), the equivalency class and the
+  minimum shared players per class and build (DR-D19, DR-C9) are set. Also still open:
+  whether σ²_prior also carries the line's parameter uncertainty (DR-C9), and `P0_form`,
+  `P0_scheme` and P0 for window-restarted tracks (DR-D19).
+- At the owner's direction (answers 8 and 11), the register and the documents that implement these
+  answers were updated. The owner confirms the record in the P0-01 merge comment and accepts or
+  rejects ADR-013 there; on rejection, the feeder-equivalency target goes to a new decision request.

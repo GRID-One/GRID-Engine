@@ -526,13 +526,23 @@ requirements:
 | R-4 | A football-valid state machine: `yardline_100` in 1…99 with safeties; goal-to-go; punts and field-goal attempts as fourth-down decisions; turnovers; end of half; no play-count cap | no safety, no goal-to-go, no punts or turnovers, a 12-play cap ending 24–29% of drives | — |
 | R-5 | League shape: 32 teams, byes, several seasons with persistent player identities | 12 teams, 14 weeks, one season | 32 teams (plays-contract §2.1) |
 | R-6 | The identifiability stress of KI-NEW-A3 is present: the starting QB is nearly collinear with his team's offense intercept | absent (QB rotates) | corr(starter QB rating, own `γ_off`) = 0.13 on real 2023 |
+| R-7 | Defensive call-ups and fill-ins (DR-D14): one-week call-ups, rest-week and injury fill-ins, and multi-week signings, so that some defenders on a fold's scored plays have no defensive play among its training plays (`layer1-credit.md` §4.3). Their planted abilities cover a pre-registered range of offsets from the team's snap-weighted defender level. The statistical owner pre-registers the rates and the offsets (open — DR-D14) | absent: each team's twelve defenders play the whole season, the backups on random snaps (§4.3) | not yet counted: how often uncovered defenders occur, to be counted on several completed seasons under the engine's fold map (open — DR-D14) |
 
 - Parameter values derived from real-data summaries are recorded as historical evidence. No byte of
   real data enters a fixture (DR-A11).
 - The realistic profile has no oracle counterpart unless a Python reference is added through the
   correction ledger. Its gates are Rust-native Class D floors, calibrated below observed on the
-  profile itself. They are expected to be far below the canonical floors. Documenting that drop is
-  the purpose of the profile.
+  profile itself, except the R-7 check below, whose kind stays open. They are expected to be far
+  below the canonical floors. Documenting that drop is the purpose of the profile.
+- The R-7 check (`layer1-credit.md` §4.3; DR-D14) is a pre-registered recovery check of Layer 1's
+  counted substitute for an uncovered defender against planted truth on R-7. Its statistics obey
+  engine-spec §7.13.4 rule 2. Its rates, offsets, statistics, margins, pass rule and gate kind stay
+  open; the statistical owner pre-registers them before any Rust result is seen (engine-spec §8.8;
+  open — DR-D14). A Class D floor under engine-spec §7.13.4 rule 1 needs an R-7 reference in the
+  corrected oracle, added through the correction ledger, to supply the observed value; otherwise
+  the check is a gate whose pass rule is fixed against planted truth. A floor calibrated on the
+  gated run's own result cannot fail that run.
+- No real-data Layer-1 run that used a substitute is promoted until the R-7 check passes (DR-D14).
 
 ### 4.12 Required before Layers A–F: the stat-vector world (DR-B4, option 3)
 
@@ -550,7 +560,7 @@ of this spec MUST define a stat-vector world with at least:
 | E matchup | defensive strength by unit (pass and run) | matchup grade `+E_def`, higher = tougher (DR-B5) |
 | F simulation and coupling | a joint game model: shared team plays, game-script coupling between score state and pass rate, teammate share competition, QB–receiver co-movement | simulated correlations; stat-vector quantiles |
 | Scoring | stat vectors scored by every built-in profile | exact (Class A) |
-| Time and identity | several seasons; rookies with feeder seasons (cross-league-priors.md); coaching changes with announcement timestamps (DR-D1); participation published only after each postseason (DR-C1); an optional stat-correction stream | the three-season window (DR-C6); publication-lag and leakage tests (P1-05); scheme resets (state-space-kalman.md) |
+| Time and identity | several seasons, with planted between-season ability dynamics (persistence, drift, aging, team change), selection and survivorship; college-linked players with feeder seasons, veterans as well as rookies (cross-league-priors.md; DR-D17); coaching changes with announcement timestamps (DR-D1); participation published only after each postseason (DR-C1); an optional stat-correction stream | the three-season window (DR-C6); the windowed season-start prior and its two builds per boundary (DR-D17, DR-D32), through a window-prior recovery gate (floor values open — DR-B3, DR-D26); publication-lag and leakage tests (P1-05); scheme resets (state-space-kalman.md) |
 
 - **One truth.** The play-level GRID world MUST be generated from the same latent abilities as the
   stat vectors, so that GRID signals and Layers A–F are validated against one truth.
@@ -635,6 +645,11 @@ The engine needs more:
 1. **Multi-season worlds** with persistent player identities, for the three-season window (DR-C6),
    the season-boundary refresh (rapm-attribution.md §6.5), publication lag (DR-C1) and walk-forward
    replay (P1-09).
+   They also carry what the windowed season-start prior's recovery gate needs (DR-D17, DR-D32):
+   planted between-season ability dynamics (persistence, drift, aging, team change), selection and
+   survivorship, and feeder seasons for college-linked players (§4.12). This spec does not yet
+   specify their form or parameters, or the gate's statistics and floors (open — DR-B4, DR-B3,
+   DR-D26).
 2. **Stream isolation (MUST).** Each component draws from its own substream, derived
    deterministically from `(world seed, component, season, game)`. Components are rosters, schedule,
    each game, college, market and availability. A local change to one component then perturbs only
@@ -914,8 +929,8 @@ lands.
    - the same generative model as the corrected oracle;
    - draw-tape replay exact (S-2);
    - ensemble Class D floors (S-5).
-5. **Rust `realistic` profile** (§4.11), with its own calibrated-below-observed floors, before any
-   real-data-scale claim.
+5. **Rust `realistic` profile** (§4.11), with its own calibrated-below-observed floors and the
+   pre-registered R-7 check (DR-D14), before any real-data-scale claim.
 6. **Rust stat-vector world** (§4.12), spec revision first, before the Layer A–F gates of P1-07 and
    P1-08.
 
@@ -933,7 +948,7 @@ lands.
 
 ## 9. Decisions
 
-| Decision | Question | Status (decision register, 2026-10-09) |
+| Decision | Question | Status (decision register, 2026-10-09 and 2026-10-14) |
 |---|---|---|
 | **DR-B4** | How is the synthetic world corrected and extended? | Ratified 2026-10-09: §4.10 now; §4.11 and §4.12 before Layers A–F. Still open: the recalibrated `r_scale`, NIS bands and Tier-0 floors; the stat-vector world's distributions and parameters (spec revision before P1-07); ledger entry 1 itself (approved when its commit exists); a work package that builds the stat-vector world |
 | **DR-B5** | Team-strength estimand, Layer-3 rows, grade sign | Ratified 2026-10-09: planted net = off + def quality (G-2); gates on E_off + E_def and `+E_def` |
@@ -945,6 +960,8 @@ lands.
 | **DR-C1** | Participation publication lag | Ratified in part 2026-10-09: stages that read participation run only after a season's participation is published. The stat-vector world carries a publication timestamp per season (§4.12) |
 | **DR-C9** | Feeder leagues | Ratified in part 2026-10-09: NCAA is the only feeder league. The synthetic feeder stays one league (`league_factor` 0.62) |
 | **DR-D1** | Dated coaching-change records | Ratified in part 2026-10-09: hand-entered, versioned records, each with an announced-at timestamp kept separate from the effective week. The stat-vector world plants changes with announcement timestamps, so the as-of rule can be tested on synthetic data first |
+| **DR-D14** | What an uncovered defender contributes to the Layer-1 opponent feature (raised in layer1-credit.md) | Decided in part 2026-10-14: a counted substitute, his RAPM prior mean. R-7 (§4.11) plants the call-ups and fill-ins its recovery check needs, and no real-data Layer-1 run that used the substitute is promoted before that check passes. Still open: R-7's rates and offsets and the check's statistics, margins, pass rule and gate kind, pre-registered by the statistical owner before any Rust result; a Class D floor needs an R-7 reference in the corrected oracle, added through the correction ledger, and any other gate fixes its pass rule against planted truth (§4.11) |
+| **DR-D17** | How the Kalman filter crosses the season boundary (raised in state-space-kalman.md) | Decided 2026-10-09 and decided in part 2026-10-14: every filter restarts from a windowed prior, a recency-weighted pooled mean of window evidence on the player's feeder prior or the population prior. Every season-boundary prior is built twice, on `S−3..S−1` and on `S−2..S−1` (DR-D32). Its recovery gate needs the multi-season world of §4.12 and §6 item 1, whose form and parameters are not yet set (open — DR-B4) |
 
 ---
 

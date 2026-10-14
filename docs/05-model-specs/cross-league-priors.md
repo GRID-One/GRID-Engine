@@ -70,7 +70,8 @@ feeder league and NCAA tier (`priors.py:16-17`). The oracle implements a single 
   NFL. The oracle "report[s] out-of-sample predictive fit honestly" (`priors.py:9-10`) but does not
   correct the bias. The engine MUST report the shared-player population the map was fit on, and MUST
   NOT present the map as valid outside that population's feeder-SV range without an approved
-  correction.
+  correction. Under ADR-013 (Proposed), once the owner accepts it, that population is the
+  feeder-linked tracks with at least one window event (§6.2).
 - **Volume or role.** This is an **efficiency** prior. Alpha-spec §6.3 (superseded): "strong college efficiency
   does not guarantee NFL volume". Role priors belong to the Layer-C spec.
 - **College fantasy points** are never inserted into an NFL projection (alpha-spec §4.2.3 (superseded)).
@@ -94,9 +95,9 @@ CN's documented claim that priors are "wired to real data" is false (cn-issues �
 | Aspect | Content |
 |---|---|
 | Engine-spec section | §6.5 NCAA / rookie prior. Also §6.4 (empirical Bayes; affine mapping) and §6.1 Layer D (efficiency) |
-| Eligibility | Superseded alpha-spec §2.5 (low-evidence definition: `years_exp ≤ 2`, below a position opportunity threshold, position change, undrafted or late-added). The oracle has only a static `is_rookie` flag |
-| Upstream | NCAA data: `docs/04-providers/cfbd/` (CFBD; not implemented). Identity linking (engine-spec §4.4; alpha-spec §4.4.3 (superseded) tiers). A feeder SV pass ("reduced Layer-1/Layer-2 machinery within college", `data_adapters.py:68-72`) built on `value-model.md`, `layer1-credit.md`, `rapm-attribution.md`, or box-score features instead (open — DR-C9). The NFL rating target: the oracle allows RAPM season rating or Kalman end-of-season smoothed talent (`priors.py:83-90`); the engine fits against the tracker's end-of-season smoothed talent, computed without the college prior (DR-D19) |
-| Downstream | SSK §6.5 (`x0`/`P0`; **not wired in the oracle**, KI-#15). `projection-stack.md` (`prior_mean`, `prior_var` features; NaN means "no prior", `features.py:52-57`). Explainability "NCAA prior contribution" (engine-spec §6.7) |
+| Eligibility | Superseded alpha-spec §2.5 (low-evidence definition: `years_exp ≤ 2`, below a position opportunity threshold, position change, undrafted or late-added). The oracle has only a static `is_rookie` flag. In the engine the list gates no Kalman prior: a player with a feeder prior (§3.3, §6.2) has it as the base of his windowed prior in every season (DR-D17; SSK §6.5) |
+| Upstream | NCAA data: `docs/04-providers/cfbd/` (CFBD; not implemented). Identity linking (engine-spec §4.4; alpha-spec §4.4.3 (superseded) tiers). A feeder SV pass ("reduced Layer-1/Layer-2 machinery within college", `data_adapters.py:68-72`) built on `value-model.md`, `layer1-credit.md`, `rapm-attribution.md`, or box-score features instead (open — DR-C9). The NFL target: the oracle allows RAPM season rating or Kalman end-of-season smoothed talent (`priors.py:83-90`); the engine target is DR-D19's (§3.1): the tracker's end-of-season smoothed talent, computed without the college prior, as decided on 2026-10-09, or, once the owner accepts ADR-013 (Proposed), the season level of each build's own window evidence (§3.3, §6.2). Either way, each DR-D32 build computes its targets from its own window, and a stored production track never supplies one (§3.3) |
+| Downstream | SSK §6.5 (the base of every windowed prior, and through it `x0`/`P0`; DR-D17; **not wired in the oracle**, KI-#15). `projection-stack.md` (`prior_mean`, `prior_var` features; NaN means "no prior", `features.py:52-57`). Explainability "NCAA prior contribution" (engine-spec §6.7) |
 | Contracts | `docs/03-contracts/engine-output-contract.md` (prior fields); `docs/03-contracts/parity-fixture-contract.md` |
 
 **Scope.** Engine-spec §2 (superseded alpha-spec §2.1) covers QB/RB/WR/TE. IDP is out of scope, so the oracle's
@@ -116,8 +117,22 @@ Units: dV per play on the NFL **rating** scale. In the oracle that is the RAPM c
 
 This is **not** the scale of the Kalman state, which is weekly Layer-1 credit (SSK §3.1, §6.5). On
 the legacy synth the per-position slope of season credit on RAPM rating is 1.19–1.40 (SSK §7.3).
-The engine therefore fits the translation against the tracker's own end-of-season smoothed talent,
-computed without the college prior, so the prior is on the state's scale with no separate map (DR-D19).
+The engine therefore fits the translation on the Kalman credit scale, so the prior is on the state's
+scale with no separate map, and the prior never trains on itself (DR-D19). The engine target is:
+
+- **As decided on 2026-10-09 (DR-D19).** The tracker's own end-of-season smoothed talent, computed
+  without the college prior. This text stands and governs until ADR-013 binds.
+- **Under ADR-013 (Proposed).** The season level of each build's own window evidence: for each
+  feeder-linked track, the mean of its prior-builder residuals over its role events in its first
+  window season with role events, with that mean's known variance, and no prior of any kind in the
+  target (§3.3, §6.2). ADR-013 records the owner's 2026-10-14 answer
+  (`docs/06-sessions/2026-10-14-P0-01.md`, answer 10). It reverses DR-D19's 2026-10-09 decision in
+  part, because the estimand changes from end-of-season smoothed talent to the season level. It
+  keeps the Kalman credit scale and the absence of a separate scale map, and binds once the owner
+  accepts it, for example in the P0-01 merge comment.
+
+Either way, each DR-D32 build computes its targets from its own window only, and a stored production
+track never supplies one (§3.3). That part does not wait on ADR-013.
 
 ### 3.2 Inputs
 
@@ -154,10 +169,21 @@ Canonical values: `league_factor = 0.62`, `college_noise_sd = 0.030`, `frac_rook
 The oracle has **no as-of handling**. The equivalency is a global fit across whatever shared players are
 passed. Required engine behaviour:
 
-- **Fit window.** The equivalency used for a forecast in season S MUST be fit only on NFL ratings that
+- **Fit window.** The equivalency used for a forecast in season S MUST be fit only on NFL data that
   existed as of the forecast: completed seasons inside the engine-spec §2.4 window. Its feeder inputs
   MUST carry CFBD retrieval timestamps (engine-spec §4.5). This follows the cn-docs §3.7 scope-leak
-  rule "equivalency frozen to prior seasons".
+  rule "equivalency frozen to prior seasons". At each season boundary it is fitted once per build
+  window of SSK §6.5: on S−3..S−1 for `prior_pre` and on S−2..S−1 for `prior_in`. Each fit uses only
+  its own seasons' NFL evidence, including its DR-D19 targets (DR-D32). A stored production track
+  never supplies a DR-D19 target: a window season's production filter restarted from a prior built at
+  an earlier boundary, around the player's own college prior, and used that season's own V(s), `g′`
+  and `δ^team`. Under ADR-013 (Proposed), once the owner accepts it, each build `b` takes its targets
+  only from `b`'s own prior-builder records (`layer1-credit.md` §4.8.2) and the `r_c` and `ω_c` of
+  `b`'s hyperparameter record (SSK §6.5). None of the following enters them: `b`'s population prior
+  `N(m, σ²_c)`, a stored production track or state, live Layer-1′ residuals, RAPM ratings, offseason
+  Layer-1 credit, an earlier boundary's prior, or NFL data from before `b`'s window other than
+  through season S's frozen V(s) behind each record's dV, which both builds share (DR-C6; DR-D32).
+  §6.2 gives the fit.
 - **Static metadata.** A prospect's own feeder SV, draft round and age are static metadata and may predate the window
   (alpha-spec §2.4 (superseded)). The **map** applied to them may not.
 - **Identity links.** An identity link that is ambiguous MUST NOT produce a prior (alpha-spec §4.4.3 (superseded): "a false
@@ -193,7 +219,8 @@ Supplied to the engine output contract (engine-spec §6.7):
 - `q` (engine form, §6.2);
 - the **current prior weight**, computed exactly from the filter (§4.4.2), not from the conjugate table.
 
-The superseded alpha-spec §6.5 requires "NCAA prior contribution, if any".
+The superseded alpha-spec §6.5 requires "NCAA prior contribution, if any". Under DR-D17 it is the
+feeder base's remaining weight in the state, computed by linearity (SSK §3.5).
 
 ---
 
@@ -388,6 +415,92 @@ n0 (equivalently the σ²_prior scale) learned by position through rolling-origi
 NCAA influence capped for components with weak translation evidence
 ```
 
+**Base of the windowed prior (DR-D17).** For a player for whom this section produces a feeder prior
+`N(μ_f, σ²_f)` at boundary S on the build's window, with `μ_f = θ_prior(i)` and `σ²_f = σ²_prior(i)`
+above (a non-ambiguous college identity link and feeder data, §3.3), that prior is the base of every
+windowed prior of each of his tracks, in every season (SSK §6.5). Every other player's base is the
+population prior `N(m, σ²_c)` of his (position class, role). The base is placed at the first season
+of the build's window, or at the player's first window season with an as-of roster snapshot
+(`rapm-attribution.md` §6.4) if that season is later (SSK §6.5, "Base"). It enters with precision
+`1/(κ_c·σ²_f)`, where `κ_c` is the base scale learned by rolling origin (SSK §6.5). Its weight falls
+only through window evidence; it is not decayed for seasons before the window. The hand-off above
+applies unchanged only to a track with no window evidence and to a rookie's first slot. The
+engine-spec §2.5 eligibility list does not gate this prior. SSK §6.5 writes the windowed prior that
+results as `N(μ_prior, σ²_prior)`; this section's `θ_prior(i)` and `σ²_prior(i)` are only its base.
+
+**Equivalency fit under ADR-013 (Proposed).** ADR-013 records the owner's 2026-10-14 answer to
+DR-D19 (`docs/06-sessions/2026-10-14-P0-01.md`, answer 10). It binds once the owner accepts it;
+until then DR-D19's 2026-10-09 text stands and governs (§3.1). If the owner rejects it, the target
+goes to a new decision request before P1-12 implements the feeder equivalency (ADR-013, Status). In
+each SSK §6.5 build `b` (`prior_pre` on S−3..S−1, `prior_in` on S−2..S−1):
+
+- **Targets.** They come only from `b`'s own prior-builder records (`layer1-credit.md` §4.8.2) and
+  the `r_c` and `ω_c` of `b`'s hyperparameter record (§3.3; SSK §6.5); `b`'s population prior
+  `N(m, σ²_c)` does not enter them. There is one target per feeder-linked, non-ambiguous
+  (player, role) track with at least one regular-season role event in `b`'s window from the base's
+  placement season on (SSK §6.5). Its target season `s*` is the earliest such season.
+- **Target value.** `ȳ_i` is the mean of the track's prior-builder residuals `r̃` over its `N_{s*}`
+  role events in `s*`. Its known variance `v_i` is the SSK §6.5 per-season variance at `s*`, from
+  `b`'s `(r_c, ω_c)`. No filter is run, and no prior of any kind (college, population or vague)
+  enters the target.
+- **Model.** Per equivalency class, a Fay–Herriot-type measurement-error regression:
+
+  ```text
+  ȳ_i = α + β·feeder_sv_i + u_i + e_i,   u_i ~ N(0, σ²_u),   e_i ~ N(0, v_i)
+  v_i = r_c/N_{s*} + ω_c·Σ_w (n_{s*,w}/N_{s*})²       # known, from b's (r_c, ω_c)
+  θ_ncaa_translated(i) = α̂ + β̂·feeder_sv_i          # (a_pos, b_pos) above
+  ```
+
+- **Prior variance.** The residual variance of the equivalency in `σ²_prior(i)` above is `σ̂²_u`, the
+  between-player variance net of the known target noise. The alpha-spec §6.3 (superseded) widening
+  for undrafted, transferred, position-converted or identity-uncertain players applies to it. An
+  estimate of `σ²_u` at zero is a typed failure (§4.6; engine-spec §6.4.7). Whether `σ²_prior` also
+  carries the line's parameter uncertainty, and the variance of the `q` blend, which must be defined
+  together with this target, the influence cap and exposure weighting, stay open (open — DR-C9).
+- **Estimator.** The estimator of the line and of `σ²_u` is named here before P1-12 implements the
+  fit (open — DR-C5). It covers how the line is weighted: precision weights `1/(σ²_u + v_i)`, or
+  equal or design weights with a variance estimator net of the known noise. When exposure follows
+  talent, precision weights are informative and a precision-weighted line overstates the base mean,
+  so the choice matters. It also covers variance clustered by player and by team-season, since
+  teammates share team-offence context in `r̃`.
+- **Fitted population.** The population the map is reported as fitted on (§1) is the feeder-linked
+  tracks with at least one window event.
+- **Canaries.** These targets meet both SSK §6.5 canaries by construction, so once ADR-013 binds
+  both can hold for feeder-linked tracks (DR-D32).
+- **Still open.**
+  - The equivalency class: the position class (proposed — DR-C9) or (position class, role) (DR-C3),
+    which for RB/WR/TE role tracks also depends on DR-D13. The same decision covers how a player's
+    several role tracks enter one fit: one row per track in a position-class fit would repeat a
+    player id (§8.2 P-7) and mix role scales (open — DR-D19, DR-C9).
+  - The minimum shared-player count per class and build (KI-G8), and what applies when one build's
+    equivalency fails and the other's passes. No fallback is specified, and substituting the
+    population base would be a silent fallback (open — DR-D19, DR-C9; DR-B6).
+  - Whether a shared player's own feeder base is fitted on folds that exclude him (KI-#48; §5.2), so
+    that his window evidence is not used twice (open — DR-D19).
+  - Career stage. `s*` is a track's first window season, so the shared pool is mostly veterans past
+    their entry season, while a rookie takes his base unchanged (SSK §6.5). If players improve after
+    NFL entry, the rookie base is biased upward. An age-at-`s*` term is an age adjustment, which goes
+    back to the Statistical owner and enters only through `θ_position_draft_prior` (DR-C9). Career
+    stage is never inferred from pre-window NFL data (open — DR-D19). A multi-season or
+    entry-season-only target, or a restriction of the pool to entry seasons, would change the decided
+    target (ADR-013, Decision, items 2 and 3): each needs a new decision request and an ADR amending
+    ADR-013, and an entry-season form also needs a provider document that specifies a field-level
+    draft- or entry-year source.
+  - If `feeder_sv` is built with an NFL-fitted model, whether that model must be season S's V(s), so
+    that the static-metadata exemption (§3.3) carries no pre-window NFL data (open — DR-C9).
+  - The P1-12 measurements, pre-registered per class and build before P1-12 runs them, on a
+    multi-season synthetic world (DR-B4) that plants within-season talent drift, team-offence
+    context, career development, and exposure and selection driven by talent. The primary yardstick is
+    estimand-neutral: weekly one-step predictive log score, NIS, PIT and coverage for rookies and
+    feeder-linked veterans run through the filter from `x0 = [μ_f, 0, 0]`. Secondary: slope and
+    base-mean bias against planted truth by exposure tier and career stage, prior variance against
+    planted truth, the learned `κ_c` and the share of zero variance estimates. A rolling-origin
+    real-data check on the same yardstick follows once Layer-1′ and CFBD `feeder_sv` exist
+    (KI-NEW-Z50, DR-C9). The engine-spec §6.5 / §9.4 rule that NCAA priors improve
+    low-evidence-player PB-MAE or calibration is not one of these measurements: it is checked in
+    P1-09 on the engine-spec §2.5 low-evidence slice, where DR-D9 gates it
+    (`evaluation-and-leakage.md` §4.12).
+
 **The parts of the oracle the engine form ports.**
 
 - The shared-player equivalency, made per-position, as-of and per-league-ready.
@@ -404,22 +517,30 @@ NCAA influence capped for components with weak translation evidence
 
 - The definition of `q` (identity confidence, NCAA sample size, role comparability, opponent and
   conference adjustment quality, draft and combine agreement).
-- The form of `θ_position_draft_prior`.
+- The covariates of `θ_position_draft_prior`. Under DR-D17 (2026-10-14, answer 9), its state-space
+  form is the population prior `N(m, σ²_c)` of SSK §6.5, one per (position class, role), estimated on
+  the window.
 - The influence cap.
 - How `feeder_sv` itself is computed from CFBD play-by-play. The `load_cfbd` docstring sketches a reduced
   Layer-1/Layer-2 pass with within-NCAA opponent adjustment; alpha-spec §4.2.3 (superseded) lists
   box-score features instead. The choice waits for the CFBD terms check.
 - Exposure weighting (`feeder_snaps`; §8.2 P-8).
+- Whether `σ²_prior` also carries the equivalency line's parameter uncertainty, and the variance of
+  the `q` blend, which must be defined together with the equivalency target, the influence cap and
+  exposure weighting (DR-D19; ADR-013, Proposed).
 
 **Lifecycle requirements.**
 
-- The equivalency is estimated once per season boundary.
+- The equivalency is estimated twice per season boundary, from the same data version: once on each
+  build window of SSK §6.5, S−3..S−1 for `prior_pre` and S−2..S−1 for `prior_in`. Each fit is
+  recorded with its window (DR-D32).
 - It is persisted as a versioned EB/affine parameter record: prior mean, prior variance, population
   variance, sample counts, shrinkage parameters, version (final-build-spec §11.6 (superseded)).
-- Priors are immutable for a season except through an identity-link version change.
-- The prior is applied to the Kalman state at the player's first slot in the evidence window and at every
-  season-boundary re-initialisation, in production and backtest replay alike (DR-C6, DR-D17; SSK §6.6).
-  The windowed prior for a player with NFL history is still to be specified (open — DR-D17).
+- Priors are immutable for a season except through an identity-link version change. A correction to
+  window-season data published during the season reaches them at the next boundary (DR-D17).
+- The prior enters the Kalman state, as the base of the windowed prior (above), at the player's first
+  slot in the evidence window and at every season-boundary re-initialisation, in production and
+  backtest replay alike (DR-C6, DR-D17; SSK §6.5, §6.6).
 
 ---
 
@@ -525,7 +646,7 @@ None. There is no feeder-SV source and no caller (§1).
 
 | # | Defect | Required engine behaviour |
 |---|---|---|
-| P-1 (KI-NEW-Z24) | **Scale mismatch.** The prior is on the RAPM-rating scale, the Kalman state on the Layer-1-credit scale (credit-on-rating slope 1.19–1.40 on the legacy synth). Issue #15's proposed `x0 = prior_mean` would mis-scale the prior | The equivalency target MUST be the Kalman tracker's own talent: end-of-season smoothed talent computed without the college prior, so the prior never trains on itself (`priors.py:83-90` already allows a smoothed-talent target). There is no separate scale map (DR-D19) |
+| P-1 (KI-NEW-Z24) | **Scale mismatch.** The prior is on the RAPM-rating scale, the Kalman state on the Layer-1-credit scale (credit-on-rating slope 1.19–1.40 on the legacy synth). Issue #15's proposed `x0 = prior_mean` would mis-scale the prior | The equivalency target MUST be on the Kalman tracker's own credit scale, and the college prior never enters it, so the prior never trains on itself. There is no separate scale map (DR-D19). As decided on 2026-10-09, the target is end-of-season smoothed talent computed without the college prior (`priors.py:83-90` already allows a smoothed-talent target); under ADR-013 (Proposed), once the owner accepts it, it is each build's window-local season level, with no prior of any kind in it (§3.1, §6.2) |
 | P-2 (KI-NEW-Z25) | The Tier-0 rookie-prior gate is invariant to the estimated equivalency (§7.1) | Class-D targets include an estimator-sensitive gate (§10.3) |
 | P-3 (KI-NEW-Z26) | `washout_table` is a conjugate approximation with inconsistent R and contradicts the implemented filter (§4.4) | Filter-derived diagnostic only |
 | P-4 (KI-NEW-Z27) | The regression is pooled across positions, while the variance is position-specific and the rating scale differs by position (§7.2) | Per-position-class equivalency or an explicit position term (DR-C9) |
@@ -555,14 +676,17 @@ Each blocks promotion of the affected artifact. Each is a deliberate divergence 
 
 | Decision | Outcome (decision interview) | Effect |
 |---|---|---|
-| **DR-C9** NCAA / feeder prior form | Ratified in part 2026-10-09: the alpha-spec §6.3 (superseded) blend governs the prior's overall form. NCAA only; UFL/USFL/XFL/CFL `LEAGUE_FACTORS` documented but unused. The age and draft step functions are not ported and go back to the statistical owner | §6.2. Still open inside it: `q`, `θ_position_draft_prior`, the influence cap, the college-rating source (a CFBD play-by-play pass for `feeder_sv`, or box-score features; waits for the CFBD terms check), exposure weighting |
+| **DR-C9** NCAA / feeder prior form | Ratified in part 2026-10-09: the alpha-spec §6.3 (superseded) blend governs the prior's overall form. NCAA only; UFL/USFL/XFL/CFL `LEAGUE_FACTORS` documented but unused. The age and draft step functions are not ported and go back to the statistical owner | §6.2. Still open inside it: `q`, the covariates of `θ_position_draft_prior` (under DR-D17, 2026-10-14, answer 9, the population prior `N(m, σ²_c)` per (position class, role), estimated on the window; SSK §6.5), the influence cap, the college-rating source (a CFBD play-by-play pass for `feeder_sv`, or box-score features; waits for the CFBD terms check), exposure weighting. Under ADR-013 (Proposed), once the owner accepts it, the equivalency's residual variance is `σ̂²_u`, net of the known target noise (§6.2); whether `σ²_prior` also carries the line's parameter uncertainty, and the `q` blend's variance, stay open |
 | DR-C10 Kalman semantics bundle | Ratified 2026-10-09: prior-based `x0`/`P0` | SSK §6.5 |
 | DR-C6 Three-season window | Overridden in part 2026-10-09: through DR-D17, every player's filter restarts from the windowed prior at each season boundary, in production and replay alike | Which seasons enter the equivalency fit; when the prior is re-applied (§6.2) |
 | DR-C1 Live vs offseason | Ratified in part 2026-10-09: RAPM and every stage that reads participation run only after a season's participation is published; the live tier reads no participation. Open: the snap-count source (KI-NEW-Z50) | The NFL evidence the equivalency may use (§3.3); the NFL target itself is DR-D19 |
 | DR-B4 Synthetic world | Ratified 2026-10-09: fix defenders, plant net strength and regenerate the goldens now; a stat-vector world and a realistic profile before Layers A–F. Open: the recalibrated `r_scale`, NIS bands and Tier-0 floors; the stat-vector world's parameters | Class-D targets (§10.3). The synthetic college world should also plant range restriction and position-specific translation |
 | DR-A11 Fixture licensing | Ratified 2026-10-08: synthetic-only parity fixtures | No CFBD payload enters the parity fixtures |
 | DR-B6 Typed failures | Ratified in part 2026-10-08: typed failure; oracle unchanged. Open: the condition-number threshold | §8.3 |
-| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted directly against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Open: `P0_form`/`P0_scheme` for prior-seeded players (P1-12 washout and calibration measurements) | §3.1, §8.2 P-1, SSK §6.5. `P0_form`/`P0_scheme` govern washout speed (§4.4.2) |
+| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted directly against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Decided in part (2026-10-14, Statistical owner, owner-directed transcription, `docs/06-sessions/2026-10-14-P0-01.md`): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed). Each DR-D32 build computes its targets from its own window only, and a stored production track never supplies one. Every option offered computed each build's targets from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does not wait on ADR-013. Under ADR-013, in each DR-D32 build, each feeder-linked track's target is the mean of its prior-builder residuals in its first window season with role events, with its known variance, and the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`; no filter run and no prior of any kind enters the target. Kept: the Kalman credit scale, no separate scale map, and a prior that never trains on itself. Until ADR-013 is accepted, the 2026-10-09 text stands and governs. Open: `P0_form`/`P0_scheme` for prior-seeded players, and `P0` for tracks restarted from a windowed prior, including whether `P0[0,0]` should offset the week-0 predict step (P1-12 washout and calibration measurements); the owner's ruling on ADR-013; the estimator (DR-C5) and the other parts §6.2 lists | §1, §2, §3.1, §3.3, §6.2, §8.2 P-1, SSK §6.5. `P0_form`/`P0_scheme` govern washout speed (§4.4.2) |
+| **DR-D17** | Decided 2026-10-09: every filter restarts from the windowed prior at each season boundary (DR-C6 above). Decided in part 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`, answers 5, 7 and 9): for a player with a feeder prior, that prior is the base of his windowed prior in every season, and its weight falls only through window evidence, so it is not decayed for seasons before the window (SSK §6.5). Every other player's base is the population prior `N(m, σ²_c)` of his (position class, role), estimated on the window. The engine-spec §2.5 eligibility list does not gate this prior. Open: the parts SSK §6.5 lists, the population prior's covariates among them (DR-C9) | §2, §3.5, §6.2, §11 |
+| **DR-D32** | Decided 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`): two priors, strict window. The equivalency is fitted twice per season boundary, on S−3..S−1 for `prior_pre` and on S−2..S−1 for `prior_in`, each on its own seasons' NFL evidence and DR-D19 targets, with season S's frozen V(s) the only shared data input (SSK §6.5). A stored production track never supplies a target; under ADR-013 (Proposed), once the owner accepts it, each build takes its targets from its own prior-builder records only (§3.3, §6.2) | §3.3, §6.2 |
+| DR-D9 Low-evidence thresholds | Open: the engine-spec §2.5 opportunity thresholds and weights. Since DR-D17 (2026-10-14) they govern no Kalman prior; they still govern the low-evidence definition wherever it is used outside it | §2 |
 
 ---
 
@@ -583,8 +707,8 @@ Each blocks promotion of the affected artifact. Each is a deliberate divergence 
 
 | WP | Scope |
 |---|---|
-| **P1-07** (§6.1 Layers A–D + §6.3 NCAA/rookie priors) | Owns the engine form (§6.2) |
-| **P1-12** (GRID component port) | Ports the oracle equivalency and translation for parity (§10.3 class A) and the Kalman hand-off (SSK §6.5) |
+| **P1-07** (§6.1 Layers A–D + §6.3 NCAA/rookie priors) | Owns the §6.5 blend assembly of the engine form (§6.2): `q`, `θ_position_draft_prior`, the influence cap and `σ²_prior`, on the equivalency that P1-12 fits; it does not edit `models::priors` |
+| **P1-12** (GRID component port) | Ports the oracle equivalency and translation for parity (§10.3 class A) and the Kalman hand-off (SSK §6.5); the per-build feeder-equivalency fit (§6.2, "Equivalency fit under ADR-013", once ADR-013 binds) and the windowed-prior base (§6.2, "Base of the windowed prior"; SSK §6.5) |
 | **P1-04** | NCAA adapter and identity linking |
 | **P1-05** | As-of prior features and leakage tests (§3.3) |
 | **P1-09** | Rookie / low-evidence scorecards (superseded alpha-spec §9.2 evaluation foundation) |
@@ -628,7 +752,7 @@ Kalman-implied prior weight for RB with snaps 60 (§4.4.2): 0.801 after 1 game, 
 | alpha-spec §4.2, §4.2.1, §4.2.2 (superseded) CFBD source, datasets, call budget | — | Not implemented (`load_cfbd` stub). `docs/04-providers/cfbd/` is a placeholder for P1-04 |
 | alpha-spec §4.2.3 (superseded) NCAA features by position | — | None implemented. The `college` frame is synthetic-only with one `feeder_sv` column. The oracle's feeder-SV approach needs a CFBD **play-by-play** GRID pass beyond §4.2.3's box-score features; the choice is open (open — DR-C9) |
 | alpha-spec §4.4.3 (superseded) NCAA-to-NFL matching tiers | — | Absent (synthetic ids join exactly). §3.3 and §8.3 add the "no prior on ambiguous link" rule |
-| alpha-spec §2.5 (superseded) low-evidence definition; continuous decay | Decay through the filter, in principle | Eligibility is a static `is_rookie` flag; none of the §2.5 criteria is implemented |
+| alpha-spec §2.5 (superseded) low-evidence definition; continuous decay | Decay through the filter, in principle | Eligibility is a static `is_rookie` flag; none of the §2.5 criteria is implemented. In the engine the list gates no Kalman prior; the feeder base's weight falls only through window evidence (§6.2; DR-D17) |
 | alpha-spec §11.5 (superseded) rookie/low-evidence features | Draft round and age (as step adjustments) | Pick, combine, college market share, usage/PPA, conference adjustment, recruiting, position conversion, identity confidence, prior variance as a feature: absent (`prior_var` exists as a feature in `features.py`) |
 | alpha-spec §6.2 (superseded) EB and affine rows | Affine college→NFL translation | EB prior parameters are not persisted or estimated |
 | alpha-spec §6.5 (superseded) "NCAA prior contribution" | — | Not computed. §3.5 specifies it from the filter |

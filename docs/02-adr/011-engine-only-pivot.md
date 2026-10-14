@@ -416,6 +416,7 @@ listed here is outside P0-01. The same list appears in the P0-01 work package.
 - `docs/01-work-packages/p0-01-engine-consolidation.md`
 - `docs/02-adr/011-engine-only-pivot.md`
 - `docs/02-adr/012-python-reference-oracle.md`
+- `docs/02-adr/013-feeder-target-season-level.md`
 - `docs/03-contracts/`:
   - `docs/03-contracts/README.md`
   - `docs/03-contracts/engine-output-contract.md`
@@ -438,6 +439,8 @@ listed here is outside P0-01. The same list appears in the P0-01 work package.
 - `docs/06-sessions/review-P1-00-adversarial-round3.md`
 - `docs/06-sessions/review-P1-00-adversarial-round4.md`
 - `docs/06-sessions/review-P0-01-adversarial-round1.md`
+- `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`
+- `docs/06-sessions/2026-10-14-P0-01.md`
 - `docs/07-archive/`
 - `reference/python/`
 - `.ai/evidence/P0-01/`

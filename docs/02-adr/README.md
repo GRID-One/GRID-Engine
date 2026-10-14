@@ -27,6 +27,10 @@ The `status` values are those of the template: `Proposed`, `Accepted`, `Supersed
 - **ADR-011 and ADR-012** are accepted, or overridden, in the owner's merge review of the P0-01 pull
   request, together with the DR-A decisions they carry (`docs/00-meta/decision-register.md`, "How to
   ratify or override").
+- **ADR-013** records the Statistical owner's 2026-10-14 reversal in part of DR-D19 (register rule 6).
+  The Statistical owner accepts or rejects it, for example in the P0-01 merge comment. Until it is
+  accepted, DR-D19's 2026-10-09 text governs. If it is rejected, the feeder-equivalency target goes
+  to a new decision request to the Statistical owner before P1-12 implements the feeder equivalency.
 
 ## Partial supersession
 
@@ -59,6 +63,7 @@ Editing `superseded-by` is the only change permitted to an Accepted ADR. The bod
 | [010](010-guard-the-shape-not-the-instance.md) | Fix the shape, not the instance: where a fail-closed guard belongs | Accepted | 2026-08-29 | — |
 | [011](011-engine-only-pivot.md) | Engine-only pivot | **Proposed** | 2026-10-07 | — |
 | [012](012-python-reference-oracle.md) | Python reference oracle | **Proposed** | 2026-10-07 | — |
+| [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | **Proposed** | 2026-10-14 | — |
 
 **What ADR-011 supersedes in part** (its "Supersession" section is authoritative):
 

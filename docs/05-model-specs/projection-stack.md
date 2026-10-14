@@ -127,7 +127,10 @@ for the port.
      `docs/03-contracts/engine-output-contract.md` §4.2. It is causal only if the filter's
      initialisation is causal. The oracle initialises from `nanmean(y[:3])` inside the window
      (`statespace.py:186`; KI-#15). The engine computes it with the forward filter alone, from a
-     prior-based `x0`/`P0` (DR-C10), and names it `end_of_window_filtered_talent`.
+     prior-based `x0`/`P0` (DR-C10), and names it `end_of_window_filtered_talent`. For the preseason
+     and week-1 forecast it is taken from the preseason prior `prior_pre`, built on `S−3..S−1`; from
+     week 2 it comes from the season-`S` filter, which restarts from `prior_in`, built on `S−2..S−1`
+     (`state-space-kalman.md` §6.5; DR-D32).
 3. **Receptions are projected as volume, and catch rate is not modelled.**
    - `receptions` is a `VOLUME_COLS` entry (`volume.py:34`) and the driver of receiving yards and
      touchdowns (`model.py:57`).
@@ -551,7 +554,10 @@ code (engine-spec §6.8; Definition of Ready).
 2. **Covariates (DR-C3, option (a)).**
    - role-specific GRID talent (dropback, carry, target), from one state-space track per player and
      role (DR-C3): filtered talent and form with their predictive variance (`state-space-kalman.md`;
-     `layer1-credit.md` Layer-1′, per role event under DR-D15);
+     `layer1-credit.md` Layer-1′, per role event under DR-D15). For the preseason and week-1 forecast
+     the talent covariate is taken from the preseason prior `prior_pre`, built on `S−3..S−1`; from
+     week 2 it comes from the filter, which restarts from `prior_in`, built on `S−2..S−1`
+     (`state-space-kalman.md` §6.5; DR-D32);
    - the prior-season offseason RAPM rating (`rapm-attribution.md` §2.2; DR-C1);
    - the cross-league prior (`cross-league-priors.md`), with an explicit missing indicator.
    - Every covariate has a missing indicator. A missing covariate is never 0.0 (KI-P1).
@@ -830,7 +836,8 @@ as a deliberate divergence (DR-B6).
 ## 9. Decisions
 
 Status after the owner's decision interview of 2026-10-08/09
-(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). The register is authoritative for status.
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and the owner's answers of 2026-10-14
+(`docs/06-sessions/2026-10-14-P0-01.md`). The register is authoritative for status.
 
 | Decision | Question | Status |
 |---|---|---|
@@ -846,6 +853,7 @@ Status after the owner's decision interview of 2026-10-08/09
 | **DR-D7** | The alpha §5.1 asymmetries | Decided 2026-10-08: intended, and binding as written (engine output contract §3.2) |
 | **DR-D13** | Whether RB/WR/TE credit measures the player or the unit | Open (`layer1-credit.md`). Interim rule: outputs carry `role = on_field` and are never described as individual efficiency. Direction recorded: test own-role (Layer-1′) credit first, then teammate subtraction, each promoted only on recovery evidence |
 | **DR-D6** | Threshold bonuses in profiles | Ratified 2026-10-09: rejected with a typed error, never approximated |
+| **DR-D32** | How the season-boundary priors treat `S−3` after week 1 | Decided 2026-10-14: two priors, strict window. The preseason and week-1 talent covariate comes from `prior_pre` (`S−3..S−1`); the filter restarts from `prior_in` (`S−2..S−1`) (`state-space-kalman.md` §6.5). Still open: P1-12 measurements of `S−3`'s weight from week 2 on, and a real-data comparison of the two builds |
 
 ---
 

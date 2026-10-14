@@ -35,10 +35,14 @@ No criterion is claimed as passing here. Each is to be run against the final com
   1. **Product/Architecture owner.** In one merge review or comment that names each DR ID, name again
      DR-A1, DR-A2, DR-A4, DR-A5, DR-A6, DR-A8, DR-A9 and DR-A12, which the owner ratified on 2026-10-08
      in the decision interview; confirm the interview record
-     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); and accept ADR-011 and
-     ADR-012, as the owner chose in the decision interview (`docs/00-meta/decision-register.md`, "How to
-     ratify or override", steps 1 and 3).
-  2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1.
+     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and the 2026-10-14 decision record
+     (`docs/06-sessions/2026-10-14-P0-01.md`); and accept ADR-011 and ADR-012, as the owner chose in
+     the decision interview (`docs/00-meta/decision-register.md`, "How to ratify or override", steps 1
+     and 3).
+  2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1. Also accept or reject
+     ADR-013 (DR-D19, answer 10 of the 2026-10-14 record), which binds only once accepted; until then
+     DR-D19's 2026-10-09 text governs, and on rejection the feeder-equivalency target goes to a new
+     decision request.
   3. **Security/Release owner.** DR-A7 and the guard changes (ADR-011 D7). Also the design of the
      `reference-oracle` job: the runner image's tool-cache CPython 3.11, failing if it is absent, and no
      `actions/setup-python` (ADR-012 §4). DR-D31 (how the job turns green, KI-NEW-Z78) was ratified by
@@ -61,8 +65,8 @@ No criterion is claimed as passing here. Each is to be run against the final com
   Both are now at `docs/00-meta/specs/superseded/`.
 - **Owner instruction.** The owner's request of 2026-10-01 and the owner's choice of option (ADR-011,
   Context).
-- **ADRs.** ADR-011 and ADR-012 (both proposed); ADR-001 D5 and ADR-005 (the amendment conditions);
-  ADR-009; ADR-010.
+- **ADRs.** ADR-011, ADR-012 and ADR-013 (all proposed); ADR-001 D5 and ADR-005 (the amendment
+  conditions); ADR-009; ADR-010.
 - **Contracts, model specs and provider manifests:** the drafts this package creates (Scope).
 
 ## Owner decisions depended on
@@ -91,7 +95,9 @@ comment.
 ### Decisions raised by the consolidation
 
 P0-01 decides none of these itself. The owner settled most of them, in full or in part, in the decision
-interview of 2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the rest stay
+interview of 2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`), and further
+parts of DR-D14 and DR-D17 on 2026-10-14 (`docs/06-sessions/2026-10-14-P0-01.md`), where the owner
+also chose a reversal in part of DR-D19 that binds once ADR-013 (Proposed) is accepted; the rest stay
 proposed or open, as each register entry says. A work package that depends on an unsettled decision, or
 on an unsettled part of one, is not Ready until the named owner rules (engine-spec §8.16.1). The blocked
 packages are listed in `docs/01-work-packages/README.md`. `docs/00-meta/decision-register.md` is
@@ -163,6 +169,19 @@ LO" (L0). P0-01 implements it as correction-ledger entry L0 (`reference/python/P
 Layer C golden regenerated once under CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, enforced by
 `reference/python/tools/pytest_platform_pin.py`. No tolerance is loosened and no test is skipped.
 
+DR-D32 (how the season-boundary priors treat season S−3 after week 1) was raised in review on
+2026-10-14 with the DR-D17 questions, and **decided by the owner on 2026-10-14**: two priors, strict
+window (`docs/06-sessions/2026-10-14-P0-01.md`). Both of its canaries (`engine-spec.md` §12.3) hold
+the model version's learned constants fixed (κ_c, λ_c and the filter's `SSParams`), which are
+calibrated by rolling origin, generally on seasons before the window, and are not window evidence
+(answer 11 of the same record). Two of its open parts, S−3's measured weight after week 1 and a
+real-data comparison of the three- and two-season builds, are P1-12 measurements. The output
+contract (`docs/03-contracts/engine-output-contract.md` §4.2, §12) has not yet named the keys of the
+`prior` field's source and build labels. For feeder-linked tracks, both canaries can hold once the
+Statistical owner accepts ADR-013 (DR-D19, answer 10), under which each build's DR-D19 targets come
+only from its own prior-builder records and its own r_c and ω_c; until then DR-D19's 2026-10-09 text
+governs.
+
 ## Objective
 At the P0-01 merge commit, the repository is engine-only and consistent with itself:
 
@@ -223,6 +242,7 @@ commit messages cite.
 - `docs/01-work-packages/p0-01-engine-consolidation.md`
 - `docs/02-adr/011-engine-only-pivot.md`
 - `docs/02-adr/012-python-reference-oracle.md`
+- `docs/02-adr/013-feeder-target-season-level.md`
 - `docs/03-contracts/`:
   - `docs/03-contracts/README.md`
   - `docs/03-contracts/engine-output-contract.md`
@@ -245,6 +265,8 @@ commit messages cite.
 - `docs/06-sessions/review-P1-00-adversarial-round3.md`
 - `docs/06-sessions/review-P1-00-adversarial-round4.md`
 - `docs/06-sessions/review-P0-01-adversarial-round1.md`
+- `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`
+- `docs/06-sessions/2026-10-14-P0-01.md`
 - `docs/07-archive/`
 - `reference/python/`
 - `.ai/evidence/P0-01/`
@@ -417,8 +439,8 @@ Each criterion is verified by the command shown, run against the final content c
       both exit 0.
 - [ ] `git diff --quiet 3823478 HEAD -- .ai/evidence/P1-00` exits 0, so the P1-00 record is untouched.
 - [ ] `git merge-base --is-ancestor 8d43203 HEAD` exits 0.
-- [ ] `grep -L '^status: Proposed' docs/02-adr/011-engine-only-pivot.md docs/02-adr/012-python-reference-oracle.md`
-      prints nothing: both ADRs are still Proposed.
+- [ ] `grep -L '^status: Proposed' docs/02-adr/011-engine-only-pivot.md docs/02-adr/012-python-reference-oracle.md docs/02-adr/013-feeder-target-season-level.md`
+      prints nothing: all three ADRs are still Proposed.
 
 **Reference oracle**
 
@@ -529,8 +551,9 @@ steps follow; do them last, on the final commit.
    trivial for traceability, so N is unchanged.
 9. **If the base moves before merge,** redo steps 3–8.
 
-A review record committed to this pull request (`docs/06-sessions/review-P0-01-…`) is a new path. It
-must then be added to "Paths affected" here and in ADR-011.
+A review or decision record committed to this pull request (`docs/06-sessions/review-P0-01-…`,
+`docs/06-sessions/2026-10-14-P0-01.md`) is a new path. It must then be added to "Paths affected"
+here and in ADR-011.
 
 ## Stop/decision conditions
 - **The owner overrides an A-decision.** Change the pull request to match, before merge.
@@ -572,6 +595,7 @@ must then be added to "Paths affected" here and in ADR-011.
 | 15 | Structural guards: no crate depends on Python (engine-spec §1.1 item 8), and the CLI depends only on the orchestration crate (§8.1 rule 4) | P1-01 | The rules rest on review alone |
 | 16 | Extend the "Template conformance" tables of the eight draft model specs to the new template headings | Statistical, before each spec is approved | A spec could be approved with a §6.8 field missing |
 | 17 | Make `reference-oracle` a required status check for every pull request to `main` in branch protection (DR-D30, decided 2026-10-09; no workflow edit) | Owner (Security/Release) | Until then a failing oracle run does not block a merge |
+| 18 | A register entry for the decision request of KI-NEW-Z79: which team data the training features of the live context model `g′` may carry (`layer1-credit.md` §4.8.2, §4.8.3). It takes the next free DR-D number before P1-12 is Ready | Register owner; Statistical (the decision) | Live Layer-1′ credit trains on team data from before the window |
 
 ### Known limitations
 - **`ai-toolchain.lock` provenance is `unrecorded` for P0-01.** This deviates from engine-spec §8.20

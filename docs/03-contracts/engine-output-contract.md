@@ -224,7 +224,8 @@ prior production projection stays in force:
 2. Expected player role and opportunity: share means.
 3. Availability adjustment (Δ expected points).
 4. Matchup adjustment (Δ).
-5. NCAA prior contribution, null if none.
+5. NCAA prior contribution: the remaining weight of the player's feeder (NCAA) base in the state,
+   computed by linearity (`state-space-kalman.md` §3.5; DR-D17). Null if he has no feeder prior.
 6. Recent NFL evidence contribution.
 7. Top positive and top negative model drivers.
 8. Uncertainty drivers.
@@ -249,7 +250,7 @@ explanation and diagnostic fields, never fantasy points.
 | `role_talent { dropback \| carry \| target }` | `{ filtered_mean, filtered_var, predictive_var }` from the state-space layer. **Filtered or one-step predictive only** |
 | `form`, `scheme_fit` | Filtered state components |
 | `offseason_rapm` | `{ rating, season, n_plays }`, or null. Fitted only once that season's participation is published *(DR-C1)* |
-| `prior` | `{ mean, var, q, n0, weight_now }`, or null. The NCAA/draft prior and its current weight (engine-spec §6.5) |
+| `prior` | `{ mean, var, q, n0, weight_now }`, or null. The season-boundary prior behind this record's GRID values, and its current weight (engine-spec §6.5). It is labelled with its source (window, feeder or population; DR-D17) and its build (DR-D32): `prior_pre`, built on S−3..S−1 for the preseason and week-1 forecast, or `prior_in`, built on S−2..S−1, from which the season-S filter restarts (`state-space-kalman.md` §6.5). The keys of the two labels are not yet named (§12) |
 | `regime_flags` | `{ intervention, scheme_reset, changepoint_z }` |
 
 Hard rule, not conditional on the DRs. **RTS-smoothed values MUST NOT appear in any live or
@@ -386,7 +387,15 @@ The engine emits **no VOR, tier or draft-ranking output** *(DR-C11)*.
   §3.2 stat definitions (P1-03). The statistical policy is decided.
 - **DR-D3.** ShareAlike status of derived exports (§8 rule 6).
 - **DR-D13.** Whether RB/WR/TE role credit in the GRID signal block (§4.2) is an individual signal.
+- **DR-D14.** The name of the per-record substitution count. When this contract adds the
+  `layer1_credit` record, the record carries, as an audit field, the number of its plays whose
+  opponent feature used the counted substitute (`layer1-credit.md` §3.2, §4.3).
+- **DR-D17, DR-D32.** The keys of the `prior` field's source label (window, feeder or population)
+  and build label (`prior_pre` or `prior_in`) (§4.2), fixed by the contract version that adds them
+  (§9).
 
 Settled in the decision interview of 2026-10-08/09: the stat-vector asymmetries (DR-D7), the GRID
 signal block (DR-C2, DR-C3), the derived horizons (DR-C4), the rejection of non-affine scoring
-rules (DR-D6) and the absence of VOR and tier outputs (DR-C11).
+rules (DR-D6) and the absence of VOR and tier outputs (DR-C11). Specified on 2026-10-14 to follow
+DR-D17 and DR-D32 (not separately put to the owner): the NCAA prior contribution (§4.1 item 5) and
+what the `prior` field's source and build labels mean, though not their keys (§4.2).

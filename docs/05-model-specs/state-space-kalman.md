@@ -112,9 +112,9 @@ validated estimands until `synthetic-world.md` plants them and §10.3 class-D ga
 | Signal stack | §6.2 GRID signal stack: V(s) → dV → Layer-1 weekly credit → **this layer** → features. Offseason RAPM is not this layer's observation (§3.1) |
 | Live vs offseason | §6.3. The validated observation (Layer-1 credit) is participation-dependent. In-season it MUST be replaced by a participation-free Layer-1′ credit, measured per role event (DR-C1, DR-D15) |
 | Statistical methods | §6.4 Kalman filtering, full RTS and fixed-lag RTS (fixed-lag is not in the oracle, §6.4 below) |
-| Priors | §6.5. `cross-league-priors.md` supplies `x0`/`P0` for low-evidence players. **Not wired in the oracle** (KI-#15) |
+| Priors | §6.5: the season-boundary prior of every track. Its base is the feeder prior of `cross-league-priors.md` for a player who has one (DR-D17). **Not wired in the oracle** (KI-#15) |
 | Ensemble | §6.6 member "Kalman latent-state model" (superseded alpha-spec §6.4 item 3). It has not been scored on real data as a forecast; see §7.4 |
-| Upstream | `value-model.md` (dV), `layer1-credit.md` (weekly credit y and its exposure: snaps, or role events for Layer-1′, DR-D15), `cross-league-priors.md` (x0, P0), interventions (Layer A injury return; coaching-change provider; changepoint detector §4.6) |
+| Upstream | `value-model.md` (dV), `layer1-credit.md` (weekly credit y and its exposure: snaps, or role events for Layer-1′, DR-D15; the §4.8.2 prior-builder records, the window evidence of the §6.5 prior), `cross-league-priors.md` (the feeder base of the §6.5 prior; DR-D17), interventions (Layer A injury return; coaching-change provider; changepoint detector §4.6) |
 | Downstream | `projection-stack.md` (`smoothed_talent`, filtered talent/form features), `docs/03-contracts/engine-output-contract.md` (trajectory and predictive band, engine-spec §5.5), `evaluation-and-leakage.md` (NIS, PIT, PICP, as-of rules) |
 | Contracts | `docs/03-contracts/plays-contract.md` (indirectly, via credit), `engine-output-contract.md`, `parity-fixture-contract.md` |
 
@@ -234,6 +234,11 @@ efficiency.
 - Prior contribution: the weight still carried by `x0` in the filtered talent. It is computable
   exactly by linearity (run the filter with `y ≡ 0` and `x0 = e₁`; see `cross-league-priors.md` §4.5).
   This replaces the conjugate `washout_table` approximation.
+- NCAA prior contribution: the weight the feeder base still carries in the filtered talent. A player
+  without a feeder prior has none. It is computed by the same linearity, through the §6.5 prior
+  equations (DR-D17).
+- Prior source: whether the prior is windowed or a feeder or population base taken unchanged, and
+  whether it is `prior_pre` or `prior_in` (§6.5; DR-D17, DR-D32).
 
 ---
 
@@ -447,6 +452,8 @@ MUST NOT clamp.
 - P0 symmetric positive-definite.
 - Every `P⁻`, `P⁺`, `P^s` symmetric PSD within tolerance; `S_w > 0`; `snaps ≥ 0`.
 - Observations are finite or explicitly missing.
+- Window-prior hyperparameters (§6.5): `σ²_c > 0`, `r_c > 0`, `ω_c ≥ 0`, `κ_c > 0` and
+  `0 < λ_c ≤ 1`.
 
 ---
 
@@ -579,10 +586,15 @@ The divergence is scenario-dependent. On the canonical trajectory it is about 0.
 2. **Observation.** Weekly credit with R from real exposure (§3.1). Cumulative RAPM coefficients MUST
    NOT be fed as observations.
 3. **Initial state.** `x0`/`P0` come from a prior (§6.5). They MUST NOT be computed from any observation
-   of the same series.
+   of the same series from season S or later, where S is the season the prior initialises. The
+   windowed prior reads only the track's evidence from the window seasons before S (DR-D17).
 4. **State record.** The persisted state is keyed by (player, role, season, week), one record per role
    track (DR-C3). It holds
    `x`, `P`, `games_since_event`, the `SSParams` version, the prior provenance and the input-data version.
+   The provenance of a windowed prior is its prior kind (`window`), its window, its
+   hyperparameter-record version, and its data, V(s), fold-map, context-model, opponent-source and
+   `SSParams` versions. Both season-boundary builds are persisted, each with its window (§6.5;
+   DR-D17, DR-D32).
    Storage is SQLite with bulk artifacts registered in a manifest (DR-C15). Writes MUST be
    atomic: a new version, never an in-place overwrite (final-build-spec §12.3, §12.4 (superseded)).
 5. **Time index.**
@@ -595,7 +607,9 @@ The divergence is scenario-dependent. On the canonical trajectory it is about 0.
 6. **Player universe.** A player leaving the as-of universe MUST NOT lose his state. State is carried
    forward within the season and simply not updated; season boundaries follow §6.6.
 7. **Corrections.** A corrected observation for an earlier week MUST trigger a recompute from that
-   week forward (KI-A9). In production this is bounded by fixed-lag smoothing (§6.4.1).
+   week forward (KI-A9). In production this is bounded by fixed-lag smoothing (§6.4.1). A correction
+   to window-season data published during season S leaves the season-S priors unchanged; it reaches
+   the prior at the next season boundary (DR-D17).
 
 #### 6.4.1 Fixed-lag smoothing (new; not in the oracle)
 
@@ -606,21 +620,21 @@ This holds exactly, because the backward recursion uses only the stored `x⁺`, 
 Indices `< t−L` keep the smoothed value last computed while inside the window (`x^s_{k|k+L}`).
 L is a hyperparameter to be fixed in this spec before P2-03 starts (open — DR-C5). Parity is in §10.3.
 
-### 6.5 Initial state from priors (engine form; DR-C10, DR-C9; open parts tagged below)
+### 6.5 Initial state from priors (engine form; DR-C10, DR-C9, DR-D17, DR-D32; open parts tagged below)
 
 ```text
 x0 = [μ_prior, 0, 0]
 P0 = diag(σ²_prior, P0_form, P0_scheme)
 ```
 
-- `(μ_prior, σ²_prior)` come from `cross-league-priors.md` for players eligible for a feeder
-  prior.
-- Otherwise they come from a position/draft population prior estimated as-of from the window
-  (superseded alpha-spec §6.3 `θ_position_draft_prior`; its form is still open — DR-C9).
+- `(μ_prior, σ²_prior)` is the windowed prior below. It starts from a base `N(μ_b, σ²_b)`: the feeder
+  prior of `cross-league-priors.md` §6.2 for a player who has one, in every season, and otherwise the
+  position/draft population prior `N(m, σ²_c)`, estimated as-of from the window (superseded alpha-spec
+  §6.3 `θ_position_draft_prior`; its covariates are still open — DR-C9). The engine-spec §2.5
+  eligibility list does not gate the base (DR-D17).
 - The filter is seeded this way at the player's first slot in the window and again at every season
-  boundary, in production and backtest replay alike (§6.6; DR-D17).
-- The windowed prior for a player with NFL history is still to be specified by the statistical owner
-  before P1-12; this section defines only the feeder and population priors (open — DR-D17).
+  boundary, in production and backtest replay alike (§6.6; DR-D17). In season S it starts from
+  `prior_in` (DR-D32, below).
 
 This makes the update the dynamic form of alpha-spec §6.3's EB posterior with `n0 = R/σ²_prior`
 (reconcile-spec-first R40).
@@ -630,14 +644,170 @@ Two facts constrain the choice:
 - **Scale.** The equivalency target in the oracle is the RAPM **rating**. The Kalman state is on the
   **Layer-1 credit** scale. These are not the same scale. On the legacy synth the per-position slope of
   season credit on rating is 1.19–1.40, with credit SD 1.3–1.8× rating SD (§7.3). The prior MUST
-  be expressed on the Kalman state's scale: the feeder translation is fitted directly against the
-  tracker's own end-of-season smoothed talent, computed without the college prior so that the prior
-  never trains on itself, with no separate scale map (DR-D19).
+  be expressed on the Kalman state's scale, with no separate scale map, and the prior never trains on
+  itself (DR-D19). As decided on 2026-10-09, the feeder translation is fitted directly against the
+  tracker's own end-of-season smoothed talent, computed without the college prior. Under ADR-013
+  (Proposed), once the owner accepts it, each build fits it against the season level of its own
+  window evidence, with no prior of any kind in the target (two builds, below); until then the
+  2026-10-09 text stands. Either way, each build computes its targets from its own window, and a
+  stored production track never supplies one (DR-D32).
 - **Washout speed.** `P0_form` and `P0_scheme` (oracle 0.02 and 0.01) dominate how fast a talent prior
   washes out. They are statistical-owner parameters, not defaults, and stay open until P1-12's washout
-  and calibration measurements (open — DR-D19; `cross-league-priors.md` §4.5).
+  and calibration measurements (open — DR-D19; `cross-league-priors.md` §4.5). Under ADR-013 the base
+  variance is a variance of the season level, so the open `P0` values must not count the starting
+  level's variance twice (open — DR-D19).
 
-### 6.6 Three-season window (DR-C6, DR-D17)
+**Windowed prior (DR-D17; decided in part 2026-10-14, answers 5, 7 and 9).** At every season boundary
+S, in production and backtest replay alike, every (player, role) track of the boundary universe
+(DR-C3) gets its prior from the window `W_S` of each build (two builds, below). There is no evidence
+threshold.
+
+- **No window evidence.** A track with no regular-season Layer-1′ role event in `W_S` takes its base
+  unchanged. A rookie whose first NFL season is S takes his base, unchanged, at his first slot.
+- **Evidence.** For each track and each season s of `W_S`:
+  - `E_s` is the track's set of regular-season role events in s (`layer1-credit.md` §4.8.1; DR-D4);
+    `N_s = |E_s|`; `n_{s,w}` is the track's event count in week w of s; `ȳ_s` is the mean of
+    `r̃_i` over `E_s`.
+  - `r̃_i = dv_i − g̃(x̃_i)`. Here `dv_i` is the play's dV under season S's frozen V(s)
+    (`value-model.md` §6.2 item 3), and `x̃_i = (down_i, ydstogo_i, yardline_100_i, δ̃_i)`.
+  - Cross-fitting runs over the admitted plays of `W_S`, on the build's window frame, with the fold
+    design ratified for Layer 1 (DR-D14): week-grouped folds keyed by play identity, K = 5, the fold
+    map persisted, seed 0 recorded, early stopping explicit. Only the prior builder uses this window
+    frame; Layer 1's own offseason frame stays a single season (DR-D14).
+  - In each fold, `δ̃` is `E_def` from the `layer1-credit.md` §4.8.3 team-level ridge on dV, with one
+    offence and one defence intercept per (team, season) and no market rows, fitted on the fold's
+    training plays. `g̃` is the DR-C7 estimator, fitted on the same training plays. Each held-out play
+    is scored with its own fold's `δ̃` and `g̃`. Only `g̃` and `δ̃` are cross-fitted: `dv_i` is taken
+    under season S's frozen V(s), fitted on S−3..S−1 and so on every play of the build window,
+    held-out folds included (DR-D17, answer 9; `evaluation-and-leakage.md` §4.2 G12).
+  - These are the prior-builder records of `layer1-credit.md` §4.8.2, with their own fold-map,
+    context-model, opponent-source and V(s) versions. Only the prior builder and, under ADR-013
+    (Proposed), the same build's feeder equivalency fit read them (two builds, below).
+  - No participation-derived input is used: no RAPM rating, no offseason Layer-1 credit, no
+    retrospective RTS. Apart from season S's frozen V(s) behind each `dv_i`, fitted on S−3..S−1 and
+    shared by both builds (the gap DR-C6 accepts; DR-D32), no NFL data from before `W_S` enters;
+    only static metadata may predate it (engine-spec §2.4).
+- **Hyperparameters.** For each class c = (position class, role), `(m, σ²_c, r_c, ω_c)` are estimated
+  on `W_S` from the event residuals of every class-c track with at least one event in `W_S`, whether
+  or not the player is in the boundary universe.
+  - `N(m, σ²_c)` is the population prior `θ_position_draft_prior`. Its covariates stay open
+    (open — DR-C9).
+  - `r_c > 0` is the per-event residual variance, from the dispersion of `r̃_i` within (track, week).
+    `ω_c ≥ 0` is the long-run within-season variance of the track's weekly level (the form term), from
+    the dispersion of weekly means within (track, season) beyond `r_c/n_{s,w}`. No `SSParams`
+    constant enters.
+  - The estimator, including whether it is likelihood-based, is named here before the builder is
+    implemented (open — DR-C5). Whichever estimator is named records any estimate on the boundary of
+    the admissible space (§4.9).
+  - The estimate is computed over a fixed universe in a fixed reduction order (engine-spec §8.13) and
+    persisted as a versioned hyperparameter record (engine-spec §6.4.7).
+  - `κ_c > 0`, the base scale, and `λ_c` in (0, 1], the recency weight (not the RAPM ridge penalty
+    λ), are one pair per class. They are learned per model version by rolling-origin validation on a
+    calibration period disjoint from evaluation (engine-spec §6.4.7, §6.5, §6.8 rule 6;
+    `evaluation-and-leakage.md` §4.11). Their tuning criterion MUST include calibration. It is
+    declared here and pre-registered before P1-12 tunes anything (open — DR-D17).
+- **Base.** For a player with a feeder prior `N(μ_f, σ²_f)` on the build's window
+  (`cross-league-priors.md` §3.3, §6.2), the base of every windowed prior of each of his tracks, in
+  every season, is that feeder prior. For every other player it is `N(m, σ²_c)`. The base is placed at
+  the first season of `W_S`, or at the player's first `W_S` season with an as-of roster snapshot
+  (`rapm-attribution.md` §6.4) if that season is later. Its weight falls only through window
+  evidence; it is not decayed for seasons before the window.
+- **Prior.** For a track with window evidence, with sums over the seasons s of `W_S`, from the
+  placement season on, that have `N_s > 0`:
+
+  ```text
+  v_s          = r_c/N_s + ω_c·Σ_w (n_{s,w}/N_s)²
+  w_s          = λ_c^((S−1)−s)
+  1/σ²_prior   = 1/(κ_c·σ²_b) + Σ_s w_s/v_s
+  μ_prior      = σ²_prior · (μ_b/(κ_c·σ²_b) + Σ_s w_s·ȳ_s/v_s)
+  ```
+
+  Here `Σ_w` runs over the weeks of s. This is the normal–normal posterior with recency-discounted
+  evidence (engine-spec §6.4.7). There is no between-season step and no between-season variance term.
+  The filter reproduces the EB form with `n0 = R/σ²_prior` only approximately: week 0 is a predict
+  step that divides `P0[0,0]` by `d_w` (§4.2), and `H = [1, 1, 1]` shares the first innovation with
+  form and scheme_fit (`cross-league-priors.md` §4.4.2).
+- **Hand-off.** `x0` and `P0` take the form above. `P0_form` and `P0_scheme` stay open, and for a
+  window-restarted track so do `P0`'s values, including whether `P0[0,0]` should offset the discount
+  that the week-0 predict step applies (open — DR-D19; §4.2). `games_since_event` takes its
+  first-slot initial value (§4.2). No changepoint flag from season S−1 takes effect in season S.
+  Interventions and scheme resets dated in week 1 apply at week 1 as usual (§4.6). No filter state
+  crosses the boundary.
+- **Lifecycle.** The prior is built from the boundary data version, the as-of of season S's V(s) fit
+  (`value-model.md` §6.2 item 2), and replay builds it the same way. It is fixed for season S except
+  through an identity-link version change (engine-spec §6.5). A correction to window-season data
+  published during S reaches it at the next boundary. It is persisted as §6.4 item 4 states.
+- **Failures.** Each of the following is a typed failure (§8.3), never clamped and never replaced by
+  the population prior (DR-B6; engine-spec §6.4.7):
+  - fewer class-c tracks than the declared minimum;
+  - an estimate of `σ²_c` or `r_c` at 0 (a degenerate pool);
+  - an estimator that fails to converge;
+  - a missing or version-mismatched input.
+
+  An estimate at `ω_c = 0` is admissible and is recorded. The declared minimum and the degenerate-pool
+  thresholds per class, including whether a small class is pooled with a declared parent class, are
+  not yet set. They are set here before the builder is implemented (open — DR-D17).
+- **Still open.**
+  - Whether `v_s` needs an overdispersion factor, and whether `r_c` and the `SSParams` `r_scale` are
+    one estimate (open — DR-D17; §4.8, KI-NEW-P4).
+  - Any extra prior-variance inflation for a regime change known before the season: a team, coaching
+    or position change, or a multi-season absence (open — DR-D17).
+  - The position class of a position-converted player, and whether his old-role tracks carry over
+    (open — DR-D17; engine-spec §2.5).
+
+**Two builds per boundary (DR-D32; decided 2026-10-14).** At each season boundary S, from the same
+data version, every season-boundary prior is built twice: `prior_pre` on S−3..S−1 and `prior_in` on
+S−2..S−1. This covers the windowed prior and its feeder and population bases.
+
+- Each build uses only its own seasons' NFL evidence: its own window evidence, cross-fitted on its own
+  seasons; its own hyperparameter record and population prior; its own feeder equivalency
+  (`cross-league-priors.md` §3.3); and its own DR-D19 targets. A stored production track never
+  supplies a DR-D19 target: a window season's production filter restarted from a prior built at an
+  earlier boundary, around the player's own college prior, and used that season's own V(s), `g′` and
+  `δ^team`.
+- **DR-D19 targets** (ADR-013, Proposed). ADR-013 binds once the owner accepts it; until then
+  DR-D19's 2026-10-09 text stands and governs, and if the owner rejects it, the target goes to a new
+  decision request before P1-12 implements the feeder equivalency (ADR-013, Status). In each build
+  `b`, the targets come only from `b`'s own prior-builder records and the `r_c` and `ω_c` of `b`'s
+  hyperparameter record; `b`'s population prior `N(m, σ²_c)` does not enter them. There is one
+  target per feeder-linked, non-ambiguous (player, role) track with at least one regular-season role
+  event in `b`'s window from the base's placement season on. Its target season `s*` is the earliest
+  such season, and its target is `ȳ_{s*}`, the mean of `r̃_i` over `E_{s*}`, with known variance
+  `v_{s*}` from `b`'s `(r_c, ω_c)` (the **Prior** form above). No filter is run, and no prior of any
+  kind (college, population or vague) enters the target. The equivalency on these targets is a
+  Fay–Herriot-type measurement-error regression on `feeder_sv` (`cross-league-priors.md` §6.2).
+- The only data input the two builds share is season S's single frozen V(s), fitted on S−3..S−1,
+  which is the gap DR-C6 accepts (`value-model.md` §6.2 item 1). Through each record's dV it carries
+  S−3 into `prior_in`. Both builds also use the model version's learned hyperparameters (`κ_c`,
+  `λ_c` and the `SSParams`), which are calibrated by rolling origin, generally on seasons before the
+  window, and are not window evidence (DR-D32, answer 11). Apart from them, NFL data from before
+  S−3, static metadata excepted, reaches neither season-boundary prior (canary 2, below).
+- `prior_pre` gives the preseason and week-1 published predictive, its calibration scores and the
+  week-1 Layer D talent covariate (`projection-stack.md` §4.8.2).
+- The season-S filter restarts from `prior_in`. Week 1's update, the week-1 changepoint z-score and
+  any flag, and every later state all come from `prior_in`.
+- A track whose only window evidence is in S−3 takes a windowed `prior_pre` and, as `prior_in`, the
+  no-evidence prior of the S−2..S−1 build.
+- Both priors are fixed for the season and are persisted with their window (§6.4 item 4).
+- Two canaries prove the window (`evaluation-and-leakage.md` §4.2 G13; engine-spec §12.3). Both hold
+  the model version fixed, its learned hyperparameters included (DR-D32, answer 11):
+  1. Changing any S−3 play or Layer-1′ input leaves `prior_in`, every changepoint z-score and flag,
+     and every season-S filtered state bit-identical from week 1's update onward, with three inputs
+     held fixed that carry S−3 by design: season S's frozen V(s) (DR-C6) and live context model `g′_S`
+     (DR-D15), both fitted on S−3..S−1, and the preseason state of the team ridge that gives week 1's
+     `δ^team` (`layer1-credit.md` §4.8.3).
+  2. Changing any NFL data from before S−3, static metadata excepted, leaves both priors
+     bit-identical.
+
+  For a feeder-linked track, both canaries can hold once ADR-013 binds, because its DR-D19 targets
+  then come only from the build's own prior-builder records (above).
+- S−3's measured weight in the season-S states and in the forecast level from week 2 on, which under
+  this rule enters only through those three fixed inputs and the model version's learned
+  hyperparameters, and a real-data accuracy comparison of the three-season and two-season builds are
+  P1-12 measurements (open — DR-D32). The comparison runs by rolling origin and needs Layer-1′ on real
+  data (DR-D15; KI-NEW-Z50).
+
+### 6.6 Three-season window (DR-C6, DR-D17, DR-D32)
 
 Engine-spec §2.4 (superseded alpha-spec §2.4) limits evidence to S−2…S (W > 1) or S−3…S−1
 (preseason and week 1).
@@ -656,9 +826,21 @@ three-season window (§6.5). There are no offseason predict steps and no offseas
 replaces the earlier default, under which production carried the state forward with its discount and
 only replay re-initialised.
 
+**Two builds (DR-D32; decided 2026-10-14).** DR-D32 reads "the new three-season window" as the
+engine-spec §2.4 as-of window. Every season-boundary prior is built twice from the same data version
+(§6.5): `prior_pre` on S−3..S−1 for the preseason and week-1 forecast, and `prior_in` on S−2..S−1,
+from which the season-S filter restarts. Apart from season S's frozen V(s), which carries S−3 into
+`prior_in` through each prior-builder record's dV, and the model version's learned hyperparameters,
+S−3 data therefore reaches no season-S state after week 1's forecast through a season-boundary
+prior. It still reaches the season's observations through the three inputs that the first §6.5
+canary holds fixed: season S's frozen V(s) (DR-C6), its live context model `g′_S` (DR-D15) and the
+team ridge's preseason state behind week 1's `δ^team`. Both priors are fixed for the season, and a
+correction to window-season data reaches them at the next boundary. No changepoint flag crosses the
+boundary (DR-D17).
+
 Production and replay MUST produce the same state for the same as-of (two-path equivalence;
-`evaluation-and-leakage.md`). Both restart from the same windowed prior at the same boundary, so they
-agree by construction.
+`evaluation-and-leakage.md`). Both build the same two priors at the same boundary and restart from the
+same `prior_in`, so they agree by construction.
 
 ---
 
@@ -781,7 +963,7 @@ Two inconsistencies in the oracle's own comments:
 | D-5 (KI-NEW-Z20) | No input or parameter validation (§4.9); `W = 0` gives `IndexError` | Typed `InvalidParams`, `EmptySeries` |
 | D-6 (KI-NEW-Z21) | Scheme reset overwrites (does not add to) the intervention's scheme inflation (§4.6 item 3). The test name says "additive" | Specify explicitly in the engine. Default to the oracle semantics: the reset sets `Σ[2,2] = scheme_reset_var` |
 | D-7 (KI-NEW-Z22) | Intervention inflation is computed as `/d_steady·(d_steady/d_spike)` incrementally and `/d_spike` in batch, which is not bitwise equal | One core computes `/d_w` once |
-| D-8 (KI-NEW-Z17) | Auto-detected changepoints are applied in the **same** week, so the persisted predictive `S` for that week (`pred_var`, written to the trajectory) is computed **after** looking at `y_w`. The band is inflated exactly when \|z\| > 3, which biases NIS and coverage. Dormant on real data because of KI-#24 | The published one-step predictive for week w MUST be the pre-detection `(m_w, S_w)`. A changepoint flagged from week w's result takes effect from week w+1 only; it never changes week w's own update (DR-D18). `z_thresh` and the precision/recall gate stay open until a synthetic world plants changepoints; until then flags are informational and never trigger production adjustments (open — DR-D18) |
+| D-8 (KI-NEW-Z17) | Auto-detected changepoints are applied in the **same** week, so the persisted predictive `S` for that week (`pred_var`, written to the trajectory) is computed **after** looking at `y_w`. The band is inflated exactly when \|z\| > 3, which biases NIS and coverage. Dormant on real data because of KI-#24 | The published one-step predictive for week w MUST be the pre-detection `(m_w, S_w)`. A changepoint flagged from week w's result takes effect from week w+1 only; it never changes week w's own update (DR-D18). In week 1 the published predictive comes from `prior_pre`, and the update, the z-score and any flag from `prior_in` (§6.5; DR-D32). No flag crosses a season boundary (DR-D17). `z_thresh` and the precision/recall gate stay open until a synthetic world plants changepoints; until then flags are informational and never trigger production adjustments (open — DR-D18) |
 | D-9 (KI-NEW-Z23) | Predictive `S` on did-not-play weeks uses `R = r_scale` from the snaps floor (golden 0.404/0.406) | Do not publish a predictive for a did-not-play week as if it were a forecast of an observation. Report it as not applicable, never as the floor-based range (DR-D16) |
 | D-10 (KI-NEW-Z26) | The washout narrative "wide prior → fast washout" is computed with a conjugate one-component formula and an obs variance (`run_demo.py:91`, 0.12²) that is inconsistent with `SSParams`. The actual filter washes out the talent prior far more slowly for RB/WR/TE (`cross-league-priors.md` §4.5) | Diagnostic derived from the actual filter |
 
@@ -799,6 +981,8 @@ The Rust component MUST return typed errors and MUST NOT fall back silently:
 - `StateSchemaMismatch` / `StateCorrupt` (load)
 - `PlayerUniverseMismatch` (obs and state misaligned)
 - `TimeIndexViolation` (non-monotone or duplicate (season, week))
+- the window-prior failures of §6.5 (DR-D17): a class below its declared minimum, a degenerate pool,
+  an estimator that fails to converge, and a missing or version-mismatched window input
 
 Each failure blocks promotion of the run (engine-spec §8.8). These are deliberate divergences
 from the oracle, listed in `reference/python/PARITY.md`.
@@ -813,19 +997,20 @@ from the oracle, listed in `reference/python/PARITY.md`.
 | DR-C1 Live observation | Ratified in part 2026-10-09: participation-free Layer-1′ credit in-season; participation RAPM offseason only. Open: the snap-count source (KI-NEW-Z50) | §2, §3.3 |
 | DR-C2 / DR-C3 Role of GRID | Ratified 2026-10-09: signal provider; role-specific talent as Layer-D covariates; the state splits by role, one track per player and role (dropback, carry, target) | §2 |
 | DR-D15 Layer-1′ observation | Decided in part 2026-10-09: exposure per role event, not per snap. Open: penalty-play handling; the snap-count source; recovery evidence on the stat-vector world | §1, §2, §3.1, §3.5 |
-| DR-C6 Three-season window | Overridden in part 2026-10-09: the Kalman clause is replaced through DR-D17 (restart from the windowed prior at every season boundary, in production and replay) | §6.6, plus the two-path equivalence requirement |
-| DR-C5 Gates and open parameters | Ratified in part 2026-10-09: PB-MAE primary; FB's open parameters set in model specs before code. Open: fixed-lag L, auto-rollback thresholds, the NIS bands (re-set under DR-B4) | §6.4.1 L; NIS bands |
-| DR-C9 Prior form | Ratified in part 2026-10-09 (`cross-league-priors.md` §9). Open: `q`, the position/draft baseline, the influence cap, exposure weighting, the college-rating source | §6.5 |
+| DR-C6 Three-season window | Overridden in part 2026-10-09: the Kalman clause is replaced through DR-D17 (restart from the windowed prior at every season boundary, in production and replay). Under DR-D32 (2026-10-14) the filter restarts from `prior_in` on S−2..S−1, so, apart from season S's frozen V(s) behind `prior_in`'s dV and the model version's learned hyperparameters, S−3 reaches no season-S state after week 1's forecast through a season-boundary prior (it enters that forecast through `prior_pre`). It still reaches the season's observations through season S's frozen V(s) (the accepted DR-C6 gap), its live context model `g′_S` (DR-D15) and the team ridge's preseason state behind week 1's `δ^team` (§6.5, canary 1) | §6.5, §6.6, plus the two-path equivalence requirement |
+| DR-C5 Gates and open parameters | Ratified in part 2026-10-09: PB-MAE primary; FB's open parameters set in model specs before code. Open: fixed-lag L, auto-rollback thresholds, the NIS bands (re-set under DR-B4); since DR-D17 (2026-10-14), the estimator of the §6.5 window-prior hyperparameters | §6.4.1 L; NIS bands; the §6.5 window-prior estimator |
+| DR-C9 Prior form | Ratified in part 2026-10-09 (`cross-league-priors.md` §9). Open: `q`, the position/draft baseline's covariates (under DR-D17, 2026-10-14, answer 9, the baseline is the population prior `N(m, σ²_c)` per (position class, role), estimated on the window), the influence cap, exposure weighting, the college-rating source | §6.5 |
 | DR-C15 Storage | Ratified 2026-10-08: SQLite source of truth plus a manifest of bulk artifacts | §6.4 item 4 |
 | DR-D1 Coaching-change source | Ratified in part 2026-10-09: hand-entered, versioned, sourced records with an announced-at timestamp kept separate from the effective week; undated records rejected. Open: the public sources and their terms; which roles count as a scheme change (this spec) | §3.3, §8.1 KI-NEW-D1 |
 | DR-B1 Oracle correction ledger | Ratified 2026-10-08: synth defenders → convention → grade sign → **causal Kalman init** → ingest. Open: each entry's own approval as its commit lands | Legacy goldens are audit-only (§10.3) |
 | DR-B3 Parity tolerances | Overridden 2026-10-09: classes A / A′ / B, C-V and C-L1 in place of C, and D over a seed ensemble (DR-D26). Open: the Class D floor values | §10.3 |
 | DR-B4 Synthetic world | Ratified 2026-10-09: fix defenders, plant net strength, regenerate the goldens and re-calibrate the QB NIS bands now; a stat-vector world and a "realistic" profile before Layers A–F. Open: the recalibrated `r_scale`, NIS bands and Tier-0 floors | §7, §1 caveat |
 | DR-B6 Typed failures vs faithful port | Ratified in part 2026-10-08: typed failure; oracle unchanged; divergences in `PARITY.md`. Open: the condition-number threshold | §8.3 |
-| **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount. Open: the windowed prior for a player with NFL history (§6.5 defines only the feeder and population priors), specified by the statistical owner before P1-12 | §6.5, §6.6 |
+| **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount. Decided in part 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`, answers 5, 7 and 9): the windowed prior is the recency-weighted pooled mean of the track's window evidence, starting from its base, with `κ_c` and `λ_c` learned by rolling origin on a disjoint calibration period; the window evidence comes from participation-free prior-builder records: each play's dV is taken under season S's frozen V(s), and the context model and the team effect are cross-fitted on the build's window with the DR-D14 fold design, the team effect from a team ridge with one offence and one defence intercept per (team, season) and no market rows; each window season enters with variance `v_s = r_c/N_s + ω_c·Σ_w (n_{s,w}/N_s)²`, with `r_c` and `ω_c` estimated on the window; a player with a feeder prior has it as his base in every season, and every other player has the population prior `N(m, σ²_c)` of his (position class, role), estimated on the window; the engine-spec §2.5 eligibility list does not gate the prior; it is fixed for the season, and a correction to window-season data reaches it at the next boundary; no changepoint flag crosses the boundary; RAPM ratings and offseason Layer-1 credit do not seed it. Open: the `κ_c`, `λ_c` tuning criterion, which must include calibration; the hyperparameter estimator (DR-C5); the class thresholds; the population prior's covariates (DR-C9); the other open parts listed in §6.5 | §2, §3.5, §4.9, §6.4, §6.5, §6.6, §8.2 D-8, §8.3, §10.2, §10.3, §11 |
 | **DR-D16** | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the published pre-game predictive is conditioned on Layer C's projected exposure and graded against realized exposure, with calibration shown in both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (P1-07) | §4.3, §8.2 D-9 |
-| **DR-D18** | Decided in part 2026-10-09: next-week application; a changepoint flagged from week w's result takes effect from week w+1, and the published week-w predictive is the pre-detection one. Open: `z_thresh` and the precision/recall gate; flags stay informational until then | §4.6, §8.2 D-8 |
-| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Open: `P0_form` / `P0_scheme` for prior-seeded players (P1-12 measurements) | §6.5 |
+| **DR-D18** | Decided in part 2026-10-09: next-week application; a changepoint flagged from week w's result takes effect from week w+1, and the published week-w predictive is the pre-detection one. Open: `z_thresh` and the precision/recall gate; flags stay informational until then. Under DR-D17 and DR-D32 (2026-10-14), no flag crosses a season boundary, and the week-1 z-score comes from `prior_in` while the published week-1 predictive comes from `prior_pre` | §4.6, §8.2 D-8 |
+| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Decided in part (2026-10-14, Statistical owner, owner-directed transcription, `docs/06-sessions/2026-10-14-P0-01.md`): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed). Each DR-D32 build computes its targets from its own window only, and a stored production track never supplies one. Every option offered computed each build's targets from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does not wait on ADR-013. Under ADR-013, in each DR-D32 build, each feeder-linked track's target is its mean prior-builder residual in its first window season with role events, with its known variance, and the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`; no filter run and no prior enters the target. Until ADR-013 is accepted, the 2026-10-09 text stands and governs. Open: `P0_form` / `P0_scheme` for prior-seeded tracks, and `P0` for tracks restarted from a windowed prior, including whether `P0[0,0]` should offset the week-0 predict step (P1-12 measurements); the owner's ruling on ADR-013; the equivalency's estimator (DR-C5) and the parts `cross-league-priors.md` §6.2 lists | §6.5 |
+| **DR-D32** | Decided 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`): two priors, strict window. Every season-boundary prior is built twice from the same data version: `prior_pre` on S−3..S−1 gives the preseason and week-1 published predictive, and the season-S filter restarts from `prior_in` on S−2..S−1. Each build uses only its own seasons' NFL evidence, its own feeder equivalency and its own DR-D19 targets; season S's frozen V(s) is the only shared data input, and both builds use the model version's learned hyperparameters (`κ_c`, `λ_c` and the `SSParams`). Two canaries prove the window, with the model version held fixed: its learned hyperparameters are calibrated by rolling origin, generally on seasons before the window, and are not window evidence (answer 11). Open: S−3's measured weight from week 2 on, and a real-data accuracy comparison of the two builds (P1-12 measurements). For feeder-linked tracks, both canaries can hold once ADR-013 (Proposed) binds, because each build then takes its DR-D19 targets from its own prior-builder records (DR-D19) | §3.5, §6.4 item 4, §6.5, §6.6, §8.2 D-8, §10.3 |
 
 ---
 
@@ -850,7 +1035,7 @@ state exists.
 | WP | Scope from this spec |
 |---|---|
 | **P1-06** Numerical primitives | Generic predict/update (Joseph), predictive (m, S), full RTS with the 1e-10 jitter, fixed-lag RTS, and typed failures. Parity: classes A and A′ below, plus the property tests ported from `test_kalman_numerical.py` |
-| **P1-12** GRID component port | 3-state instance, `SSParams` by position class, intervention and post-event ("rust") counter, scheme reset, changepoint detector, persisted state (§6.4), Tier-0 Kalman gates, golden `k_*` regeneration |
+| **P1-12** GRID component port | 3-state instance, `SSParams` by position class, intervention and post-event ("rust") counter, scheme reset, changepoint detector, persisted state (§6.4), the season-boundary prior builder and its two builds (§6.5), Tier-0 Kalman gates, golden `k_*` regeneration |
 | **P1-05** Feature store and leakage harness | As-of slicing of interventions with knowledge timestamps; exposure of the `smoothed_talent` / filtered features; two-path equivalence for the Kalman |
 | **P1-07** Layers A–D, priors, baselines | Prior handoff (§6.5) |
 | **P1-09** Backtest and metrics | Calibration gates (NIS, PIT, PICP) on the backtest; regime-conditional calibration |
@@ -881,6 +1066,7 @@ explicit `x0`. Rust therefore never implements the look-ahead.
 | PF-SS-06 | `kparity` series with and without an intervention | Rust batch == Rust fold(step) == oracle **batch** (`kalman_two_component`) | **A**. The oracle `kalman_step` with an intervention is NOT a target (KI-NEW-S1) |
 | PF-SS-07 | Fixed-lag L ∈ {1, 2, 4} over PF-SS-01..03 at every t | fixed-lag vs Rust full RTS over 0…t, indices t−L…t | **A** (internal consistency; no oracle counterpart) |
 | PF-SS-08 | Tier-0 focus QB and QB calibration pool on the **defender-fixed** synth after DR-B4 | total_smooth / tau_smooth recovery; variance widening; NIS, PIT and PICP bands | **D** (floors re-set on the fixed synth, calibrated below observed values and gated over the DR-D26 seed ensemble: the median and a declared low quantile; the floor values are open — DR-B3, DR-D26). Current fixed values: 0.976 / 0.6538 / 0.00233→0.00738; pooled NIS 1.829 fails today |
+| PF-SS-09 | Season-boundary prior (§6.5): injected window evidence, base and hyperparameters, for both builds | `μ_prior`, `σ²_prior` and `x0` of `prior_pre` and `prior_in` | **spec golden (A)** + **D**. No oracle counterpart. Hand-checkable cases of the §6.5 equations on injected hyperparameters are Class A goldens; the estimator gets its own once it is named (open — DR-C5). `P0` is not compared, since its values for a window-restarted track stay open (open — DR-D19). Recovery needs the multi-season synthetic world of `synthetic-world.md` §4.12 and §6 item 1, whose form, parameters and floors are not yet set (open — DR-B4, DR-B3, DR-D26) |
 
 **Not targets.**
 
@@ -931,8 +1117,8 @@ Sections cited as "alpha-spec §x (superseded)" or "final-build-spec §x (supers
 | alpha-spec §6.4 (superseded), ensemble member 3 | Latent state exists | Not a validated forecast component on real data (§7.4) |
 | alpha-spec §6.5 (superseded) explainability | Talent, form, uncertainty and regime flags (§3.5) | Prior contribution not computed in the oracle |
 | alpha-spec §6.6 (superseded) rules 1–8 | This spec; typed failures in §8.3 | Rule 4 is violated by the oracle (§5.4) |
-| alpha-spec §2.4 (superseded) three-season rule | — | Production state carries indefinitely. The engine restarts each filter from the windowed prior at every season boundary (§6.6; DR-C6, DR-D17) |
-| alpha-spec §2.5 (superseded) low-evidence decay | A continuous Kalman washout, in principle | Prior not wired |
+| alpha-spec §2.4 (superseded) three-season rule | — | Production state carries indefinitely. The engine restarts each filter from the windowed prior `prior_in` at every season boundary and forecasts week 1 from `prior_pre` (§6.5, §6.6; DR-C6, DR-D17, DR-D32) |
+| alpha-spec §2.5 (superseded) low-evidence decay | A continuous Kalman washout, in principle | Prior not wired. In the engine the §2.5 eligibility list gates no Kalman prior; the feeder base's weight falls only through window evidence (§6.5; DR-D17) |
 | alpha-spec §4.5 (superseded) leakage | Missing-week semantics, as-of interventions | Look-ahead `x0` (KI-#15); same-week changepoint predictive (D-8) |
 | alpha-spec §12.1–§12.3 (superseded) tests | Unit (Joseph, RTS), golden, as-of | Golden embeds legacy defects; leakage test for intervention knowledge time missing |
 | final-build-spec §11.4 (superseded) | Online `x`/`P` state; daily batch of sequential steps | Persisted as `.npz`, not SQLite; transition model not persisted; time index ambiguity resolved in §6.4 item 5 |

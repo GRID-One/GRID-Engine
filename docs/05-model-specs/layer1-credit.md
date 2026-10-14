@@ -167,13 +167,17 @@ every consumer.
 
 | Tier | When | Credit | Opponent feature | Context model |
 |---|---|---|---|---|
-| **Offseason** | After season `S`'s participation is published (engine-spec §4.5) | Layer 1: on-field credit over listed plays (§4.5), corrected per §8 | Gauge-invariant per-play defensive effect from the offseason RAPM, fold-wise (§4.3; DR-D14) | Cross-fitted on the completed season alone (§4.4, §6.2 item 5; DR-D14) |
+| **Offseason** | After season `S`'s participation is published (engine-spec §4.5) | Layer 1: on-field credit over listed plays (§4.5), corrected per §8 | Gauge-invariant per-play defensive effect from the offseason RAPM, fold-wise, with a counted substitute for an uncovered defender (§4.3; DR-D14) | Cross-fitted on the completed season alone (§4.4, §6.2 item 5; DR-D14) |
 | **Live** | Each completed game-week of season `S` | Layer-1′: per-role involvement credit (§4.8) | Team-level defensive effect from the live-tier team ridge, as of the start of the week (§4.8.3) | Frozen, fitted on completed seasons; no in-season refit (§4.8.2) |
 
 Participation-dependent credit MUST NOT feed any live or locked projection (superseded alpha-spec
 §12.3: "current-season participation unavailable at serve time must not appear in promoted live
 features"). A historical backtest that computes Layer 1 from in-season participation MUST label
 every output `research_only = true` (engine-spec §6.3).
+
+Offseason-tier credit does not seed the Kalman's season-start prior, and neither do RAPM ratings.
+The windowed prior takes its window evidence only from the participation-free prior-builder records
+of §4.8.2 (DR-D17; SSK §6.5).
 
 ---
 
@@ -239,7 +243,7 @@ exposure (DR-C10).
 | `dv` | `plays["dv"]` (`layers.py:509`) | EP per play | Missing column: bare `KeyError`. NaN: sklearn raises `ValueError: Input y contains NaN` (verified) → typed `ContractError` | V(s) frozen per data version and as-of (value-model.md; KI-NEW-W4) |
 | `off_players` | tuple per play; membership by `pid in t` (`layers.py:533, 549, 580`) | player ids | Duplicates collapse to one membership (legacy synth has 245 plays with duplicated ids, plays-contract D-8). `()` (participation absent or unmatched) silently yields no credit → MUST be rejected unless participation is `Listed` (plays-contract D-5) | participation of season `S` only at as-of ≥ its publication timestamp (engine-spec §4.5; DR-C1) |
 | `def_players` | tuple per play, iterated in the sum (`layers.py:493`) | player ids | Duplicates would count twice (none in either synth or in 2023; verified). Same `()` hazard as above | as above |
-| `ratings_lookup` | `{player_id: rating}`; read with `.get(p, 0.0)` (`layers.py:492-493`) | EP per play | **A defender missing from the lookup silently contributes 0.0** → MUST be an explicit coverage policy with a counted, typed failure (§5.4) | ratings MUST be fold-wise, out of fold (§4.3; DR-D14; KI-NEW-A5) |
+| `ratings_lookup` | `{player_id: rating}`; read with `.get(p, 0.0)` (`layers.py:492-493`) | EP per play | **A defender missing from the lookup silently contributes 0.0** → a listed defender with no entry in the fold-wise fit raises `CreditError::UncoveredDefender` (§5.4). An *uncovered* defender, who has an entry but no defensive play among the fit's training plays (`exposure_def = 0`) or a `no_data` coefficient, takes the counted substitute `m_p` (§4.3; DR-D14) | ratings MUST be fold-wise, out of fold (§4.3; DR-D14; KI-NEW-A5) |
 | `week` | int, the aggregation key (`layers.py:535, 584`) | — | **`season` is ignored**: a multi-season frame merges equal week numbers (§8 item 6). The verdict works around it by calling per season (`verdict.py:176-182`) | — |
 | `season_type` | absent from the oracle contract | — | Postseason rows enter (KI-NEW-V0a) → Layer 1 consumes regular-season plays only (`season_type = REG`; DR-D4, DR-C12) | — |
 | `player_ids` / `qb_ids` / `focus_qb` | lists / id | — | Unknown or absent ids are skipped silently (`layers.py:550-551, 581-582`); `layer1_qb_weekly` returns an empty frame for an absent QB, and `fit()` then turns it into a NaN prior (RAPM §5.4) → explicit `no_data` and a typed error where a value is required | — |
@@ -272,8 +276,9 @@ exposure (DR-C10).
 | `exposure` | `n_{p,w}` or `n_{p,ρ,w}` | Never defaulted. `exposure = 0` means no observation: the record is `no_data`, not a zero credit |
 | `no_data` | true when the player has no qualifying event that week, or is below the eligibility rule | Consumers map it to `played = false, y = NaN` (SSK §3.2 missing-week contract) |
 | `context_model_version` | hash of the fitted context model(s), the feature schema and the training window | engine-spec §8.8 |
-| `opponent_source` | the rating source and version that produced the opponent feature (§4.3) | — |
-| `fold_id` (offseason tier) | the fold that scored each play; persisted with the residuals | audit and parity surface |
+| `opponent_source` | the rating source and version that produced the opponent feature (§4.3). Offseason tier: also the definition and version of the substitute `m_p`, and the substitution counts for the run, per fold (affected plays, substituted slots, distinct players), per week and per defensive team-week, each with the sub-count whose defender had offensive exposure in the fit (§4.3; DR-D14) | — |
+| `fold_id` (offseason tier) | the fold that scored each play; persisted with the residuals | audit and parity surface. The §4.3 substitution triples are persisted with the fold map |
+| substituted-play count (offseason tier) | the number of the record's plays whose `δ_i` used a substitute (§4.3; DR-D14) | Audit only: no consumer reads it until a spec says so, and the Kalman's `R_w` is unchanged (§4.7). Whether the filter should down-weight such weeks is not yet decided (open — DR-D14). Its name is fixed when `engine-output-contract.md` adds this record |
 | `research_only` | true whenever participation of a season was used before its publication timestamp | engine-spec §6.3 |
 | provenance | data version, V(s) version, as-of, seeds, booster backend and version (DR-C8) | engine-spec §8.5, §8.8 |
 
@@ -381,13 +386,75 @@ fold-wise, option (a) below (DR-D14). The two options considered were:
 - (b) **frozen**: the previous completed window's offseason RAPM, which is out of sample for the
   frame.
 
-Coverage MUST be total: every id in `Δ_i` has a rating in the declared source, or the play fails
-with `CreditError::UncoveredDefender` (§5.4), unless the statistical owner approves a declared,
-counted substitute. Fold-wise ratings do not remove the case: a defender whose plays all fall in the
-held-out weeks of a fold has no rating from that fold's training plays, and a `no_data` prior-0
-coefficient (RAPM §3.2) does not count as a rating (KI-NEW-Z4). DR-D14 ratified the fold-wise source
-but names no policy for this case, so whether such plays fail or take a declared substitute (prior
-mean 0 with a recorded count, or the team effect alone) is still open (open — DR-D14).
+**Training rows** (DR-D14). Under (a), the training rows of `ĝ^{(−k)}` take `δ` from the same
+fold-`k` fit that scores fold `k`. On those rows `δ` comes from a fit that trained on the rows' own
+dV; on a scored play it never does (§8, known limitation 1). This design stands. The context-model
+comparison that DR-C7 requires also compares it with a nested candidate, which is not adopted: for
+each fold `k` and each fold `j ≠ k`, a play of fold `j` used as a training row of `ĝ^{(−k)}` would
+take `δ` from `β` and `γ_def` fitted on the plays of the folds other than `k` and `j` (three with
+`K = 5`). That is one extra RAPM fit per unordered pair `{k, j}`, on the persisted fold map. Scored
+plays would keep the fold-`k` fit, and the coverage rule below would apply to each training row
+with respect to its pair fit. The comparison measures weekly-credit recovery against a planted
+opponent effect and out-of-sample forecasting. The worlds and the seed ensemble it runs on stay
+open, and the statistical owner pre-registers its statistics and margin before any Rust result is
+seen (open — DR-D14). If the nested design wins by that margin, the agent raises a decision request
+with a Proposed ADR citing DR-D14; otherwise this design stands.
+
+**Coverage** (DR-D14). It applies to every offseason-tier and research-only Layer-1 run, synthetic
+runs included. Layer-1′ is unaffected, because it uses `δ^team` (live tier, below). The owner,
+answering in both DR-B6 roles, recorded the substitute as the counted-substitute exception that
+this section and KI-NEW-Z4 already named, not as a reversal of DR-B6. Let `F` be the fold-wise fit
+that computes `δ_i`: the fit on fold `k`'s training plays, for a play scored in fold `k` and for a
+training row of `ĝ^{(−k)}`.
+
+1. **Missing entry.** `F` holds one rating per id in the season frame's as-of universe. A listed
+   defender with no entry in `F` raises `CreditError::UncoveredDefender{count, plays}` (§5.4), and
+   the run is not promotable. This is the oracle's `.get(p, 0.0)` path (`layers.py:493`), a typed
+   failure under DR-B6. An id outside the as-of universe fails earlier, at the RAPM stage
+   (`RapmError::UnknownParticipant`, RAPM §5.4). The variant's name predates the term of item 2:
+   `CreditError::UncoveredDefender` is raised only for a listed defender with no entry in `F`, never
+   for an uncovered defender, who takes the counted substitute.
+2. **Uncovered.** A listed defender `p` is *uncovered* in `F` when he has no defensive play among
+   `F`'s training plays (`exposure_def = 0`; RAPM §3.2), or when his coefficient in `F` carries the
+   RAPM `no_data` flag under whatever rule RAPM §3.2 then applies (DR-C5 may add a minimum exposure;
+   open — DR-C5). A defender whose only training exposure in `F` is offensive is uncovered.
+   Fold-wise ratings do not remove the case: a defender whose plays all fall in the held-out weeks
+   of a fold is uncovered in that fold's fit.
+3. **Substitute.** An uncovered defender's term is his RAPM prior mean `m_p` in `F` (RAPM §4.10;
+   0 today):
+
+   ```text
+   δ_i = γ_def^F[def_team(i)] + Σ_{covered p ∈ Δ_i} β_p^F + Σ_{uncovered p ∈ Δ_i} m_p
+   ```
+
+   - `δ_i` is then gauge-invariant except through those counted, substituted terms.
+   - RAPM outputs are unchanged, and `p`'s coefficient keeps whatever `no_data` flag RAPM §3.2
+     gives it. Only `δ_i` uses `m_p`. No missing indicator enters `ĝ`: engine-spec §6.8 rule 12
+     makes this exception for `δ_i` only.
+   - Coverage is decided on `F`'s training plays only. Any market row in `F` takes its exposures
+     `n^off_{t,p}`, `n^def_{t,p}`, `N_off(t)` and `N_def(t)` from those plays too (RAPM §4.4), as
+     the fold-wise source ratified 2026-10-09 implies.
+   - The value equals the oracle's 0.0 today. It is an owner decision on its merits, never parity
+     (KI-NEW-Z4, KI-NEW-Z67; engine-spec Appendix D item 14).
+   - The statistical owner re-confirms `m_p` before any change to how RAPM sets `m_p` (DR-C9,
+     DR-D12), or DR-D12's real-scale setting of the RAPM ridge penalty `λ` or of `μ_team`, applies
+     to `δ_i`.
+4. **Counting.** Every substitution is persisted with the fold map as a `(fold, player_id, play)`
+   triple, flagged when `p` had offensive exposure in `F`. Per fold, the run records affected plays,
+   substituted slots and distinct players. `opponent_source` records the run, per-week and
+   per-defensive-team-week totals, and each `layer1_credit` record carries the number of its plays
+   whose `δ_i` used a substitute (§3.2). A substitution never fails the run.
+5. **Promotion gate** (engine-spec §6.8 rule 13). No real-data Layer-1 run that used a substitute
+   is promoted until a pre-registered recovery check of the substitute against planted truth passes
+   on the realistic profile's requirement R-7: one-week defensive call-ups, rest-week and injury
+   fill-ins and multi-week signings, planted over a range of ability offsets (`synthetic-world.md`
+   §4.11). Its statistics obey engine-spec §7.13.4 rule 2. The R-7 rates and offsets, and the
+   check's statistics, margins, pass rule and gate kind, stay open; the statistical owner
+   pre-registers them before any Rust result is seen (open — DR-D14). A Class D floor under
+   engine-spec §7.13.4 rule 1 needs an R-7 reference in the corrected oracle, added through the
+   correction ledger, to supply the observed value; otherwise the check is a gate whose pass rule
+   is fixed against planted truth. A floor calibrated on the gated run's own result cannot fail
+   that run.
 
 **Required (live tier).** No participation exists, so `δ^team_i = E_def^{team}[def_team(i)]` from
 the live-tier team ridge on dV (engine-spec §6.2, Component 5), estimated through week
@@ -521,6 +588,36 @@ r′_i  = dv_i − g′(x′_i)          for every play of season S
 - Any in-season refit schedule would be a change of this spec, with a cross-fit design under
   DR-D14.
 
+**Prior-builder records** (DR-D17; DR-D32). The windowed season-start prior (SSK §6.5) does not
+read `r′`. The Layer-1′ residuals whose per-season means it pools are prior-builder records `r̃`:
+participation-free and with a team-level opponent effect, like `r′`, but with `g̃` and `δ̃`
+cross-fitted on the build window instead of the frozen `g′` and the as-of-week `δ^team`. The owner
+confirmed this construction as part of DR-D17 on 2026-10-14 (answer 9,
+`docs/06-sessions/2026-10-14-P0-01.md`). At each season boundary `S` the records are computed from
+the same data version once for each build window `W` of DR-D32 (`S−3..S−1` and `S−2..S−1`):
+
+```text
+x̃_i  = (down_i, ydstogo_i, yardline_100_i, δ̃_i)
+r̃_i  = dv_i − g̃^{(−k(i))}(x̃_i)          for every admitted play i of W
+```
+
+- `dv_i` is the play's dV under season `S`'s frozen V(s) (value-model.md §6.2 item 3). That V(s) is
+  fitted on `S−3..S−1`, and so on every play of the build window, held-out folds included (DR-D17,
+  answer 9); only `g̃` and `δ̃` are cross-fitted.
+- The cross-fit runs on the window frame `W` with the fold design DR-D14 ratified for Layer 1:
+  week-grouped folds keyed by play identity, `K = 5`, the fold map persisted, seed 0 recorded and
+  early stopping explicit (§4.4, §5.2).
+- In each fold, `δ̃` comes from the fold-wise team ridge of §4.8.3, and `g̃` is the DR-C7 estimator
+  fitted on the same training plays. Each held-out play is scored with its own fold's `δ̃` and `g̃`.
+- No participation-derived input enters: no RAPM rating, no offseason Layer-1 credit and no
+  retrospective RTS. Apart from season `S`'s frozen V(s), fitted on `S−3..S−1` and shared by both
+  builds (the gap DR-C6(b) accepts; DR-D32), no NFL data from before `W` enters; only static
+  metadata may predate it (engine-spec §2.4).
+- The records are labelled prior-builder records and carry their own fold-map, context-model,
+  opponent-source and V(s) versions (§4.11). Only the windowed prior builder and, under ADR-013
+  (Proposed), the same build's feeder-equivalency fit (`cross-league-priors.md` §3.3) read them. The
+  builder averages `r̃_i` over each track's regular-season role events of §4.8.1, per window season.
+
 #### 4.8.3 Opponent adjustment
 
 `δ^team_i = E_def^{team}[def_team(i)]` from the live-tier team-level ridge on dV with off/def team
@@ -529,6 +626,20 @@ better defence), **as of the start of week `week_i`**. That is, it is estimated 
 `< week_i`, so the adjustment is a pre-game quantity. The week-1 value comes from the preseason
 state of that ridge (DR-C6). The team ridge's market rows at lock (DR-B5) are part of Component 5,
 not of this spec.
+
+Because a window season's week-1 value comes from its preseason ridge state, the `δ^team` stored
+with a window play, on which `g′` trains (§4.8.2), carries team data from before the window. If the
+live team ridge follows the engine-spec §2.4 window in season, the scope is wider: a play's stored
+value is the ridge's state as of its week, estimated on that play's own §2.4 window, so it carries
+team data from before `S−3` for every play of `S−3` and `S−2` and for the week-1 plays of `S−1`, not
+only through week 1's preseason state. Which team data those training features may carry is open; a
+decision request is still to be raised (KI-NEW-Z79).
+
+The prior-builder records of §4.8.2 use a team-level ridge on dV of the same form, fitted fold-wise
+instead of as of the week: on each fold's training plays of the build window, with one offence and
+one defence intercept per `(team, season)` and no market rows. In each fold, `δ̃_i` is the fold's
+`E_def` for play `i`'s defending team in `season_i`. It feeds only the prior-builder records
+(DR-D17).
 
 #### 4.8.4 Attribution (DR-D15)
 
@@ -619,6 +730,7 @@ Provenance key, as in RAPM §4.9:
 | `layer1_all_qbs` threshold | 20 | `layers.py:550` | hand-set (PR #10, Phase 3 Task 4; plan lost, critic G-3) |
 | Re-seed statistic | unweighted mean of weekly credit, focus QB only | `layers.py:605` | hand-set v0 |
 | Unknown defender rating | 0.0 | `layers.py:493` | hand-set v0 |
+| Engine: uncovered defender's term in `δ_i` | `m_p`, his RAPM prior mean (0 today); a defender missing from the fold's ratings is `CreditError::UncoveredDefender` | §4.3, §5.4 | owner decision (DR-D14), not parity |
 | Aggregation key | `week` only | `layers.py:535, 584` | hand-set v0 (defect, §8 item 6) |
 | Layer-1′ constants | none: no eligibility threshold | — | DR-D15 |
 
@@ -636,12 +748,16 @@ double-count precision in the filter.
   exposure is 0.
 - The fold map partitions the frame: every play is scored exactly once, by a model that did not
   train on it. In the offseason tier the opponent feature of a scored play MUST come from a source
-  that did not train on that play either (§4.3).
+  that did not train on that play either (§4.3). That includes the coverage decision and any
+  substitute, and the `δ` of `ĝ^{(−k)}`'s training rows: all come from the fold-`k` fit, whose
+  training plays exclude the scored fold `k` (DR-D14).
 - Credit for `(season, week)` in the live tier MUST be invariant to any play of a later week
   (§10.3 T-L1-4).
 - Each persisted record carries the context-model, opponent-source and V(s) versions it was
   computed from. A record whose versions differ from the current promoted ones is stale, never
   silently mixed (engine-spec §8.8).
+- Prior-builder records (§4.8.2) carry their own fold-map, context-model, opponent-source and V(s)
+  versions, and the windowed prior is persisted with those versions (DR-D17; SSK §6.4 item 4).
 
 ---
 
@@ -678,6 +794,8 @@ double-count precision in the filter.
 - **Engine rule.**
   - The fold map MUST be a deterministic function of play keys and the seed, for example a hash
     of `(season, week)` for week-grouped folds. It MUST NOT depend on frame row order.
+    The week-to-fold function itself is not yet fixed, and it changes how often a defender is
+    uncovered under §4.3 (open — DR-D14).
   - The booster MUST be deterministic for a given seed regardless of thread count. Any
     parallelism uses fixed-order reductions (superseded alpha-spec §6.6 rule 5).
   - The seed, the fold map and the booster backend and version enter `context_model_version`.
@@ -716,7 +834,8 @@ and C-L1 for the Layer-1 context model.
 | `dv` missing or non-finite | bare `KeyError` / sklearn `ValueError` | `ContractError::MissingField` / `NonFiniteValue` at contract validation |
 | State feature non-finite | passed to the booster as a missing value | `ContractError::NonFiniteValue` |
 | Participation not `Listed` for a play in an offseason-tier frame | `()` → no credit, silently | `ContractError::ParticipationUnavailable` (plays-contract D-5) |
-| A defender id without a rating in the declared source | contributes 0.0 | `CreditError::UncoveredDefender{count, plays}`, unless a declared, counted substitute is approved (§4.3; open — DR-D14) |
+| A listed defender id with no entry in the fold-wise fit (§4.3 item 1) | contributes 0.0 | `CreditError::UncoveredDefender{count, plays}`. The run is not promotable (DR-D14, DR-B6). The variant's name predates the term: it is never raised for an uncovered defender (next row) |
+| An uncovered defender: an entry, but no defensive play among the fit's training plays, or a `no_data` coefficient (§4.3 item 2) | not reached: the oracle has no fold-wise ratings | Not a failure. His term in `δ_i` is his RAPM prior mean `m_p`, and the substitution is counted and persisted (§4.3 items 3–4; DR-D14) |
 | Fewer plays than folds, or a fold with no training rows | sklearn `ValueError` | `CreditError::InsufficientData` |
 | Booster fit or prediction fails | propagates; swallowed in `layer1_all_qbs` (KI-G6) | `CreditError::ContextModelFailed`. Never swallowed |
 | A requested player with no qualifying event | omitted, or an empty frame | a `no_data` record. Where a consumer requires a value, `CreditError::NoEvidence`. The oracle's case, the fixed-point re-seed, is not in the engine (DR-D11) |
@@ -726,7 +845,8 @@ and C-L1 for the Layer-1 context model.
 | Context-model or opponent-source version mismatch on read | n/a | `StateError::VersionMismatch` |
 
 Each failure blocks promotion of the run (engine-spec §8.8). These are deliberate divergences,
-listed in `reference/python/PARITY.md` (e).
+listed in `reference/python/PARITY.md` (e). The uncovered-defender row is not a failure: a
+real-data run that used a substitute is promoted only once the R-7 check passes (§4.3 item 5).
 
 ---
 
@@ -755,7 +875,10 @@ Layer 1 is **batch-only** in the oracle.
    - A run with no newly completed game-week computes nothing (SSK §6.4 item 5).
 3. **Corrections.** A corrected play, a corrected snap count or a corrected V(s) version
    invalidates and recomputes the affected weeks' records. Downstream, the Kalman recomputes from
-   the first affected week (SSK §6.4 item 7; KI-A9).
+   the first affected week (SSK §6.4 item 7; KI-A9). A correction to window-season data published
+   during season `S` reaches the prior-builder records of §4.8.2, and through them the windowed
+   prior, only at the next season boundary. The prior is fixed for the season, except through an
+   identity-link version change (engine-spec §6.5; SSK §6.5; DR-D17).
 4. **Two-path equivalence.** The weekly stage's records for `(S, w)` MUST equal, exactly, a batch
    recomputation of Layer-1′ for `(S, w)` at the same as-of with the same frozen `g′`
    (`evaluation-and-leakage.md`; engine-spec §8.19). The frozen-`g′` design makes this hold by
@@ -765,7 +888,12 @@ Layer 1 is **batch-only** in the oracle.
    season `S−3` after week 1, which the in-season §2.4 window has dropped. The offseason-tier
    Layer-1 frame for season `s` is that season alone, as the
    verdict computes it per season (`verdict.py:179-182`); DR-D14 chose the single-season frame over
-   window pooling. The opponent source is §4.3 (a), fold-wise ratings (DR-D14).
+   window pooling. The opponent source is §4.3 (a), fold-wise ratings, with the §4.3 coverage rule:
+   a defender missing from the fold's ratings is a typed failure, and an uncovered defender takes
+   the counted substitute `m_p`. The training rows of `ĝ^{(−k)}` take `δ` from the fold-`k` fit,
+   pending the DR-C7 comparison with nested training rows (DR-D14). The prior builder's
+   cross-fit (§4.8.2; DR-D17) runs the same fold design on a window frame; the offseason-tier
+   Layer-1 frame stays a single season.
 
 ---
 
@@ -835,6 +963,13 @@ Three observations bear on DR-C7:
   (legacy), with residual correlation to the GBM of 0.9842 and 0.9456. That is a probe, not a
   candidate evaluation.
 
+**The real-2023 fold-wise row.** Its −0.0184, against −0.0005 with state features only, was
+measured with the oracle's play-level `KFold(shuffle)` folds (§4.4; method in §7.8), and each fold's
+training rows took the opponent feature from that fold's own ratings, as under §4.3 (a). It has two
+untested readings: the train/score mismatch of the training rows' opponent feature (§8, known
+limitation 1), or a booster overfitting a low-signal feature. Per-play R² is not the yardstick
+(above), and the row is not accuracy evidence (engine-spec Appendix D item 16; DR-D14).
+
 ### 7.4 Recovery of planted ability, and the unit-credit property
 
 Season credit is the snap-weighted mean of weekly credit, for all 144 offensive synth players (all
@@ -878,6 +1013,13 @@ On the synth these design changes are of the same size as a seed change. On real
 fold-wise correction removes the entire apparent opponent signal (§7.3). Week-grouped folds are
 also the condition under which the calibration gate's innovations are genuinely held out
 (`test_calibration_synth.py:49-53`).
+
+The §4.3 substitute path has no evidence yet, and the oracle never reaches it. Its recovery claim
+rests on the pre-registered R-7 check of §4.3 item 5 (engine-spec §6.8 rule 13;
+`synthetic-world.md` §4.11), whose rates, offsets, statistics, margins, pass rule and gate kind
+stay open (open — DR-D14). How often defenders are uncovered on real seasons, under the engine's
+fold map once §5.2 fixes it, is still to be counted on several completed seasons, as historical,
+non-parity measurement (open — DR-D14).
 
 ### 7.6 The fixed point (`fit`, `n_iter = 3`)
 
@@ -965,10 +1107,10 @@ deliberate divergence (DR-B6).
 | # | Defect (oracle) | KI / source | Required behaviour |
 |---|---|---|---|
 | 1 | `layer1_all_qbs` swallows any exception with `except Exception: pass` (`layers.py:555-556`) and refits the context model per QB | KI-G6 (alias KI-#27) | **Not ported** (decision-register "Defaults applied" item 4). Any multi-player call fits once and raises `CreditError::ContextModelFailed` |
-| 2 | Opponent feature from ratings fitted on all plays, held-out fold included. On real 2023 the in-sample feature's entire apparent signal is leakage (R² 0.0144 → −0.0184) | KI-NEW-A5 (this spec adds the real-data measurement) | Fold-wise ratings (§4.3; DR-D14) |
+| 2 | Opponent feature from ratings fitted on all plays, held-out fold included. On real 2023 the in-sample feature's entire apparent signal is leakage (R² 0.0144 → −0.0184) | KI-NEW-A5 (this spec adds the real-data measurement) | Fold-wise ratings (§4.3; DR-D14). The training rows of `ĝ^{(−k)}` take `δ` from the fold-`k` fit (known limitation 1 below) |
 | 3 | Play-level shuffled folds in production; week-grouped only in the calibration gate | KI-NEW-A5; reconcile-code-first C18 | Week-grouped folds keyed by play identity, with the fold map persisted (§4.4, §5.2) |
 | 4 | Opponent feature `D_i` omits `γ_def`, so it is gauge-dependent | KI-NEW-Z5; RAPM §4.6; new | `δ_i = γ_def[def_team(i)] + Σ β_p` (§4.3) |
-| 5 | A defender without a rating contributes 0.0 silently | KI-NEW-Z4; new | Total coverage or a declared, counted substitute (§4.3, §5.4; open — DR-D14) |
+| 5 | A defender without a rating contributes 0.0 silently | KI-NEW-Z4; new | A defender missing from the fold's ratings raises `CreditError::UncoveredDefender`. An uncovered defender takes his RAPM prior mean `m_p`, counted on every record and persisted with the run, and no real-data run that used a substitute is promoted before the R-7 check passes (§4.3, §5.4; DR-D14) |
 | 6 | Aggregation by `week` only: multi-season frames merge seasons silently (7 rows instead of 12 in §7.4) | KI-NEW-Z2; new (the verdict works around it, `verdict.py:176-182`) | Key every record by `(season, week)` |
 | 7 | Eligibility `N_p ≥ min_plays` counted over the whole frame; ineligible players are absent rather than flagged | KI-NEW-Z6; new | As-of eligibility; `no_data` records (§3.2, §4.5) |
 | 8 | Batch credit for week `w` depends on later weeks through `ĝ` and the ratings. The synth Kalman calibration and Tier-0 gates are therefore not causal one-step tests | KI-NEW-Z7; new | Offseason or retrospective use only. The live tier uses frozen `g′` and as-of `δ^team` (§4.8, §6.2). Calibration gates that claim one-step semantics use causal credit (SSK §7) |
@@ -986,17 +1128,26 @@ deliberate divergence (DR-B6).
 | 20 | `golden/snapshot.npz` lacks the exposures of `qb_credit` | KI-NEW-Z76; new | Layer-1 and Kalman fixtures export exposures from the run (§10.2) |
 | 21 | The plays contract has no involvement roles, and snap counts have no provider contract, PFR→GSIS crosswalk or licence ruling | KI-NEW-Z50; new; `docs/04-providers/nflverse/README.md:76`; `access-and-license.md:40` | Contract MINOR addition and provider contract before Layer-1′ (P1-03); licence ruling by the Data/Licensing owner |
 
+Known limitations of the required design. They are not oracle defects, and the port implements the
+design as specified.
+
+| # | Limitation | Source | Status |
+|---|---|---|---|
+| 1 | Train/score mismatch of training-row `δ`. `ĝ^{(−k)}` trains on rows whose `δ` comes from the fold-`k` fit, which was fitted to those rows' own dV, while a scored play's `δ` is out of sample. So `ĝ` can learn a steeper `δ` slope than held-out plays support. It also never sees a substituted `δ` on a training row, because every defender listed there has defensive exposure in the fold-`k` fit (unless a DR-C5 minimum-exposure rule flags him `no_data`), so it cannot learn a substitute's bias | DR-D14 (raised in review, 2026-10-14) | The ratified design stands. The DR-C7 context-model comparison also compares it with nested training rows, on a pre-registered statistic and margin (§4.3; open — DR-D14) |
+| 2 | The prior-builder records' dV is in sample. It is taken under season `S`'s frozen V(s), fitted on `S−3..S−1` and so on every play of the build window, held-out folds included; only `g̃` and `δ̃` are cross-fitted (§4.8.2) | DR-D17 (answer 9; raised in review, 2026-10-14) | The confirmed design stands. `evaluation-and-leakage.md` G12 records the exception |
+
 ---
 
 ## 9. Decisions
 
-Status as of the owner's decision interview of 2026-10-08/09. `decision-register.md` is
-authoritative for status.
+Status as of the owner's decision interview of 2026-10-08/09 and the owner's decisions of
+2026-10-14 (`docs/06-sessions/2026-10-14-P0-01.md`). `decision-register.md` is authoritative for
+status.
 
 | Decision | Question | Outcome or proposed default |
 |---|---|---|
 | **DR-C1** | Participation dependence on the live path | **Ratified in part 2026-10-09.** Two tiers: Layer 1 offseason only; Layer-1′ in season (§1.4) (DR-C1). Still open: the snap-count source (KI-NEW-Z50) |
-| **DR-C7** | Context-model estimator: cross-fitted GBM vs ridge/GAM | **Ratified in part 2026-10-09** for V(s) only (a deterministic in-house estimator). The context-model choice stays open: decided on recovery evidence (proposed — DR-C7). This spec adds: decide on weekly-credit recovery against a planted opponent effect and on out-of-sample forecasting, not per-play R² (§7.3) |
+| **DR-C7** | Context-model estimator: cross-fitted GBM vs ridge/GAM | **Ratified in part 2026-10-09** for V(s) only (a deterministic in-house estimator). The context-model choice stays open: decided on recovery evidence (proposed — DR-C7). This spec adds: decide on weekly-credit recovery against a planted opponent effect and on out-of-sample forecasting, not per-play R² (§7.3). The same comparison also compares the ratified training-row design with nested training rows (§4.3; DR-D14) |
 | **DR-C8** | Booster backend | **Ratified in part 2026-10-09.** Pure-Rust first, no native artifacts (DR-C8). The concrete crate is approved in the WP that first needs a booster. The backend and version enter `context_model_version` |
 | **DR-C10** | Kalman observation | **Ratified 2026-10-09.** Weekly credit with real exposure (DR-C10); §4.7 |
 | **DR-C3** | Role-specific talent in Layer D | **Ratified 2026-10-09.** Per-role Layer-1′ streams (dropback, carry, target) feed role talent, with one Kalman track per player and role (DR-C3) |
@@ -1004,12 +1155,14 @@ authoritative for status.
 | **DR-B3** | Parity tolerances | **Overridden 2026-10-09.** Classes A / A′ / B / D, with Class C replaced by C-V for V(s) and C-L1 for the Layer-1 context model (§10.3), and Class D gated over a seed ensemble (DR-B3, DR-D26). Still open: the Class D floor values and the DR-D26 seed set, quantile and margins |
 | **DR-B4** | Synthetic world | **Ratified 2026-10-09** (direction). Fixed defenders now; before Layers A–F, the stat-vector world. This spec needs it to plant passer, rusher and target roles and an opponent effect, so Layer-1′ and the DR-C7 choice can be tested. Still open: the recalibrated `r_scale`, NIS bands and Tier-0 floors; that world's distributions and parameters; and the WP that builds it |
 | **DR-B6** | Typed failures | **Ratified in part 2026-10-08.** §5.4 (DR-B6). Still open: the numeric ill-conditioning threshold |
-| **DR-D14** | Fold scheme, opponent-rating source (fold-wise vs frozen) and its coverage policy, early-stopping control, fold count, seed policy, and the offseason frame (single season vs window pooling) | **Ratified 2026-10-09.** Week-grouped folds, fold-wise ratings, early stopping explicit, `K = 5`, seed 0 recorded, single-season frame. Still open: the uncovered-defender policy under fold-wise ratings (§4.3), before P1-12. Same slug as engine-spec §6.2 Component 6 |
+| **DR-D14** | Fold scheme, opponent-rating source (fold-wise vs frozen) and its coverage policy, early-stopping control, fold count, seed policy, and the offseason frame (single season vs window pooling) | **Ratified 2026-10-09; decided in part 2026-10-14** (uncovered defenders; the training rows stand). Week-grouped folds, fold-wise ratings, early stopping explicit, `K = 5`, seed 0 recorded, single-season frame. A defender missing from the fold's ratings is a typed failure; an uncovered defender takes his RAPM prior mean `m_p`, counted, with real-data promotion gated on the R-7 check (§4.3). The training-row design stands, pending the DR-C7 comparison with nested training rows. Still open: the R-7 check's rates, offsets, statistics, margins, pass rule and gate kind, and the training-row comparison's statistics and margin, all pre-registered before any Rust result is seen; the comparison's worlds and seed ensemble; the week-to-fold function (§5.2); the real-season frequency of uncovered defenders (§7.5); whether the filter down-weights substituted weeks, and the name of the per-record count (§3.2). Same slug as engine-spec §6.2 Component 6 |
 | **DR-D13** | Is Layer-1 (and Layer-1′) credit an on-field-unit quantity or a teammate-adjusted individual one? Candidates: keep unit credit and label it; subtract co-involved players' offseason ratings, e.g. `r_i − Σ_{q ∈ O_i, q ≠ p} β_q`; or restrict to Layer-1′ role events | **Open, no default.** The evidence is §7.4 and §7.7. It must be decided before RB/WR/TE credit is promoted as an individual signal. Interim rule confirmed and direction recorded 2026-10-09: pursue an individual estimand, testing own-role (Layer-1′) credit first, per event, then teammate subtraction; each is promoted only on recovery evidence (stat-vector world, DR-B4) |
 | **DR-D15** | Layer-1′ observation (per event vs per snap), role set, scrambles, penalties, attribution, opponent as-of rule, `g′` features and refit schedule | **Decided in part 2026-10-09.** The §4.8 rules (per-role full-residual attribution, frozen `g′`, opponent as of week `w − 1`) and the per-event observation, not per snap (§4.8.5). Still open: penalty-play handling, the snap-count source (KI-NEW-Z50) and recovery evidence on the stat-vector world (§4.8.6) |
 | **DR-D11** | Re-seed set, credit→rating scale mapping, convergence criterion | **Decided 2026-10-09.** Drop the fixed-point claim: GRID's fit is a single pass, with no Layer-1 credit fed back into RAPM prior means; feedback returns only by ADR with recovery evidence. How oracle parity fixtures treat the oracle's loop is RAPM §4.7's matter. engine-spec §6.2 Component 7 calls the same decision "DR-D11" |
 | **DR-D16** | Ex-ante exposure for the published predictive band | **Decided in part 2026-10-09.** The pre-game predictive is conditioned on Layer C's projected exposure and graded against realised exposure; a did-not-play week's predictive is not applicable. Still open: the exact definition, after Layer C (P1-07; SSK §9) |
-| **DR-D19** | The prior on the Kalman credit scale | **Decided in part 2026-10-09.** The feeder translation is fitted against the tracker's own talent scale (end-of-season smoothed talent computed without the college prior); no separate scale map. Still open: `P0_form` and `P0_scheme` (SSK §9); §1.3 item 3 |
+| **DR-D19** | The prior on the Kalman credit scale | **Decided in part 2026-10-09.** The feeder translation is fitted against the tracker's own talent scale (end-of-season smoothed talent computed without the college prior); no separate scale map. **Decided in part (2026-10-14, Statistical owner, owner-directed transcription, `docs/06-sessions/2026-10-14-P0-01.md`)**: season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed). Each DR-D32 build computes its DR-D19 targets from its own window only, and a stored production track never supplies one. Every option offered computed each build's targets from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does not wait on ADR-013. Under ADR-013, a feeder-linked track's target is the mean of its prior-builder residuals `r̃` (§4.8.2) in its first window season with role events, with its known variance from the build's own `r_c` and `ω_c`; no filter is run, and no prior of any kind enters it (SSK §6.5; `cross-league-priors.md` §6.2). Until the owner accepts ADR-013, the 2026-10-09 text governs. Still open: `P0_form` and `P0_scheme`, and P0 for tracks that restart from the windowed prior (SSK §9); the owner's ruling on ADR-013; the equivalency's estimator (DR-C5) and the other parts `cross-league-priors.md` §6.2 lists; §1.3 item 3 |
+| **DR-D17** | How the state-space filter crosses the offseason, and the windowed prior for a track with NFL evidence | **Decided 2026-10-09; the windowed prior decided in part 2026-10-14.** Each filter restarts at every season boundary from a windowed prior (SSK §6.5), whose window evidence comes only from the prior-builder records of §4.8.2 (confirmed 2026-10-14, answer 9), never from RAPM ratings or offseason Layer-1 credit. The prior is fixed for the season, except through an identity-link version change; a correction to window-season data reaches it at the next boundary (§6.2 item 3). Still open: the parts SSK §6.5 and §9 list |
+| **DR-D32** | How do the season-boundary priors treat season `S−3` after week 1? | **Decided 2026-10-14.** Every season-boundary prior is built twice from the same data version: on `S−3..S−1` for the preseason and week-1 forecast, and on `S−2..S−1` for the state the season-`S` filter restarts from. Each build runs its own prior-builder cross-fit (§4.8.2). Two canaries prove the window, with the model version's learned hyperparameters (`κ_c`, `λ_c` and the `SSParams`) held fixed: they are calibrated by rolling origin, generally on seasons before the window, and are not window evidence (answer 11). For feeder-linked tracks, both canaries can hold once ADR-013 (Proposed) binds, because each build then takes its DR-D19 targets from its own prior-builder records (§4.8.2; DR-D19). Still open: the P1-12 measurements that SSK §6.5 lists |
 
 ---
 
@@ -1058,12 +1211,12 @@ Fixtures are synthetic only (DR-A11), exported single-threaded and sha256-manife
 |---|---|---|---|
 | P-L1-1 | Membership sets `P(p,w)`, exposures `n_{p,w}`, week sets, eligibility under the oracle rule | exact | Integer and set equality (duplicates counted once) |
 | P-L1-2 | Weekly credit `c_{p,w}` from the **injected** residual vector | A | ≤ 1e-12 abs (parity-fixture-contract §6: "credit means") |
-| P-L1-3 | Opponent feature `D_i` from the injected ratings lookup; `δ_i` from injected `β`, `γ` once the corrected oracle provides it | A | ≤ 1e-12 abs |
+| P-L1-3 | Opponent feature `D_i` from the injected ratings lookup; `δ_i` from injected `β`, `γ` once the corrected oracle provides it. A substituted term (§4.3) has no oracle counterpart: it is the spec golden of §10.4 E-2, and its counts are audited by T-L1-6 | A | ≤ 1e-12 abs |
 | P-L1-4 | Context-model residual from the Rust booster, with injected `x_i`, `dv` and **injected fold map** | C-L1 (below) | Rust-native vs oracle |
 | P-L1-5 | `fit(n_iter=3)` with injected per-iteration residuals: ratings, team values, `qb_weekly`, `m_focus` | A′ (ratings, ≤ 1e-9 rel); A (`qb_weekly`, `m_focus`) | Stage-isolated, as parity-fixture-contract §5. The engine does not implement the loop (DR-D11); how parity treats the oracle's loop is RAPM §4.7's matter |
 | P-L1-6 | Kalman on weekly credit | — | Owned by SSK §10.3 (PF-SS-02); requires the exported exposures |
 | P-L1-7 | End to end with the Rust V(s), the Rust booster and the Rust corrected synth: Kalman Tier-0 floors and calibration bands on credit | D | Floors re-set on the fixed synth, calibrated below observed, gated on the seed-ensemble median and a required low quantile (DR-B3, DR-B4, DR-D26). The floor values, the seed set, the quantile and the margins are still open and not set by this spec |
-| P-L1-8 | Divergences: `(season, week)` keying on a two-season frame; `no_data` records; typed failures of §5.4; no `layer1_all_qbs` | divergence | Listed in `reference/python/PARITY.md` (e). Rust asserts the typed outcome |
+| P-L1-8 | Divergences: `(season, week)` keying on a two-season frame; `no_data` records; typed failures of §5.4, including `CreditError::UncoveredDefender` for a defender missing from the ratings (`layers.py:493`); no `layer1_all_qbs` | divergence | Listed in `reference/python/PARITY.md` (e). Rust asserts the typed outcome |
 | P-L1-9 | Layer-1′ | spec golden (A) + D | No oracle counterpart. The per-event lines of §10.4 E-4 are Class A goldens: DR-D15 decided every rule they exercise. Recovery on the stat-vector synth (DR-B4) is Class D |
 
 **Layer-1 Class C (C-L1; DR-B3).** The original DR-B3 Class C text targets V(s) and fails for the
@@ -1101,6 +1254,9 @@ decision request, not a reason to loosen them.
   `(season, week)` records whose values equal the per-season computation.
 - **T-L1-6 cross-fit hygiene.** No play is scored by a model, or by an opponent-rating source,
   that trained on it (§4.11). This is checked by fold-membership audit on the persisted fold map.
+  The same audit recomputes, from the persisted fold map and each fit's training plays, every
+  substitution triple of §4.3 and the per-fold, per-week, per-defensive-team-week and per-record
+  counts, which MUST equal the persisted ones exactly (DR-D14).
 
 ### 10.4 Reference examples (become golden unit tests)
 
@@ -1141,6 +1297,19 @@ D = [0.1, 0.2, 0.2, −0.1, −0.1, 0.2, 0.2]       (oracle; play 2's unknown "z
 
 Required: play 2 raises `CreditError::UncoveredDefender{count: 1, plays: [2]}` (§4.3, §5.4;
 DR-D14).
+
+Required, for an uncovered defender (§4.3 items 2–4; DR-D14). Play `i`, scored in fold `k`, lists
+defenders `(d1, d3)` of team `B`. The fold-`k` fit `F` has `γ_def[B] = 0.05` and `β_d1 = 0.20`.
+`d3` is in the as-of universe, so `F` holds an entry for him, but none of his plays, defensive or
+offensive, is among `F`'s training plays. No other play of fold `k` lists an uncovered defender.
+With `m_d3 = 0`:
+
+```text
+δ_i = γ_def[B] + β_d1 + m_d3 = 0.05 + 0.20 + 0 = 0.25          (no error)
+substitution triple (k, d3, i), offensive-exposure flag false
+fold k: affected plays 1, substituted slots 1, distinct players 1
+each offensive player listed on i with no other substituted play that week: record count 1
+```
 
 **E-3. Gauge invariance of `δ` (required form).** One team `B` defends every play, with `k_def = 2`
 listed defenders `b1`, `b2`. With `β_b1 = 0.10`, `β_b2 = 0.05` and `γ_def[B] = 0.20`,

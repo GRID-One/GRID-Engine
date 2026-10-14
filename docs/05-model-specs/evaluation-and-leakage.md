@@ -274,8 +274,8 @@ deliberately leaky input or forecaster that the guard MUST catch.
 | G9 | **State namespace** | `CacheNamespace` refuses roots overlapping a cwd-relative `data/cache` (`asof.py:171-210`) | Backtests and tests write only under an isolated state root, checked against the **configured** production root, before any write | Pointing the namespace at production raises (`test_asof.py:116-119`) |
 | G10 | **Scope** | V(s) frozen on the warm-up (`backtest.py:165-168`) | V(s), priors, equivalency and VOR replacement fit before W; calibration periods for gates disjoint from evaluation (§4.11) | A V(s) refit on the whole season (KI-NEW-W4) is detected by G1 |
 | G11 | **Corrections and labels** | absent; postseason rows enter (KI-NEW-V0a, KI-NEW-I4) | Stat corrections create a new data version; postseason rows never enter REG labels (DR-C12) | A corrected stat replayed into an earlier snapshot changes its data version |
-| G12 | **Cross-fit folds** | play-level `KFold(shuffle)` (KI-NEW-A5) | Folds hold out whole weeks; no input to a held-out fold is fitted on it (`layer1-credit.md`; DR-D14) | — |
-| G13 | **Kalman initialisation** | `x0 = nanmean(y[:3])` (KI-#15) | No observation from the forecast week or later initialises any state (DR-C10) | Changing week-2 observations leaves the week-1 filtered value unchanged |
+| G12 | **Cross-fit folds** | play-level `KFold(shuffle)` (KI-NEW-A5) | Folds hold out whole weeks; no input to a held-out fold is fitted on it (`layer1-credit.md`; DR-D14). That covers the fold-wise RAPM fit behind `δ_i`, the exposures of its market rows, and the test of which defenders are uncovered and take the counted substitute `m_p` (`layer1-credit.md` §4.3). The training rows of `ĝ^{(−k)}` take `δ` from the same fold-`k` fit that scores fold `k`, as ratified (DR-D14). The windowed prior's prior-builder records are cross-fitted on each build's window with the same fold design (`layer1-credit.md` §4.8.2; DR-D17, DR-D32). Their dV is the one exception: it is taken under season `S`'s frozen V(s), fitted on `S−3..S−1` and so on every play of the build window, held-out folds included (DR-D17, answer 9); only the context model `g̃` and the opponent feature `δ̃` are cross-fitted | — |
+| G13 | **Kalman initialisation** | `x0 = nanmean(y[:3])` (KI-#15) | No observation from the forecast week or later initialises any state (DR-C10). At each season boundary the filter restarts from `prior_in`, built on `S−2..S−1`; the preseason and week-1 forecast use `prior_pre`, built on `S−3..S−1` (DR-D32) | Changing week-2 observations leaves the week-1 filtered value unchanged; **plus two window canaries** (DR-D32), both with the model version held fixed (its learned `κ_c`, `λ_c` and `SSParams` are calibrated by rolling origin, generally on seasons before the window, and are not window evidence): changing any `S−3` play or Layer-1′ input, with season `S`'s frozen V(s), its live context model `g′_S` and the team ridge's preseason state behind week 1's `δ^team` held fixed (all three carry `S−3` by design; DR-C6, DR-D15), leaves `prior_in`, every changepoint z-score and flag, and every season-`S` filtered state bit-identical from week 1's update onward; changing any NFL data from before `S−3`, static metadata excepted, leaves both priors bit-identical. For feeder-linked tracks, both canaries can hold once ADR-013 (Proposed) binds, because each build then takes its DR-D19 targets from its own prior-builder records (`state-space-kalman.md` §6.5) |
 
 ### 4.3 Walk-forward backtest (`backtest.walk_forward`, `backtest.py:117-201`)
 
@@ -308,7 +308,22 @@ for (s, w) in slots:
    uses only the `S−2` and `S−1` blocks, because season-`S` participation is unpublished
    (`rapm-attribution.md` §6.4). V(s) is fit once per season on `S−3..S−1` and frozen for that
    season, an accepted gap: after week 1 it still carries `S−3`. Every Kalman filter restarts from
-   the windowed prior at each season boundary, in production and replay alike (DR-D17).
+   the windowed prior at each season boundary, in production and replay alike (DR-D17). Every
+   season-boundary prior is built twice from the same data version (DR-D32): `prior_pre` on
+   `S−3..S−1` gives the preseason and week-1 forecast, and `prior_in` on `S−2..S−1` gives the state
+   the filter restarts from. Both builds use the model version's learned hyperparameters (`κ_c`,
+   `λ_c` and the `SSParams`), which are calibrated by rolling origin, generally on seasons before
+   the window, and are not window evidence. Apart from them, pre-window data reaches neither
+   season-boundary prior; with the model version held fixed, changing any NFL data from before
+   `S−3`, static metadata excepted, leaves both priors bit-identical (G13; DR-D32). Both builds also
+   take every prior-builder record's dV under season `S`'s one frozen V(s), which carries `S−3` into
+   `prior_in`. Apart from that V(s) and the model version's learned hyperparameters, `S−3` reaches
+   no season-`S` state after week 1's forecast through a season-boundary prior. For a feeder-linked
+   track, both statements can hold once ADR-013 (Proposed) binds, because each build then takes its
+   DR-D19 targets from its own prior-builder records (`state-space-kalman.md` §6.5). The season's
+   observations still carry `S−3` through the three inputs G13 holds fixed: season `S`'s frozen V(s)
+   (DR-C6), its live context model `g′_S` (DR-D15) and the team ridge's preseason state behind
+   week 1's `δ^team`.
 3. Generate and **freeze** the locked projection set (§3.2). An operational re-projection is a new
    version and never replaces a locked one.
 4. Score after official outcomes and stat corrections are available, with labels from engine-spec
@@ -861,7 +876,8 @@ correction (DR-B1) or a deliberate divergence in `reference/python/PARITY.md` (D
 ## 9. Decisions
 
 Status as recorded in `docs/00-meta/decision-register.md`, which is authoritative, after the owner's
-decision interview (2026-10-08/09).
+decision interview (2026-10-08/09) and the owner's answers of 2026-10-14
+(`docs/06-sessions/2026-10-14-P0-01.md`).
 
 | Decision | Question | Status |
 |---|---|---|
@@ -878,6 +894,9 @@ decision interview (2026-10-08/09).
 | **DR-D5** | Declared publication-time approximation for backfilled history | Decided 2026-10-09: "corrected as retrieved" accepted for stat corrections only, declared in every backtest report; other backfilled data follow each provider's declared publication-lag rule (P1-03; §4.1) |
 | **DR-D2** | Source of timestamped pre-lock lines for backtests | Open; interim rule confirmed 2026-10-09: market inputs are unavailable in backtests, with a missingness indicator, and closing lines are never substituted |
 | **DR-D16** | Conditional vs unconditional calibration | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the pre-game predictive is conditioned on Layer C's projected exposure, and calibration reports show both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (`state-space-kalman.md` §9) |
+| **DR-D14** | Layer-1 cross-fit design | Ratified 2026-10-09: week-grouped folds keyed by play identity with the fold map persisted, fold-wise opponent ratings, early stopping explicit, `K = 5`, seed 0 recorded, a single-season frame (G12). Decided in part 2026-10-14: a defender with no defensive exposure, or a `no_data` coefficient, in the fold's training plays takes his RAPM prior mean `m_p` in `δ_i`, counted and persisted, and no real-data Layer-1 run that used it is promoted before the pre-registered R-7 recovery check passes; a listed defender with no rating entry is a typed failure; the training rows of `ĝ^{(−k)}` keep `δ` from the fold-`k` fit, as ratified, and are compared later with nested out-of-fold `δ` inside the DR-C7 context-model comparison, on weekly-credit recovery and out-of-sample forecasting. Open: the rates, offsets, statistics, margins, pass rule and gate kind of the R-7 check (`synthetic-world.md` §4.11) and the statistics and margin of the training-row comparison, all pre-registered before any Rust result is seen; that comparison's worlds and seed ensemble |
+| **DR-D17** | Kalman season boundary | Decided 2026-10-09: every filter restarts from the windowed prior at each season boundary, in production and replay (§4.3). Decided in part 2026-10-14: a track with window evidence takes a recency-weighted pooled mean, a normal–normal posterior over its per-season mean Layer-1′ residuals in the window, which come from participation-free prior-builder records cross-fitted on each build's window, apart from their dV, taken under season `S`'s frozen V(s) (`layer1-credit.md` §4.8.2; G12), starting from the player's feeder prior as base if he has one and the population prior otherwise; no RAPM rating or offseason Layer-1 credit enters it; its base scale `κ_c` and recency weight `λ_c` (not the RAPM ridge penalty `λ`) are learned by rolling origin on a calibration period disjoint from evaluation (§4.11); the prior is fixed for the season, and a correction to window-season data reaches it at the next boundary. Open: the `κ_c`, `λ_c` tuning criterion, which must include calibration and is pre-registered before P1-12 tunes anything; the estimator of the window hyperparameters (DR-C5) |
+| **DR-D32** | How the season-boundary priors treat `S−3` after week 1 | Decided 2026-10-14: every season-boundary prior is built twice from the same data version, `prior_pre` on `S−3..S−1` for the preseason and week-1 forecast and `prior_in` on `S−2..S−1` for the state the filter restarts from; two canaries prove the window (G13), both holding fixed the model version's learned constants (`κ_c`, `λ_c` and the `SSParams`), which are calibrated by rolling origin, generally on seasons before the window, and are not window evidence (answer 11); apart from them, pre-window data reaches neither season-boundary prior. Open: P1-12 measurements of `S−3`'s weight from week 2 on, and a real-data comparison of the two builds. For feeder-linked tracks, both canaries can hold once ADR-013 (Proposed) binds (DR-D19) |
 
 ---
 

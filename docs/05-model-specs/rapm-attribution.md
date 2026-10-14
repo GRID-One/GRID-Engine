@@ -23,8 +23,9 @@ implementing agent may not redefine them (alpha-spec §1.3, superseded; carried 
   uses cautious-nevermore @ `59bce1d` line numbers, which are byte-identical in the import.
 - **Proposed decisions.** Statements tagged "(proposed — DR-xx)" are defaults recorded in
   `docs/00-meta/decision-register.md`. The owner has not ratified them, so they are not settled.
-  Decisions the owner settled at the 2026-10-08/09 decision interview are cited plainly as
-  "(DR-xx)"; the register's **Still open** clause names any part that stays open.
+  Decisions the owner settled at the 2026-10-08/09 decision interview or on 2026-10-14
+  (`docs/06-sessions/2026-10-14-P0-01.md`) are cited plainly as "(DR-xx)"; the register's
+  **Still open** clause names any part that stays open.
 - **Synthetic generators.**
   - *Legacy synth* is the oracle's generator as imported. Its defenders are drawn from the
     offense's own roster (KI-NEW-Y0; critic G-1).
@@ -143,7 +144,7 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
 | Layer B (team environment) | `N[t]` as a team-strength input, reconciled to the market line at lock |
 | Layer D (efficiency) | Offseason player rating as a further covariate, with a missing indicator, beside the role-specific talent covariates in EB-shrunk, exposure-weighted component-rate models (DR-C3, option 1) |
 | Layer E (matchup) | `G[t] = +E_def[t]` |
-| §6.5 priors | `estimate_equivalency` consumes the `ratings` frame (`reference/python/backend/grid/priors.py`; cross-league-priors.md) |
+| §6.5 priors | In the oracle, `estimate_equivalency` consumes the `ratings` frame (`reference/python/backend/grid/priors.py`; cross-league-priors.md). In the engine no RAPM rating seeds a Kalman prior (§2.3; DR-D17, DR-D19) |
 | Layer-1 | Defender ratings for the opponent-adjustment feature (layer1-credit.md §4) |
 
 ### 2.3 Live vs offseason (engine-spec §6.3; DR-C1)
@@ -154,7 +155,15 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
 - Therefore (DR-C1):
   - Production RAPM is fitted **only at season boundaries**, on completed seasons whose
     participation is published.
-  - Its outputs seed priors and features.
+  - Its outputs seed priors and features for later seasons (§2.2; engine-spec §6.3), among them
+    Layer D's offseason rating covariate (DR-C3).
+  - No RAPM rating seeds a Kalman prior (DR-D17). The windowed season-start prior reads none, and
+    the feeder equivalency is fitted on the Kalman credit scale against DR-D19 targets that each
+    DR-D32 build computes from its own window, never from a stored production track (DR-D19). As
+    decided on 2026-10-09, a target is end-of-season smoothed talent computed without the college
+    prior. Under ADR-013 (Proposed), once the owner accepts it, a target is the track's mean
+    prior-builder residual in its first window season with role events, from the build's own
+    records (layer1-credit.md §4.8.2); until then the 2026-10-09 text governs.
   - In-season, the Kalman observes the participation-free Layer-1′ credit (layer1-credit.md §4.8).
 - The oracle's walk-forward folds current-season participation into RAPM at every origin
   (`reference/python/backend/validation/backtest.py:177-199`). Backtests built that way MUST be
@@ -213,6 +222,23 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
 | `market_residual` | `N[t] − s_t` for anchored teams | the falsifiable hook of `layers.py:13-14` |
 | `solver_diagnostics` | see §5.3 | MUST accompany every solve |
 | provenance | window seasons, as-of, data version, column-map version, hyperparameters (§4.9) | engine-spec §8.5 / §8.8 |
+
+**Fold-wise fits** (DR-D14). Layer 1 computes its opponent feature `δ_i` from RAPM fits on one
+fold's training plays each (`layer1-credit.md` §4.3). In such a fit:
+
+- `exposure_off` and `exposure_def` count a player's plays among those training plays, and
+  `no_data` follows from that exposure as above.
+- The fit holds one entry per id in the season frame's as-of universe. A listed defender with no
+  entry is Layer 1's typed failure `CreditError::UncoveredDefender`. An id outside the universe is
+  `RapmError::UnknownParticipant` (§5.4).
+- A defender is *uncovered* in the fit when his `exposure_def` there is 0 or his coefficient
+  carries `no_data`. This includes a defender seen there only on offense. Only Layer 1's `δ_i`
+  takes the counted substitute for him, his prior mean `m_p` (§4.10). The RAPM outputs are
+  unchanged, and his coefficient keeps the `no_data` flag this section gives it. The name
+  `CreditError::UncoveredDefender` predates this term: Layer 1 raises it only for a listed
+  defender with no entry in the fit, never for an uncovered one.
+- A minimum-exposure control under DR-C5 may widen `no_data`, and with it the uncovered set
+  (open — DR-C5).
 
 ### 3.3 Explanation fields (template: Explanation fields; engine-spec §6.7)
 
@@ -364,6 +390,8 @@ else:            return np.linalg.solve(A, b)   # LU                            
        + Σ_p (n^off_{t,p} / N_off(t)) e_p
        + Σ_p (n^def_{t,p} / N_def(t)) e_p
    ```
+   In a fold-wise fit (§3.2), the fit window is that fit's training plays. A market row there
+   takes `n^off_{t,p}`, `n^def_{t,p}`, `N_off(t)` and `N_def(t)` from those plays only (DR-D14).
 3. `s_t` is the market-implied net strength **using the line as of lock** (engine-spec §4.3),
    converted into EP per play over the window. The conversion is not defined anywhere yet
    (DR-D10).
@@ -498,7 +526,7 @@ Provenance key:
 | Condition threshold | 1e10 | `layers.py:356` | hand-set (PR #53 C3) |
 | `n_iter` | 3 | `layers.py:591`; `tests/grid/golden_master.py:31` | hand-set v0. The engine fixes the round count at 1 (DR-D11; §4.7) |
 | Situation `min_plays` | 200 (`run_situation_rapm`); 50 (`weekly_update`) | `layers.py:432`; `weekly_update.py:47` | hand-set (Phase 4) |
-| Prior mean `m` | 0, except the `fit` re-seed | `layers.py:373-376,605` | design ("ridge toward replacement") |
+| Prior mean `m` | 0, except the `fit` re-seed | `layers.py:373-376,605` | design ("ridge toward replacement"). For a defender, 0 stands for about his team's typical on-field defender, not replacement level (§4.10). Layer 1 uses `m_p` as an uncovered defender's term in `δ_i` (DR-D14) |
 | Synth market noise | N(0, 0.01), seed 1 | `tests/grid/test_tier0_recovery.py:33-34`; `golden_master.py:30,69-70` | test harness only |
 | Column order | players `sorted(key=str)`; teams `sorted(players.team.unique())` | `layers.py:252,255` | design. Canonical-order PR (Phase-4 T1) |
 
@@ -508,13 +536,21 @@ Provenance key:
   `σ²` unmodelled. RAPM is a penalized point estimator in the oracle. There is no posterior
   variance output.
 - **Prior means.**
-  - `m = 0` ("replacement"), except the oracle's `fit` re-seed (§4.7), which the engine does not
-    port (DR-D11).
+  - `m = 0`, except the oracle's `fit` re-seed (§4.7), which the engine does not port (DR-D11).
+  - The oracle calls 0 "replacement" (`layers.py:9`). With `μ_team = 0.05` the team's fitted
+    defender ratings centre near 0 and `γ_def` carries the team level. Low-exposure ratings sit near
+    0 through shrinkage, so a 0 term stands for about the team's typical on-field defender, above a
+    call-up's expected level, not at replacement.
+  - Layer 1 gives an uncovered defender (§3.2) his prior mean `m_p` as his term in `δ_i`, counted on
+    every affected record (`layer1-credit.md` §4.3; DR-D14).
   - Priors from cross-league equivalency are **not** wired into RAPM on any oracle path
     (compare KI-NEW-P2).
 - **Required (open).**
   - Whether RAPM should take feeder/rookie prior means from cross-league-priors.md is open
     under DR-C9 and DR-D12.
+  - If DR-C9 or DR-D12 changes how RAPM sets `m_p`, or DR-D12 sets the real-scale ridge penalty `λ`
+    or `μ_team`, the statistical owner re-confirms Layer 1's uncovered-defender substitute before
+    the change applies to `δ_i` (DR-D14).
   - Any posterior-variance output (for example from the diagonal of `A⁻¹` scaled by a residual
     variance estimate) is **not** specified. The Rust port MUST NOT emit one until an approved
     spec revision defines it.
@@ -833,6 +869,7 @@ divergence (DR-B6).
 | **DR-D10** | How a spread (points per game) at lock maps to `s_t` in EP per play over the window, and whether totals also enter (Layer B implied points) | **Open, no default.** Requires a calibration study |
 | **DR-D12** | `λ`, `μ_team`, `lambda_by_pos`, and QB identifiability on the real scale. Options: multi-season pooling (DR-C6), a QB-specific penalty or prior, or Layer-1 event credit for QBs | **Decided in part** 2026-10-09 (DR-D12): calibrate by rolling origin on completed seasons, pre-registered before results (engine-spec §7); the study compares all three remedies. The values and the winning remedy stay open |
 | **DR-D11** | Generalize the re-seed to every credited player with a convergence test, or drop the fixed-point claim | **Decided** 2026-10-09 (DR-D11): drop the fixed-point claim. A single pass (rounds fixed at 1), with no Layer-1 credit fed back into RAPM prior means (§4.7) |
+| **DR-D14** | Layer-1 cross-fit design; here, what an uncovered defender in a fold-wise fit contributes to `δ_i` | Fold-wise ratings **ratified** 2026-10-09 (DR-D14). **Decided in part** 2026-10-14 (DR-D14): an uncovered defender's term is his prior mean `m_p`, counted; a listed defender with no entry is a typed failure; the RAPM outputs and the `no_data` flag are unchanged (§3.2); the statistical owner re-confirms the value if how RAPM sets `m_p`, or the real-scale `λ` or `μ_team`, changes (§4.10). This spec adds, from the fold-wise source ratified 2026-10-09: market rows take their exposures from the fit's training plays (§4.4). The rates, offsets, statistics, margins, pass rule and gate kind of the R-7 recovery check stay open (`synthetic-world.md` §4.11) |
 
 ---
 

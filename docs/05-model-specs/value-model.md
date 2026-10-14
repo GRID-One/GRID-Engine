@@ -538,6 +538,24 @@ the oracle disagree:
    prediction chain (engine-spec §8.8). A new V(s) version invalidates every dV-derived block: RAPM
    sufficient statistics (rapm-attribution.md §6.4), Layer-1 and Layer-1′ credit, Kalman
    observations, and dV features. Mixing versions is a typed error (§5.4).
+   - Season `S`'s windowed season-start prior (DR-D17) reads its window seasons' dV recomputed
+     under season `S`'s frozen V(s), not the dV kept under each window season's own V(s) version.
+     Its prior-builder records carry that V(s) version (layer1-credit.md §4.8.2;
+     state-space-kalman.md §6.5).
+   - Both builds of that prior, `prior_pre` on `S−3..S−1` and `prior_in` on `S−2..S−1`, share this
+     one V(s) (DR-D32). Both also use the model version's learned hyperparameters (`κ_c`, `λ_c` and
+     the `SSParams`), which are calibrated by rolling origin, generally on seasons before the
+     window, and are not window evidence; both DR-D32 canaries hold them fixed. Apart from this
+     V(s), the gap item 1 accepts, and those hyperparameters, `prior_in` reads no `S−3` data. For a
+     feeder-linked track, that holds once ADR-013 (Proposed) binds, because each build then takes
+     its DR-D19 targets from its own prior-builder records, whose dV uses this same V(s); until
+     then DR-D19's 2026-10-09 text governs those targets (state-space-kalman.md §6.5; DR-D19).
+   - The season-`S` filter restarts from `prior_in`, so, apart from this V(s) behind `prior_in`'s
+     dV and the model version's learned hyperparameters, `S−3` reaches no season-`S` state after
+     week 1's forecast through a season-boundary prior. The season's observations still carry it
+     through the three inputs that the first window canary holds fixed: this frozen V(s) (DR-C6),
+     the live context model `g′_S` (DR-D15) and the team ridge's preseason state behind week 1's
+     `δ^team` (evaluation-and-leakage.md §4.2 G13; state-space-kalman.md §6.5).
 4. **Backtests replay the production rule.** Each historical origin uses the artifact that the
    season-boundary rule would have produced for its season (two-path equivalence; P1-09). The
    oracle's four-slot warm-up freeze is a research harness and is not ported.
