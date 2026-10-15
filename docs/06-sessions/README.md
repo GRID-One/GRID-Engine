@@ -39,11 +39,10 @@ content:
 - round 2 cites PR #2's review of `7787921` as the earlier review;
 - the reviewed heads follow commit order (`7787921` → `de3b36c` → `8e07b04` → `3823478`).
 
-Two actions remain, and neither can be done from inside this repository:
+PRs #2 and #3 were closed unmerged on 2026-10-15 (owner action), so `docs/05-sessions/` cannot be
+recreated by merging them. One action remains, and it cannot be done from inside this repository:
 
-1. **Close PRs #2 and #3 unmerged** (owner action). Their content is here now. Merging either
-   would recreate `docs/05-sessions/`.
-2. **Fix the reviewer brief** that names `docs/05-sessions/review-P1-00-adversarial.md`. It lives
+1. **Fix the reviewer brief** that names `docs/05-sessions/review-P1-00-adversarial.md`. It lives
    in the review-workflow prompt, not in this repository. A brief that contradicts the authority
    index is a defect in the brief.
 
@@ -62,6 +61,7 @@ Date is the record's own `date:` front matter where it has one.
 | 2026-10-01 | P0-01 consolidation inventory: 8 inventory reports plus a completeness critic | — | [`2026-10-01-consolidation-inventory/`](2026-10-01-consolidation-inventory/README.md) | `claude/grid-engine-consolidation-e7kmh9` |
 | 2026-10-08 to 2026-10-09 | P0-01 owner decision interview (62 questions; DR-D9 and DR-D10 not asked) | — | [`2026-10-09-P0-01-decision-interview.md`](2026-10-09-P0-01-decision-interview.md) | `claude/grid-engine-consolidation-e7kmh9` |
 | 2026-10-14 | P0-01 owner decisions on DR-D14, DR-D17 and DR-D19 (11 questions; new DR-D32; ADR-013 proposed) | — | [`2026-10-14-P0-01.md`](2026-10-14-P0-01.md) | `claude/grid-engine-consolidation-e7kmh9` |
+| 2026-10-15 | P0-02: the owner's P0-01 merge review, DR-A10 ruling and ADR acceptance (3 questions) | — | [`2026-10-15-P0-02.md`](2026-10-15-P0-02.md) | `claude/grid-engine-consolidation-e7kmh9` |
 
 ¹ Round 3's front matter says 2026-08-20. The commit that wrote it, `c220a69`, is dated
 2026-08-29.
