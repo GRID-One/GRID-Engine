@@ -1,0 +1,54 @@
+# cargo-deny policy — SKELETON ONLY.
+#
+# P1-00 establishes a working gate, not a finished policy. Full policy (explicit license
+# whitelist rationale, banned crate categories, source allowlists) is P1-11, per the P1-00
+# work package non-goals.
+
+[advisories]
+# A known vulnerability fails the build. No exceptions list: add one only with a written
+# justification and Security/Release owner approval (alpha-spec.md 1.4, 14.2).
+yanked = "deny"
+# Explicit rather than relying on cargo-deny defaults, so a version bump of the tool cannot
+# silently relax the policy. Review finding "minor 7".
+#
+# That claim only holds if the tool itself is pinned -- the second review was right that an
+# unpinned cargo-deny could rename or re-default these keys underneath the comment. It is now
+# pinned in toolchains/dev-tools.lock and in both installers. Verified on the pinned version
+# (cargo-deny 0.20.2): `cargo deny check` emits no unknown-field or deprecation warning for
+# either key and reports "advisories ok, bans ok, licenses ok, sources ok" -- so both are read
+# and honoured, not silently ignored. Re-check this when the pin moves.
+unmaintained = "all"
+unsound = "all"
+ignore = []
+
+[licenses]
+# Permissive licenses only. The project itself is MIT OR Apache-2.0 (ADR-001 D4).
+# A copyleft dependency would complicate redistributing the Windows installer
+# (final-build-spec.md 3.2), so it requires Data/Licensing owner approval.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+]
+confidence-threshold = 0.8
+# BSD-2/BSD-3/ISC are not in the graph yet but are ubiquitous in the Rust ecosystem and will
+# appear as P1-01+ adds dependencies. Pre-allowing them is intentional; this suppresses the
+# cosmetic "unmatched license allowance" warning without relaxing any policy.
+unused-allowed-license = "allow"
+exceptions = []
+
+[bans]
+# Permissive in P1-00; tightened in P1-11 once the real dependency graph exists.
+multiple-versions = "warn"
+wildcards = "deny"
+deny = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

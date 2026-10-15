@@ -1,0 +1,340 @@
+# GRID-Alpha CI skeleton — P1-00; reference-oracle job added by P0-01.
+#
+# Two verification jobs, per the P1-00 acceptance criteria:
+#   linux-smoke           fast feedback  (just verify)
+#   windows-authoritative merge gate     (scripts/verify.ps1 -Scope Full)
+# plus `guards` (the repository guards with the PR body and base ref) and, since P0-01,
+#   reference-oracle      the Python reference oracle (reference/python/, ADR-012), Linux only,
+#                         OUTSIDE the frozen verify chain (see the job for why)
+#
+# scripts/verify.ps1 stays merge-authoritative pending DR-A3 (ADR-011 D8). The old rationale, "the
+# production target is Windows", no longer holds: the engine has no Windows application. Windows
+# authority is kept only because removing it would reduce coverage without its own ADR (ADR-007,
+# ADR-009). Until that follow-up ADR lands, the Linux job cannot substitute for it.
+#
+# No third-party actions beyond actions/checkout: this file is a security boundary, and every
+# action added here is supply-chain surface (alpha-spec.md 14.1, 14.2). Tools are installed
+# with `cargo install --locked`. That is slow without caching; caching is deferred to P1-11,
+# where Swatinem/rust-cache can be evaluated as a deliberate supply-chain decision.
+
+name: alpha-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # ADR-002: SQLite is a file, so CI needs no service container.
+  DATABASE_URL: sqlite:target/grid-dev.db
+
+jobs:
+  guards:
+    name: repository guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # diff-based guards need history
+
+      - name: Shell scripts parse (ADR-004 regression gate)
+        run: |
+          for f in scripts/*.sh; do bash -n "$f" || exit 1; done
+          echo "all shell scripts parse"
+
+      - name: Guard-script behaviour tests
+        run: ./tests/guards/run.sh
+
+      - name: Migrations are append-only
+        run: ./scripts/check-migrations.sh "origin/${{ github.base_ref || 'main' }}"
+
+      - name: No secrets in the diff
+        run: ./scripts/check-secrets.sh "origin/${{ github.base_ref || 'main' }}"
+
+      - name: Changes trace to a work package or ADR
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: ./scripts/check-traceability.sh "origin/${{ github.base_ref || 'main' }}"
+
+      - name: Authority documents have not forked
+        run: ./scripts/check-authority-sync.sh
+
+      - name: justfile, verify.sh and verify.ps1 agree (three-way parity)
+        run: ./scripts/check-verify-parity.sh
+
+      - name: Environment contract
+        run: ./scripts/check-env-contract.sh
+
+      # Round 3 min-1. The completion record's numeric claims, re-derived from the artifacts
+      # they describe. Deliberately NOT part of `just verify`: the manifest records verify's own
+      # output, so requiring a current manifest to run verify would never converge. See the
+      # header of the script.
+      #
+      # Since P0-01 the script selects the record itself -- the one evidence record this change
+      # set adds or modifies, else the latest in history -- instead of always checking P1-00's,
+      # so no WP is passed here. The selection rules are in the script header.
+      - name: Evidence claims are true against the artifacts
+        run: ./scripts/check-evidence-claims.sh "origin/${{ github.base_ref || 'main' }}"
+
+  linux-smoke:
+    name: linux-smoke
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth 0: `just verify` runs the diff-based guards (ADR-007), and at the default
+      # depth 1 origin/main does not exist, so check-migrations and check-traceability could
+      # not verify anything. They now fail under CI rather than skipping, so this is required.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Versions are pinned in toolchains/dev-tools.lock and duplicated here because
+      # `cargo install` has no lockfile of its own. --locked pins a tool's DEPENDENCIES;
+      # only --version pins the tool. Keep the two files in step.
+      - name: Install dev toolchain (pinned — toolchains/dev-tools.lock)
+        run: |
+          cargo install just            --locked --version 1.58.0
+          cargo install cargo-nextest   --locked --version 0.9.143
+          cargo install sqlx-cli        --locked --version 0.9.0 --no-default-features --features sqlite,rustls
+          cargo install cargo-deny      --locked --version 0.20.2
+          cargo install cargo-audit     --locked --version 0.22.2
+          cargo install typos-cli       --locked --version 1.49.0
+
+      - name: Record resolved tool versions
+        run: |
+          just --version; cargo nextest --version; sqlx --version
+          cargo deny --version; cargo audit --version; typos --version
+
+      # The property the whole committed-.sqlx design exists to provide (ADR-002) had never
+      # been exercised: every job sets DATABASE_URL at workflow scope and runs `just bootstrap`
+      # first, so query! always resolved against a live database. This reproduces a fresh
+      # clone. `-u` must precede assignments -- `env VAR=x -u OTHER` silently does not unset.
+      - name: Fresh clone compiles offline (regression gate for the .sqlx cache)
+        run: env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace
+
+      - name: Bootstrap (creates the local SQLite development database)
+        run: just bootstrap
+
+      - name: just verify
+        run: just verify
+
+  windows-authoritative:
+    name: windows-authoritative
+    runs-on: windows-latest
+    steps:
+      # fetch-depth 0 for the same reason as linux-smoke. This is the 8.11 merge gate, so its
+      # green must include the governance guards, not merely the compile-and-test recipes.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Versions are pinned in toolchains/dev-tools.lock and duplicated here because
+      # `cargo install` has no lockfile of its own. --locked pins a tool's DEPENDENCIES;
+      # only --version pins the tool. Keep the two files in step.
+      - name: Install dev toolchain (pinned — toolchains/dev-tools.lock)
+        shell: pwsh
+        run: |
+          cargo install just            --locked --version 1.58.0
+          cargo install cargo-nextest   --locked --version 0.9.143
+          cargo install sqlx-cli        --locked --version 0.9.0 --no-default-features --features sqlite,rustls
+          cargo install cargo-deny      --locked --version 0.20.2
+          cargo install cargo-audit     --locked --version 0.22.2
+          cargo install typos-cli       --locked --version 1.49.0
+
+      - name: Record resolved tool versions
+        shell: pwsh
+        run: |
+          just --version; cargo nextest --version; sqlx --version
+          cargo deny --version; cargo audit --version; typos --version
+
+      # ADR-009 fixed verify.ps1 to propagate exit codes. Run 32382377066 was green with every
+      # command passing, which proves nothing about the throw path: an inert Assert-Ok and a
+      # working one produce identical output when nothing fails. "A gate that passes vacuously
+      # is a gate nobody has tested" (ADR-002) applies to the fix as much as to the gate.
+      #
+      # This exercises the REAL script -- not a copy of the helper, which could drift.
+      #
+      # Round 3 M3 strengthened it twice. Before, the assertion was `$rc -ne 0`, which accepts
+      # ANY non-zero as proof: a renamed script, a pwsh startup error, a missing bash, a PATH
+      # mishap. Each would have read as "verify.ps1 correctly refused to pass". The same
+      # standard was already being applied to the empty-scan fixtures in tests/guards/run.sh --
+      # a case that would pass whether or not the guard exists proves nothing -- and it belonged
+      # here too. Both runs below now assert on the SPECIFIC Assert-Ok message, so only the
+      # intended failure path can satisfy them.
+      - name: verify.ps1 propagates failures (ADR-009 self-test)
+        shell: pwsh
+        run: |
+          $stub = Join-Path $env:RUNNER_TEMP 'stub-bin'
+          New-Item -ItemType Directory -Force -Path $stub | Out-Null
+          $env:PATH = "$stub;$env:PATH"
+
+          function Invoke-SelfTest([string]$Name, [string]$Expected) {
+              $log = Join-Path $env:RUNNER_TEMP "selftest-$Name.log"
+              pwsh -NoProfile -File ./scripts/verify.ps1 -Scope Full *> $log
+              $rc = $LASTEXITCODE
+              $out = (Get-Content -Raw $log)
+              Write-Host "--- $Name : verify.ps1 exited $rc ---"
+              if ($rc -eq 0) {
+                  throw "[$Name] verify.ps1 exited 0 with a FAILING command. ADR-009's fix is inert and the merge gate cannot fail."
+              }
+              # Non-zero is necessary but NOT sufficient: it must be non-zero BECAUSE Assert-Ok
+              # threw on the command we stubbed. Anything else -- a startup error, a missing
+              # interpreter, the script not being found -- also exits non-zero and would
+              # otherwise be indistinguishable from the fix working.
+              if ($out -notmatch [regex]::Escape($Expected)) {
+                  Write-Host $out
+                  throw "[$Name] verify.ps1 exited $rc but WITHOUT '$Expected'. Non-zero alone is not proof the exit came from Assert-Ok."
+              }
+              Write-Host "[$Name] verify.ps1 refused to pass, via Assert-Ok: '$Expected' (exit $rc)"
+          }
+
+          # Run 1 -- the FIRST Assert-Ok. cargo fmt is verify.ps1's first command, so it throws
+          # immediately and the step costs seconds.
+          Set-Content -Path (Join-Path $stub 'cargo.cmd') -Value 'exit /b 7'
+          Invoke-SelfTest 'first-assert' '[verify] FAILED: cargo fmt'
+
+          # Run 2 -- the LAST Assert-Ok. Run 1 alone only ever exercises #1 of 15 (16 until the
+          # FFI step left with ADR-011); the other fourteen rested entirely on the text analysis
+          # in tests/guards/run.sh. Here every earlier command SUCCEEDS (so all fourteen earlier
+          # Assert-Oks are executed and must fall through cleanly) and only the final one,
+          # typos, fails. That covers both directions:
+          # Assert-Ok must throw on failure AND must not throw on success.
+          Set-Content -Path (Join-Path $stub 'cargo.cmd') -Value 'exit /b 0'
+          Set-Content -Path (Join-Path $stub 'bash.cmd')  -Value 'exit /b 0'
+          Set-Content -Path (Join-Path $stub 'typos.cmd') -Value 'exit /b 3'
+          Invoke-SelfTest 'last-assert' '[verify] FAILED: typos'
+
+          Remove-Item -Recurse -Force $stub
+
+          # Set our own verdict. `pwsh -File` leaves $LASTEXITCODE non-zero -- deliberately,
+          # since we ASKED verify.ps1 to fail -- and GitHub's pwsh wrapper exits the step with
+          # whatever $LASTEXITCODE holds at the end. So the first version of this step asserted
+          # success and then reported failure: run 32403569748, where the log reads "verify.ps1
+          # correctly refused to pass" immediately above "##[error]Process completed with exit
+          # code 1".
+          #
+          # A step that deliberately runs a command it EXPECTS to fail must state its own
+          # result, never inherit one from the subprocess. Any `throw` above still fails the
+          # step, because it terminates before reaching this line.
+          exit 0
+
+      # Round 3 min-2. linux-smoke gained this gate as M5's regression test; the MERGE gate did
+      # not have it. The property is platform-sensitive -- path handling is exactly what blinded
+      # scan_files on this runner -- so the job that most needs it was the one without it.
+      #
+      # pwsh has no `env -u`, and the workflow sets DATABASE_URL at job scope, so the variable is
+      # removed from the process environment and restored afterwards. Removing it is the whole
+      # point: it reproduces a fresh clone, where query! must resolve against the committed
+      # .sqlx cache and nothing else.
+      - name: Fresh clone compiles offline (regression gate for the .sqlx cache)
+        shell: pwsh
+        run: |
+          $saved = $env:DATABASE_URL
+          Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
+          $env:SQLX_OFFLINE = 'true'
+          if ($env:DATABASE_URL) { throw "DATABASE_URL is still set; this would not reproduce a fresh clone." }
+          cargo check --workspace
+          $rc = $LASTEXITCODE
+          if ($saved) { $env:DATABASE_URL = $saved }
+          if ($rc -ne 0) {
+            throw "cargo check --workspace failed offline (exit $rc). A fresh clone cannot compile against the committed .sqlx cache."
+          }
+          Write-Host "offline compile OK against the committed .sqlx cache"
+          exit 0
+
+      - name: Bootstrap
+        shell: pwsh
+        run: just bootstrap
+
+      - name: Authoritative verification
+        shell: pwsh
+        run: .\scripts\verify.ps1 -Scope Full
+
+  # The Python reference oracle (ADR-012): the working cautious-nevermore engine, imported as an
+  # executable parity reference for the Rust port. This job proves the oracle still runs, its
+  # 105 imported files still match MANIFEST.tsv, and its suite (synthetic-recovery gates, golden
+  # master, determinism) still passes with the pinned dependency set.
+  #
+  # LINUX ONLY, by design (DR-A3, inventory critic G-6). Linux x86_64 is the oracle's platform
+  # of record: golden-master Layer C and test_cache.py::test_ttl_expired are recorded as failing
+  # on Windows, and a core.autocrlf checkout breaks every MANIFEST.tsv hash. It is therefore
+  # never wired into windows-authoritative, and it is OUTSIDE the frozen `just verify` /
+  # verify.ps1 chain (ADR-001 D5): adding it there would be a D5 amendment that, on Windows,
+  # would have to skip Layer C -- weaker than this job.
+  #
+  # No actions/setup-python: this file is a security boundary (header). The runner image's
+  # tool-cache CPython 3.11 builds a throwaway venv (the job fails if it is absent), and the
+  # install is constrained to the exact pins in reference/python/requirements.lock (verified
+  # there on CPython 3.11.15). If the runner's interpreter or BLAS kernel moves the golden
+  # master, that is an owner decision (critic X-7), never a reason to loosen a tolerance or skip
+  # a test. It happened once (KI-NEW-Z78: the imported Layer C golden held only under OpenBLAS
+  # AVX-512 kernels), and the owner ratified option 1 (DR-D31, 2026-10-08): every oracle run
+  # pins OPENBLAS_CORETYPE=Haswell, which any x86-64 AVX2 CPU runs, and correction-ledger entry
+  # L0 regenerated the golden once under CPython 3.11 + Haswell (reference/python/PARITY.md (b)),
+  # so this job is expected green on ordinary ubuntu-latest runners. Threads are pinned to 1: the
+  # determinism-sensitive tests pin themselves, and unpinned OpenMP/OpenBLAS oversubscription
+  # slowed one file more than 10x.
+  reference-oracle:
+    name: reference-oracle (Linux only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      # DR-D31 / ledger entry L0: the golden is frozen under this kernel; tools/pytest_platform_pin.py enforces it too.
+      OPENBLAS_CORETYPE: "Haswell"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    defaults:
+      run:
+        working-directory: reference/python
+    steps:
+      - uses: actions/checkout@v4
+
+      # The lock was verified on CPython 3.11, and the golden is frozen on 3.11 (PR #4: the
+      # runner's default python3 is 3.12, which moves Layer C; tools/pytest_platform_pin.py
+      # refuses any other interpreter). Use the runner image's
+      # tool-cache 3.11 directly -- no setup action, so no new supply-chain surface -- and fail
+      # loudly if the image stops shipping it rather than silently testing another interpreter.
+      - name: Select the tool-cache CPython 3.11 (the lock was verified on 3.11.15)
+        run: |
+          py="$(ls -d /opt/hostedtoolcache/Python/3.11.*/x64/bin/python3 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$py" ]; then
+            echo "::error::no CPython 3.11 in /opt/hostedtoolcache/Python; the oracle lock needs 3.11 (ADR-012)"
+            exit 1
+          fi
+          echo "ORACLE_PY=$py" >> "$GITHUB_ENV"
+          "$py" --version
+          "$py" -c 'import platform, sys; print(sys.executable, platform.machine())'
+          # Golden-master numerics depend on the OpenBLAS kernel (KI-NEW-Z78); the job pins
+          # OPENBLAS_CORETYPE=Haswell above, and the CPU is logged for the record.
+          grep -m1 'model name' /proc/cpuinfo || true
+
+      # Stdlib only, so it runs before anything is installed: provenance is checked against
+      # the committed bytes, not against an environment pip has already touched.
+      - name: Oracle files match MANIFEST.tsv
+        run: '"$ORACLE_PY" tools/verify_manifest.py'
+
+      - name: Install the pinned oracle dependencies into a venv
+        run: |
+          "$ORACLE_PY" -m venv "$RUNNER_TEMP/oracle-venv"
+          "$RUNNER_TEMP/oracle-venv/bin/python" -m pip install -r requirements.txt -c requirements.lock
+          "$RUNNER_TEMP/oracle-venv/bin/python" -m pip freeze
+          echo "$RUNNER_TEMP/oracle-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Oracle test suite (446 tests at import)
+        run: |
+          command -v python3
+          # threadpoolctl reports only libraries already loaded: import numpy, scipy and sklearn
+          # first, or threadpool_info() is empty. The kernel in use must be Haswell (DR-D31, L0);
+          # the pytest platform-pin plugin fails the session otherwise.
+          python3 -c 'import numpy, scipy.linalg, sklearn.ensemble, threadpoolctl; info = threadpoolctl.threadpool_info(); [print(i.get("internal_api"), i.get("version"), i.get("architecture"), i.get("filepath")) for i in info]; any(i.get("user_api") == "blas" for i in info) or print("::warning::threadpoolctl found no BLAS library")'
+          python3 -m pytest

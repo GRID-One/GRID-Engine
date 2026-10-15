@@ -1,0 +1,16 @@
+[
+  {"season": 2025, "week_effective": 1, "team": "NE",  "role": "HC", "old_name": "Jerod Mayo",      "new_name": "Mike Vrabel"},
+  {"season": 2025, "week_effective": 1, "team": "LAR", "role": "OC", "old_name": "Mike LaFleur",    "new_name": "Zac Robinson"},
+  {"season": 2025, "week_effective": 1, "team": "NYJ", "role": "HC", "old_name": "Robert Saleh",    "new_name": "Aaron Glenn"},
+  {"season": 2025, "week_effective": 1, "team": "CHI", "role": "OC", "old_name": "Luke Getsy",      "new_name": "Ben Johnson"},
+  {"season": 2025, "week_effective": 1, "team": "LV",  "role": "HC", "old_name": "Antonio Pierce",  "new_name": "Pete Carroll"},
+  {"season": 2025, "week_effective": 1, "team": "JAX", "role": "HC", "old_name": "Doug Pederson",   "new_name": "Liam Coen"},
+  {"season": 2025, "week_effective": 1, "team": "TEN", "role": "HC", "old_name": "Mike Vrabel",     "new_name": "Brian Callahan"},
+  {"season": 2025, "week_effective": 1, "team": "DAL", "role": "OC", "old_name": "Brian Schottenheimer","new_name": "Kellen Moore"},
+  {"season": 2025, "week_effective": 1, "team": "CAR", "role": "HC", "old_name": "Frank Reich",     "new_name": "Dave Canales"},
+  {"season": 2025, "week_effective": 1, "team": "WAS", "role": "DC", "old_name": "Jack Del Rio",    "new_name": "Joe Whitt Jr."},
+  {"season": 2025, "week_effective": 5, "team": "KC",  "role": "OC", "old_name": "Matt Nagy",       "new_name": "Joe Bleymaier"},
+  {"season": 2025, "week_effective": 8, "team": "CLE", "role": "HC", "old_name": "Kevin Stefanski",  "new_name": "Jim Schwartz"},
+  {"season": 2025, "week_effective": 10,"team": "ATL", "role": "OC", "old_name": "Zac Robinson",    "new_name": "Kirk Cousins"},
+  {"season": 2025, "week_effective": 12,"team": "HOU", "role": "DC", "old_name": "Matt Burke",      "new_name": "Duce Staley"}
+]

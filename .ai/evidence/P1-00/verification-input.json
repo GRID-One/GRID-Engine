@@ -1,0 +1,315 @@
+{
+  "verification": {
+    "commands": [
+      {
+        "command": "just verify",
+        "environment": "Linux. The session inherits a stale DATABASE_URL from the environment definition (a leftover /home/user/nfl-alpha path) which cannot be changed mid-session, so the canonical run overrides it with `env -u SQLX_OFFLINE -u DATABASE_URL`, letting the committed .env supply DATABASE_URL=sqlite:target/grid-dev.db and SQLX_OFFLINE=true. CI is unaffected: the workflow sets DATABASE_URL at env: scope and the value it sets is the correct one.",
+        "exit_status": 0,
+        "summary": "All 9 recipes passed. cargo nextest: 3 tests run, 3 passed, 0 skipped. Doctests: 12 crate targets, 0 doctests. Guard suite: 42 cases passed (was 38; four added for the ADR-009 coverage check with its mutation control, and for the diff-mode empty-scan guard). check-verify-parity: 16 steps.",
+        "canonical": true,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30"
+      },
+      {
+        "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "Fresh-clone offline compile (M5). Proven against a forced macro re-expansion, not a warm cache: `touch crates/persistence/src/lib.rs` then check -> exit 0. Proven to FAIL correctly: with .sqlx moved aside -> exit 101, 'SQLX_OFFLINE=true but there is no cached data for this query'. Now a CI step in linux-smoke."
+      },
+      {
+        "command": "./scripts/verify.sh <scope> (Full FULL full Changed changed smoke --help 'full ' and no argument)",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "C1 scope guard, verified across the argument space with cargo stubbed so the guard is observed in isolation. Accepted forms reach the first check (stub exit 99); smoke, --help and 'full ' are rejected with exit 2 and a named reason. Before the fix all nine invocations exited 0 having run nothing."
+      },
+      {
+        "command": "./tests/guards/run.sh",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "42 cases passed, 0 failed -- from 12 at the start of round 2. All six guards covered, plus the verify.sh scope guard and the verify.ps1 exit-code coverage check. Three cases carry an explicit CONTROL asserting the unmodified subject passes first, so a fail-closed case cannot pass for the wrong reason; the ADR-009 coverage check carries a mutation control proving it can fail at all."
+      },
+      {
+        "command": "cargo sqlx prepare --check --workspace -- --lib",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "Drift detection proven by mutation: editing the query -> exit 1 ('missing one or more queries'); restoring -> exit 0."
+      },
+      {
+        "command": "./scripts/check-migrations.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "Append-only satisfied, 1 migration, base origin/main. Behaviour-tested: add PASS, modify FAIL, delete FAIL, amend-an-unmerged-draft PASS, and no-base-ref FAILS under $CI."
+      },
+      {
+        "command": "./scripts/check-secrets.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "No secret patterns found (diff vs origin/main). The detector's own two files are no longer excluded from all scanning -- they get a dedicated always-on pass, with a line-level '# nosecret' exemption (minor 4). Verified that no current pattern self-matches either file."
+      },
+      {
+        "command": "./scripts/check-traceability.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "All 68 non-trivial paths traced individually, without PR_BODY -- which is how the build jobs run it now that they check out at fetch-depth 0."
+      },
+      {
+        "command": "./scripts/check-authority-sync.sh",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "The two alpha-spec.md copies are byte-identical (94813 bytes)."
+      },
+      {
+        "command": "./scripts/check-verify-parity.sh",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "justfile and scripts/verify.sh agree on 16 verification steps. Order-sensitive. Now also fails, with a diagnosis, when either extraction yields zero commands -- previously that died at exit 1 with an empty message (M8)."
+      },
+      {
+        "command": "./scripts/check-env-contract.sh",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "DATABASE_URL=sqlite:target/grid-dev.db (from .env, repo-relative); SQLX_OFFLINE=true (from .env), .sqlx/ present. The guard now resolves SQLX_OFFLINE the way the query! macro does rather than reporting only the shell's view (C2)."
+      },
+      {
+        "command": "cargo deny check",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "advisories ok, bans ok, licenses ok, sources ok on the pinned cargo-deny 0.20.2. No unknown-field or deprecation warning for the explicit unmaintained/unsound keys, so both are honoured rather than silently ignored -- answering the reviewer's question 7, which they could not run."
+      },
+      {
+        "command": ".\\\\scripts\\\\verify.ps1 -Scope Full",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "ESTABLISHED. alpha-ci run 32415391750, job 96575256117 (windows-latest), commit 6b7f3fd -- ONE run carrying both halves, which is the bar owner ruling D11 set and the reason this entry was withheld through three earlier greens.\n  step 'verify.ps1 propagates failures (ADR-009 self-test)'  SUCCESS\n  step 'Authoritative verification'                          SUCCESS\nThe self-test runs the real script with a stub cargo exiting 7. Its step body has exactly ONE path to exit 0 -- reached only after `if ($rc -eq 0) { throw }` does not fire -- so a green conclusion entails that verify.ps1 returned non-zero under a failing command. Stated precisely rather than loosely: the literal assertion line 'verify.ps1 correctly refused to pass with a failing command: exit 1' was READ in the log of the prior run 32403569748 against the same script; in run 32415391750 the same outcome is DEDUCED from the step's single exit-0 path plus its success conclusion. The distinction is recorded because 'I read it' and 'it follows from the code' are different warrants and this record has been burned before by treating them as one.\nThe authoritative verification's own log ends '[verify] All checks passed.' with, on Windows: guard suite '42 passed, 0 failed' including 'every native command in verify.ps1 is followed by Assert-Ok (16 guarded, 0 unguarded)' and its mutation control; check-secrets 'OK ... 6768 added line(s) from 80 changed file(s)' -- a non-zero corpus, where a fail-open reads 0; check-migrations and check-traceability returning real verdicts against origin/main rather than the SKIP that M1 exposed."
+      },
+      {
+        "command": "alpha-ci run 32332121205 (guards / linux-smoke / windows-authoritative)",
+        "exit_status": 0,
+        "run_against_commit": "6b7f3fd081078401327e77565c746334e61dbf30",
+        "summary": "All three jobs green on the previous head. Cited in place of run 32329932430 because that run predates de3b36c; this is the run that covers the commit the branch was actually sitting on when the second review was written."
+      }
+    ],
+    "note": "Populate from an actual run. A command that was not executed is never recorded as passing (alpha-spec.md 8.11)."
+  },
+  "review": {
+    "reviewer_type": "independent adversarial agent, fresh context (not the implementer); two rounds",
+    "reviewer": "Round 1: PR #2, branch claude/grid-alpha-adversarial-review-ikkjuk, reviewed 7787921. Round 2: PR #3, branch claude/adversarial-review-p1-00-l32emp, posted as a comment on PR #1 at 2026-08-20T12:25:40Z, reviewed de3b36c.",
+    "reviewed_commit": "round 2: de3b36c; round 3: 8e07b04",
+    "verdict": "round 2: CONDITIONAL (3 blockers, 9 major, 11 minor); round 3: CONDITIONAL (1 blocker, 3 major, 4 minor)",
+    "round_2_disposition": [
+      {
+        "id": "C1",
+        "summary": "verify.sh fails open on an unrecognized scope: `verify.sh Full` ran zero checks and exited 0",
+        "disposition": "FIXED. Reproduced first. Scope normalized and validated; ADR-008 records the third D5 amendment under owner ruling D7. No check body touched, parity still 16 steps. 9 regression cases."
+      },
+      {
+        "id": "C2",
+        "summary": "both CLAUDE.md files say SQLX_OFFLINE unset, contradicting ADR-002, and claim an enforcement check-env-contract.sh does not perform",
+        "disposition": "FIXED. Reproduced both halves empirically. Corrected in three files -- the review found two; check-env-contract.sh carried the same inversion in its own remediation advice. The guard now also resolves SQLX_OFFLINE the way the query! macro does. Answering question 2: it was missed, not deliberate, and nothing could have caught it -- a doc-vs-ADR cross-check is now a P1-01 follow-up."
+      },
+      {
+        "id": "C3",
+        "summary": "relicensing GPL-3.0 -> MIT/Apache is irreversible, out of scope, and rests only on implementer prose",
+        "disposition": "PARTLY FIXED, PARTLY OWNER. The review's supporting fact is wrong and is corrected in ADR-001 D4: both sides are the owner's own commits and the permissive one is LATER (f71a241 GPL 16:05:08, then 2565acc Cargo.toml MIT OR Apache-2.0 16:35:13). The irreversibility objection does not depend on that and stands. Per ruling D8, D4 stays and the owner records the licensing ruling on PR #1 -- the owner-authored artifact the review asked for. Answering question 1: the ruling existed only as an in-session exchange, which is exactly the gap."
+      },
+      {
+        "id": "M1",
+        "summary": "the merge-authoritative job's green excluded append-only and traceability -- both SKIPped at fetch-depth 1 and exited 0",
+        "disposition": "FIXED. fetch-depth: 0 on both build jobs, and both SKIP paths now exit 1 under $CI while still skipping in a local shallow checkout. Answering question 3: the interaction was not known when ADR-007 landed, and yes, non-zero under $CI is right -- an exit 0 with a stderr line is passing silently."
+      },
+      {
+        "id": "M2",
+        "summary": "six checkably-false statements in the completion record and manifest; the canonical run predated HEAD by three commits",
+        "disposition": "FIXED. Every number re-derived from a command run against this head rather than remembered: 9 recipes, 3 tests, 16 parity steps, 35 guard cases, public API {schema_meta_value, applied_schema_version}, three recipe lines changed across the branch. Answering question 6: yes -- regenerated at the real head, citing run 32332121205."
+      },
+      {
+        "id": "M3",
+        "summary": "the 8.12-mandated human_approvals.required field said no approvals are required",
+        "disposition": "FIXED. Both mandated fields populated; the prose distinction between rulings and sign-offs is kept."
+      },
+      {
+        "id": "M4",
+        "summary": "build tooling unpinned in a repository whose thesis is pinned reproducibility; deny.toml's own claim depends on it",
+        "disposition": "FIXED. toolchains/dev-tools.lock added; justfile and both CI jobs pin identically and echo resolved versions. Answering question 5: pin the tool and keep the claim. Answering question 7: cargo-deny 0.20.2 honours both keys with no warning."
+      },
+      {
+        "id": "M5",
+        "summary": "the offline-compile guarantee -- the reason .env is committed -- is never exercised by CI",
+        "disposition": "FIXED. Offline cargo check step added before bootstrap, proven both to pass on a forced re-expansion and to fail with .sqlx absent. Answering question 4: no reason not to."
+      },
+      {
+        "id": "M6",
+        "summary": "the work package's non-goals were rewritten by the implementer inside the PR they constrain",
+        "disposition": "OWNER (ruling D9). Branch unchanged, no P1-00b split; the owner records the amendment on PR #1. The technical necessity is real and the reviewer independently confirmed it, but necessity is not authorization."
+      },
+      {
+        "id": "M7",
+        "summary": "a semver-breaking dependency upgrade folded into a bootstrap PR, and 14.2's checklist items are missing from ADR-003",
+        "disposition": "PARTLY FIXED, PARTLY OWNER (ruling D9). The two missing 14.2 items are now in ADR-003 from evidence: a maintenance assessment (172 crates, zero rsa, footprint reduced, CLI now pinned) and a Windows compatibility check (verify.ps1 -Scope Full PASSED on windows-latest). The owner records the 14.2 deviation itself on PR #1."
+      },
+      {
+        "id": "M8",
+        "summary": "check-verify-parity and check-env-contract have no behaviour tests, and parity is load-bearing by design",
+        "disposition": "FIXED, and the reviewer's worry was understated. Two empty extractions would have compared equal; reproducing it showed the script did not even fail cleanly -- set -euo pipefail killed it at exit 1 with an empty message. Both extractions now tolerate no-match and an explicit guard diagnoses the real cause. Suite 12 -> 35 cases, all six guards covered."
+      },
+      {
+        "id": "M9",
+        "summary": "the permission profile drifted from the justfile it enumerates, missing test-doc and check-guards",
+        "disposition": "FIXED. Enumeration replaced with `just check-*` / `just test-*` prefixes, which cannot fall behind."
+      },
+      {
+        "id": "minors 3,4,5,7,8,9,10,11",
+        "summary": "secret-pattern width and the scanner's two-file blind spot; cargo audit's network dependency; redundant gitignore entry; bootstrap-repo data/; schema_meta's future; the template's Appendix-B deviation; CRLF workaround count",
+        "disposition": "ALL FIXED or RECORDED. Warn tier added; the blind spot replaced with an always-on pass plus a line-level '# nosecret' marker; ADR-002 records the accepted network dependency and pre-approves P1-02 retiring schema_meta by forward migration (answering question 8: scaffolding); ADR-004 counts the CRLF workarounds and sets a threshold; ADR-001 records the deliberate Appendix-B deviation."
+      },
+      {
+        "id": "minor 1",
+        "summary": "docs/05-sessions vs docs/06-sessions collision -- now on two open branches",
+        "disposition": "RECORDED, OWNER. This branch cannot fix files on branches #2 and #3. docs/06-sessions/README.md names the two actions required before either merges, including fixing the review brief that keeps sending reviewers to a path the authority index calls invalid."
+      },
+      {
+        "id": "minor 2",
+        "summary": ".cargo/config.toml [env] would be the idiomatic committed way to set SQLX_OFFLINE rather than a tracked .env",
+        "disposition": "NOT CHANGED, deliberately. The reviewer is right on idiom. This is the exact mechanism whose last change was a blocker (C2 of round 1), and swapping it in the same PR that corrects the documentation about it trades a real regression risk for a stylistic gain. Deferred to P1-11 with the reasoning recorded rather than churned now."
+      },
+      {
+        "id": "minor 6",
+        "summary": "just bootstrap re-installs tools CI already has, plus hyperfine and cargo-mutants no CI step uses",
+        "disposition": "PARTLY FIXED. hyperfine and cargo-mutants moved to a bootstrap-bench recipe, and bootstrap's sqlx-cli now takes CI's feature narrowing instead of pulling the MySQL and Postgres drivers. Caching itself stays P1-11."
+      },
+      {
+        "id": "SELF-1 (verify.ps1 fail-open)",
+        "summary": "scripts/verify.ps1, the 8.11 merge-authoritative command, discarded the exit code of all sixteen commands it ran; the Windows gate could not fail",
+        "disposition": "FIXED (ADR-009, fourth D5 amendment, owner ruling D10). Found by this implementer, not by either reviewer, and only because round 3's $CI fail-closed change and 23 new guard cases made the Windows job print a real verdict for the first time. Explicit Assert-Ok after each command; the one-line $PSNativeCommandUseErrorActionPreference alternative was rejected as a silent no-op on the pinned 7.2. Consequence accepted rather than minimised: all prior Windows greens are withdrawn as evidence of passing."
+      },
+      {
+        "id": "SELF-2 (check-secrets blind on Windows)",
+        "summary": "both git ls-files scan loops examined ZERO files on Windows; the guard printed 'OK no secret patterns found' over a committed ghp_ token and a credentialed connection string",
+        "disposition": "FIXED. Hidden by SELF-1: the guard suite detected it and verify.ps1 threw the verdict away. Three layers -- CR-stripping on paths and patterns; a fail-closed check so a scan that opened nothing can never report OK whatever the platform cause; and the file count in the verdict line so an empty corpus is visible. .gitattributes pins secret-patterns.txt to LF at the source. Three regression cases, one of them a deliberate control so the empty-scan case cannot pass for the wrong reason."
+      },
+      {
+        "id": "C3 / M6 / M7 owner records",
+        "summary": "the three deviations needing an owner-authored artifact rather than implementer prose",
+        "disposition": "CLOSED by the owner on PR #1 (2026-08-20): the permissive licence per 2565acc, the SQLx bootstrap moving P1-02 -> P1-00, and the sqlx 0.8 -> 0.9 bump as a consequence of that fold-in. This is the artifact both review rounds asked for and that no implementer-written ADR could substitute for."
+      },
+      {
+        "id": "SELF-3 (the ADR-009 fix was itself unproven)",
+        "summary": "run 32382377066 was green on the fixed verify.ps1, but with every command passing it exercised only the happy path -- an inert Assert-Ok would have produced the same output",
+        "disposition": "FIXED. A self-test step on windows-authoritative runs the REAL script with a failing cargo and requires a non-zero exit, covering the other direction. A guard-suite case asserts every native command is followed by an Assert-Ok (16/16) with its own mutation control, since check-verify-parity never reads verify.ps1 and could not catch a command added without one. Also closed the symmetrical empty-scan gap on check-secrets' diff-mode branch, and both verdicts now state what they measured rather than an unqualified OK."
+      },
+      {
+        "id": "SELF-4 (the self-test step inherited its exit code)",
+        "summary": "the ADR-009 self-test asserted success and then failed the job: after `pwsh -File` returned 1 -- deliberately, since the child was asked to fail -- $LASTEXITCODE stayed 1 and GitHub's pwsh wrapper exited the step with it",
+        "disposition": "FIXED, and worth separating from the finding it was testing. The SCRIPT behaved correctly; run 32403569748's log shows Assert-Ok firing, naming 'cargo fmt --all -- --check (exit 7)', and verify.ps1 exiting 1. Only the harness around it was wrong. The step now ends with an explicit `exit 0`; the throw path still fails the step because it terminates first. General rule recorded in ADR-009: a verification step that deliberately runs a command it expects to fail must state its own verdict, never inherit one from the subprocess."
+      },
+      {
+        "id": "D11 discharged",
+        "summary": "the Windows evidence withdrawn after ADR-009 is re-earned",
+        "disposition": "Run 32415391750 carries the ADR-009 self-test and the authoritative verification green in one job on one commit. verification_status returns to 'passed' -- earned across four rounds rather than asserted. The withdrawal stood for 8 commits and 5 CI runs; that is the cost of the standard and it was worth paying."
+      }
+    ],
+    "round_3_disposition": [
+      {
+        "id": "C1",
+        "summary": "check-secrets.sh fails open in diff mode over untracked files: scan_files is called and nothing checks `scanned`",
+        "disposition": "FIXED, and the finding UNDERSTATED it. Reproduced both arms: diff mode exits 0 with a ghp_ token in an untracked file, and full-tree mode does too, because the round-2 call-site guard runs several lines BEFORE the untracked scan and counts only the tracked pass. Fixing the diff arm alone would have been the third patch to an instance, so the guard moved INSIDE scan_files and the redundant call-site guard was removed. Accounts for deliberate skips (the detector's own files, binaries) so an all-binary untracked set still passes -- proved by a case. Mutation control: with the new guard disabled, three suite cases go red."
+      },
+      {
+        "id": "M1",
+        "summary": "the Assert-Ok coverage analysis misses six of seven command forms, including `& $tool`, `.\\tool.exe` and column 0",
+        "disposition": "FIXED. Reproduced the reviewer's table exactly (1 caught, 6 missed) -- after discarding my own first attempt, which inserted the command where it displaced cargo fmt's Assert-Ok and so read all-CAUGHT for the wrong reason. Rule inverted: a line is a command UNLESS it is a recognised construct. Keyword boundary is ([^[:alnum:]_-]|$), not \\b, because in awk \\b is a backspace (gawk spells it \\y; this runner is mawk 1.3.4) -- writing \\b silently produced three false positives. Controls added for all seven forms and for twelve constructs; with the old analysis restored, six form cases go red."
+      },
+      {
+        "id": "M2",
+        "summary": "verify.ps1's command list is parity-checked against nothing, while being the merge-authoritative gate",
+        "disposition": "FIXED. Verified 'latent, not drifted' independently before acting: 16 commands, same order, all three. check-verify-parity.sh now reads all three, comparing pairwise so the failure names which one drifted. The `bash ` prefix verify.ps1 needs on Windows is normalised at line start only, with a case proving that does not make the ps1 side always compare equal. Proved by dropping cargo audit from verify.ps1 alone: parity fails, Assert-Ok coverage stays clean at 15/0 -- which is exactly why nothing else could have caught it. No D5 amendment: the parity guard is not one of the three frozen implementations."
+      },
+      {
+        "id": "M3",
+        "summary": "the ADR-009 self-test accepts any non-zero exit as proof, and exercises Assert-Ok #1 of 16",
+        "disposition": "FIXED, both parts. Each run now asserts on the SPECIFIC Assert-Ok message, so a renamed script, a pwsh startup error or a missing bash can no longer read as 'correctly refused to pass'. A second run stubs cargo and bash to SUCCEED and typos to fail: it exercises the LAST Assert-Ok and proves the other fifteen fall through cleanly on success, covering both directions. Cannot be executed here -- there is no PowerShell on this runner -- so it is proven by CI on windows-latest, not locally. What was checked locally: the two expected substrings match the real Assert-Ok labels and the throw format string."
+      },
+      {
+        "id": "minor-1",
+        "summary": "the manifest records 'All 65 non-trivial paths traced'; the true count is 66 -- and it sat outside the claim-verification pass",
+        "disposition": "FIXED, and the mechanism more than the number. The pass was a routine run from memory over nine facts, which is why a tenth escaped it for three rounds. It is now scripts/check-evidence-claims.sh, which re-derives seven claim families from the artifacts and refuses to pass if it compared fewer than seven. Run in CI's guards job. Deliberately NOT in `just verify`: the manifest records verify's own output, so requiring a current manifest before verify can pass would never converge."
+      },
+      {
+        "id": "minor-2",
+        "summary": "windows-authoritative has no offline-compile step though linux-smoke does",
+        "disposition": "FIXED. Added before Bootstrap on the merge gate. pwsh has no `env -u`, so DATABASE_URL is removed from the process environment and restored after, with an assertion that it is actually gone -- removing it is the whole point, since it reproduces a fresh clone resolving query! against the committed .sqlx cache."
+      },
+      {
+        "id": "minor-3",
+        "summary": "verify.sh's scope guard must stay at column 0 or check-verify-parity breaks; documented only in a comment",
+        "disposition": "FIXED. Now an assertion in the guard suite, with a control proving an indented arm is actually detected. A comment is a note to a careful reader; this survives a routine re-indent."
+      },
+      {
+        "id": "minor-4",
+        "summary": "the manifest has never covered the head in three rounds -- is the framing hiding a fixable ordering problem?",
+        "disposition": "ANSWERED, NOT FIXED, deliberately. See the reply on PR #1. Generating the manifest in CI against the pushed head would make CI the author of its own evidence, and the lag is one commit by construction, not a workflow defect. What WAS fixable is that the lag went unmeasured: check-evidence-claims.sh now verifies the content claims independently of which commit they were written at, and explicitly does not assert manifest.commit == HEAD, because that would encode a falsehood as a rule."
+      }
+    ]
+  },
+  "human_approvals": {
+    "required": [
+      "Architecture owner: formal sign-off on the diff (authority order, crate boundaries) -- the P1-02 -> P1-00 rework itself is now recorded by the owner on PR #1",
+      "Security/Release owner: .claude/settings.json permission profile",
+      "Merge reviewer: the CI skeleton and the final diff"
+    ],
+    "obtained": [
+      "D1 branch naming wp/P1-00-repo-bootstrap",
+      "D2 remediate the skeleton gaps inside P1-00",
+      "D3 keep the numbered Obsidian vault over the flat 8.7 tree",
+      "D4 MIT OR Apache-2.0 is the correct licence (Data/Licensing owner authority)",
+      "D5 verification recipes are frozen; rework the spec instead",
+      "D6 environment defects are fixed in the environment, not in-repo",
+      "D7 add the scope guard to scripts/verify.sh (ADR-008, third D5 amendment)",
+      "D8 D4 stays on this branch; the owner records the licensing ruling on PR #1",
+      "D9 the owner records the M6/M7 scope and 14.2 deviations on PR #1; no P1-00b split",
+      "ADR-003 sqlx 0.8 -> 0.9 to remediate RUSTSEC-2023-0071",
+      "ADR-004 line-ending policy and LF conversion of shell scripts",
+      "ADR-005 amend the frozen check-sqlx recipe with --workspace",
+      "ADR-007 verify covers the repository guards and doctests",
+      "D10 fix verify.ps1 with explicit $LASTEXITCODE checks (ADR-009, fourth D5 amendment)",
+      "D11 withdraw the Windows evidence and re-earn it from a run of the fixed script",
+      "Owner record on PR #1: permissive licence (2565acc), SQLx bootstrap P1-02 -> P1-00, sqlx 0.8 -> 0.9 as a consequence"
+    ],
+    "note": "`required` and `obtained` are the 8.12-mandated fields and are now populated; an earlier revision left both empty while the prose beneath named four outstanding sign-offs, so an automated consumer -- or a reviewer skimming the mandated field name -- read 'no approvals required' (second review, M3). They record two DIFFERENT things and the distinction is load-bearing. `obtained` holds DECISION RULINGS: answers the owner gave in-session to explicit questions naming the alternatives, authorizing the decisions the ADRs record. `required` holds ROLE-SCOPED SIGN-OFFS: reviews of the resulting artifacts, of which NONE has been performed. The owner holds every role (docs/00-meta/authority-index.md), so both statements are true at once -- but a ruling on a question is not a review of a diff. UPDATE: the owner posted the C3/M6/M7 records directly on PR #1, so those three no longer sit in `required` -- they are closed by an owner-authored artifact rather than by implementer prose, which was the whole objection.",
+    "decision_rulings_obtained": "See `obtained` above.",
+    "role_scoped_signoffs_required": "See `required` above.",
+    "role_scoped_signoffs_obtained": []
+  },
+  "known_limitations": [
+    "Role-scoped sign-offs: NONE obtained. Decision rulings D1-D9 were given in-session; a ruling on a question is not a review of a diff. Architecture, Security/Release, Data/Licensing and Merge reviewer all remain outstanding, and the owner has agreed to record the C3 licensing ruling and the M6/M7 scope and 14.2 deviations on PR #1 directly.",
+    "scripts/verify.ps1 -Scope Full is ESTABLISHED as passing under a gate proven capable of failing -- run 32415391750, both the ADR-009 self-test and the authoritative verification green in the same job on 6b7f3fd. Withheld through three earlier greens because the two halves sat in different runs of different commits; combining them would have repeated M2. CI remains authoritative on the true final commit (12.8), which is the commit carrying this manifest.",
+    "Three fail-opens have now been found by the implementer after round 2, all invisible to CI's own conclusion: the Windows gate discarded exit codes, the secret scanner examined zero files on Windows, and the fix for the first was itself unproven. All three are fixed and regression-tested.",
+    "Two fail-opens were found by the implementer in this round, both invisible to CI's own conclusion and to two adversarial reviews: the Windows gate discarded exit codes, and the secret scanner examined zero files on Windows. Both are fixed and regression-tested. The general lesson is recorded in ADR-001 D5: freezing a check list is not the same as trusting it.",
+    "RESOLVED in round 3 (M2). scripts/check-verify-parity.sh now reads all THREE frozen implementations, comparing pairwise so a failure names which one drifted. It was not drifted when found -- 16 commands, same order, all three -- so this closed a latent gap, not a live one. What it still does NOT check is whether each command's exit code is handled: that is why ADR-009's defect was invisible to it, and why the Assert-Ok coverage analysis in tests/guards/run.sh is a separate control. No longer a P1-11 follow-up.",
+    "An evidence manifest structurally cannot record the SHA of its own commit. This one attests to the code head; the commit carrying it follows and is not self-covered.",
+    "Review finding M10 from round 1 (Flutter/Dart analysis) and app/pubspec.lock are NOT done. pubspec.lock is BLOCKED, not deferred: Flutter is not installed in this environment and a hand-written lockfile would be a fabrication.",
+    "`just verify` is not offline: cargo audit fetches the RustSec advisory database over the network on every run. Accepted and recorded in ADR-002; the compile-and-test path is genuinely offline and now has a CI regression gate proving it.",
+    "-Scope Changed remains an alias for Full in both verify scripts even though 8.11 cites it as canonical. Deferred to P1-11; the deferral is safer now that the argument reaching the alias is validated (ADR-008).",
+    "CI caching is deferred to P1-11 but is more than cosmetic: an uncached ~32-minute Windows job that any push cancels is a merge gate that is hard to observe passing. It was cancelled 9 times in 10 runs before the branch was frozen deliberately. Moving hyperfine and cargo-mutants out of bootstrap reduces but does not remove this.",
+    "The justfile, scripts/verify.sh and scripts/verify.ps1 remain THREE duplicate implementations; unification is barred by D5, so drift is guarded three-way by check-verify-parity.sh since round 3 -- which has behaviour tests, including for a step missing from verify.ps1 alone and for the case where its own parser yields nothing.",
+    "Cargo.toml, ai-toolchain.lock, rust-toolchain.toml and justfile retain CRLF. ADR-004 now counts the workarounds this costs and sets a threshold for escalating normalization out of P1-11.",
+    "No fixtures are delivered. alpha-spec.md 9.5 lists them under P1-00; deferred to P1-03/P1-04 and recorded in ADR-001.",
+    "The grid-alpha-opus5 environment still presets a stale DATABASE_URL (a /home/user/nfl-alpha path) that cannot be changed mid-session, so local commands override it explicitly. CI is unaffected -- the workflow sets DATABASE_URL at env: scope and the value it sets is correct.",
+    "scripts/check-evidence-claims.sh re-derives NUMBERS from artifacts. It cannot tell that a SENTENCE has gone stale: two known limitations and two narrative lines were falsified by round 3's own fixes while every numeric claim still matched, and all four were found by reading rather than by the tool. Claim 8 covers the one prose sentence carrying a machine-comparable value (the Final commit). Prose staleness otherwise remains a manual sweep -- stated rather than implied, because claiming the record is self-verifying would be the fail-open shape ADR-010 is about."
+  ],
+  "follow_up": [
+    "P1-11: extend check-verify-parity.sh to cover scripts/verify.ps1, which no guard currently reads.",
+    "P1-01: a guard asserting every native command in verify.ps1 is followed by an exit-code assertion, so ADR-009's fix cannot silently regress when a command is added.",
+    "P1-01 (blocking): write .claude/agents/ definitions before more agent-driven packages run. ADR-006 defers them with a good argument but concedes the gap; several of both reviews' findings are process findings, which is what that gap looks like in practice.",
+    "P1-01: add a guard cross-checking the instruction files (CLAUDE.md, docs/CLAUDE.md, authority-index.md) against the ADRs they cite. Blocker C2 was a doc-vs-ADR contradiction no existing guard could catch, in a repository whose whole premise is that those files are trustworthy.",
+    "P1-02: domain schema on 0002+. Retiring schema_meta by forward migration is pre-approved in ADR-002.",
+    "P1-11: implement -Scope Changed in both verify scripts.",
+    "P1-11: move SQLX_OFFLINE from the committed .env to .cargo/config.toml [env] (review minor 2).",
+    "P1-11: repo-wide line-ending normalization as a standalone whitespace-only commit; ADR-004 sets the threshold at which this stops being deferrable.",
+    "P1-11: CI dependency caching (evaluate Swatinem/rust-cache) as a deliberate supply-chain decision -- this is a merge-gate observability problem, not a cosmetic one.",
+    "P1-11: finalize deny.toml policy; add toolchains/native-dependencies.lock.",
+    "Governance: reconcile docs/05-sessions/ vs docs/06-sessions/ before PRs #2 and #3 merge, and fix the reviewer brief that sends reviewers to the invalid path.",
+    "Human: record the C3 licensing ruling and the M6/M7 deviations on PR #1 (rulings D8, D9).",
+    "Human: configure branch protection on main (an explicit P1-00 non-goal).",
+    "Human: correct the grid-alpha-opus5 environment per ADR-002's contract."
+  ]
+}
