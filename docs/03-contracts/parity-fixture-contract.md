@@ -32,9 +32,9 @@ owner decisions. A part the table marks open is not settled:
 | Class D over a seed ensemble | DR-D26 (overridden 2026-10-09: a declared low quantile is gated as well as the ensemble median). Open: the seed set, quantile and margins |
 | Synthetic world | DR-B4 (ratified 2026-10-09). Open: the recalibrated values and the stat-vector world's parameters |
 | Typed-failure divergences | DR-B6 (ratified in part 2026-10-08). Open: the ill-conditioning threshold |
-| Synthetic-only fixtures | DR-A11 (ratified 2026-10-08; to be named again in the P0-01 merge comment) |
+| Synthetic-only fixtures | DR-A11 (ratified 2026-10-08; named again in the P0-01 merge review, 2026-10-15, PR #4 comment 6185953773) |
 | Fixture format | DR-D29 (ratified 2026-10-08) |
-| `reference-oracle` as a required check | DR-D30 (overridden 2026-10-09: required for every PR; the owner applies it in branch protection after P0-01 merges) |
+| `reference-oracle` as a required check | DR-D30 (overridden 2026-10-09: required for every PR; P0-01 has merged, and the owner now applies it in branch protection) |
 | Oracle golden platform (interpreter and OpenBLAS kernel) | DR-D31 (ratified 2026-10-08, option 1; ledger entry L0) |
 
 See [decision-register.md](../00-meta/decision-register.md) for each entry. An open part is not
@@ -395,14 +395,14 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
 |---|---|---|
 | `guards` (Linux) | A fixture guard, for example `scripts/check-parity-fixtures.sh`, using `sha256sum` as `check-evidence-claims.sh` already does. It checks: every listed file exists and its sha256 matches; no unlisted file is present; required manifest keys exist; `provenance.data == "synthetic"`; `INDEX.tsv` agrees; the fixture tree is marked `-text` | not yet added. DR-D29 (ratified 2026-10-08) puts hash verification in this shell guard. A new step in `.github/workflows/alpha-ci.yml` touches the workflow security boundary (Security/Release owner) |
 | `linux-smoke`, `windows-authoritative` | The Rust parity tests run inside the existing Rust test step. They read the committed fixtures, apply the §6 classes, and need no Python | no recipe change; tests are added under the existing `test-rust` step |
-| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner image's tool-cache CPython 3.11 and fails if that is absent, with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval. The job pins `OPENBLAS_CORETYPE=Haswell`, and the golden master was regenerated under CPython 3.11 + Haswell by ledger entry L0, so the suite is expected green on GitHub's AMD runners (KI-NEW-Z78; DR-D31, ratified 2026-10-08) | suite run: in place since P0-01; fixture regeneration: DR-B2 (ratified 2026-10-08), added with the exporter by the first port WP (§9). A required status check for every PR once the owner applies it after P0-01 merges (DR-D30) |
+| `reference-oracle` (**Linux only**) | Runs the oracle suite (`python -m pytest` from `reference/python`: 446 tests) with threads pinned to 1, then **regenerates every fixture into a temporary directory and byte-compares** it with the committed tree. It uses the runner image's tool-cache CPython 3.11 and fails if that is absent, with `pip install -r requirements.txt -c requirements.lock`. `actions/setup-python` would need Security/Release owner approval. The job pins `OPENBLAS_CORETYPE=Haswell`, and the golden master was regenerated under CPython 3.11 + Haswell by ledger entry L0, so the suite is expected green on GitHub's AMD runners (KI-NEW-Z78; DR-D31, ratified 2026-10-08) | suite run: in place since P0-01; fixture regeneration: DR-B2 (ratified 2026-10-08), added with the exporter by the first port WP (§9). A required status check for every PR once the owner applies it, now that P0-01 has merged (DR-D30) |
 
 **Rules for the `reference-oracle` job:**
 
 - It is never wired into `verify.ps1` or `windows-authoritative`. Golden Layer C and the cache
   TTL test fail on Windows (critic.md G-6).
 - It becomes a required status check for every PR to `main` once the owner applies that setting
-  in GitHub branch protection after P0-01 (PR #4) merges (DR-D30). No workflow edit is needed.
+  in GitHub branch protection, now that P0-01 (PR #4) has merged (DR-D30). No workflow edit is needed.
   Being a required check does not wire it into the frozen verify chain.
 - If the runner's Python or BLAS kernel cannot reproduce the fixtures under the platform pin, escalate
   to the owner (KI-NEW-Z78; DR-D31). Never loosen a tolerance or regenerate to absorb the drift.

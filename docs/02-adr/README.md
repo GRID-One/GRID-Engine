@@ -3,9 +3,10 @@
 **Rank.** Accepted ADRs are **authority level 2** (`engine-spec.md` §1.5, DR-A2): above contracts, model
 specs, provider manifests and work packages, and **below** `engine-spec.md`.
 
-- **Pending ratification.** That order is adopted by P0-01 (ADR-011) subject to owner ratification at
-  merge. Until then, the superseded order of `alpha-spec.md` §1.5 applies, which puts ADRs at level 3,
-  below both superseded specs.
+- **In force.** That order, adopted by P0-01 (ADR-011) and ratified on 2026-10-08, has been in force
+  since the owner's merge review named it again on 2026-10-15 (PR #4 comment 6185953773). Before
+  then, the superseded order of `alpha-spec.md` §1.5 applied, which put ADRs at level 3, below both
+  superseded specs.
 - **Limits.** An ADR can resolve an ambiguity or record a deviation ratified by the owner. It can never
   override the specification. A decision that replaces the specification itself (ADR-011) gets its force
   from the owner's direct ruling, and the ADR is the record of that ruling (the ADR-001 D3 precedent).
@@ -23,14 +24,16 @@ Start from `docs/99-templates/template-adr.md`.
 The `status` values are those of the template: `Proposed`, `Accepted`, `Superseded` and `Rejected`.
 
 - **Who accepts.** Only the deciding owner role moves an ADR from Proposed to Accepted or Rejected. An
-  implementing agent writes ADRs as Proposed and never marks one Accepted.
-- **ADR-011 and ADR-012** are accepted, or overridden, in the owner's merge review of the P0-01 pull
-  request, together with the DR-A decisions they carry (`docs/00-meta/decision-register.md`, "How to
-  ratify or override").
+  implementing agent writes ADRs as Proposed and never marks one Accepted on its own judgment. The
+  exception is an owner-directed transcription: the agent transcribed the owner's acceptance of
+  ADR-011, ADR-012 and ADR-013 at the owner's direction (answer 2 of
+  `docs/06-sessions/2026-10-15-P0-02.md`).
+- **ADR-011 and ADR-012** were accepted on 2026-10-15 in the owner's merge review of the P0-01 pull
+  request (PR #4 comment 6185953773), together with the DR-A decisions they carry
+  (`docs/00-meta/decision-register.md`, "How to ratify or override").
 - **ADR-013** records the Statistical owner's 2026-10-14 reversal in part of DR-D19 (register rule 6).
-  The Statistical owner accepts or rejects it, for example in the P0-01 merge comment. Until it is
-  accepted, DR-D19's 2026-10-09 text governs. If it is rejected, the feeder-equivalency target goes
-  to a new decision request to the Statistical owner before P1-12 implements the feeder equivalency.
+  The Statistical owner accepted it on 2026-10-15 in the same comment, and its text governs the parts
+  of DR-D19 it reverses.
 
 ## Partial supersession
 
@@ -51,19 +54,19 @@ Editing `superseded-by` is the only change permitted to an Accepted ADR. The bod
 
 | ADR | Title | Status | Date | Superseded in part by |
 |-----|-------|--------|------|-----------------------|
-| [001](001-repo-bootstrap-decisions.md) | Repository bootstrap decisions | Accepted | 2026-08-20 | 011 (proposed) |
+| [001](001-repo-bootstrap-decisions.md) | Repository bootstrap decisions | Accepted | 2026-08-20 | 011 |
 | [002](002-sqlx-offline-cache.md) | SQLx offline cache and database provisioning | Accepted | 2026-08-20 | — |
 | [003](003-sqlx-0-9-upgrade.md) | Upgrade sqlx 0.8 to 0.9 | Accepted | 2026-08-20 | — |
 | [004](004-line-ending-policy.md) | Line-ending policy | Accepted | 2026-08-20 | — |
 | [005](005-check-sqlx-workspace-flag.md) | Amend check-sqlx with --workspace | Accepted | 2026-08-20 | — |
-| [006](006-deferred-deliverables.md) | Deferred 8.7/9.2 deliverables | Accepted | 2026-08-20 | 011 (proposed) |
-| [007](007-verify-covers-guards-and-doctests.md) | verify covers guards and doctests | Accepted | 2026-08-20 | 011 (proposed) |
+| [006](006-deferred-deliverables.md) | Deferred 8.7/9.2 deliverables | Accepted | 2026-08-20 | 011 |
+| [007](007-verify-covers-guards-and-doctests.md) | verify covers guards and doctests | Accepted | 2026-08-20 | 011 |
 | [008](008-verify-scope-guard.md) | Validate the scope argument in verify.sh | Accepted | 2026-08-20 | — |
-| [009](009-verify-ps1-exit-codes.md) | verify.ps1 must propagate native exit codes | Accepted | 2026-08-20 | 011 (proposed) |
+| [009](009-verify-ps1-exit-codes.md) | verify.ps1 must propagate native exit codes | Accepted | 2026-08-20 | 011 |
 | [010](010-guard-the-shape-not-the-instance.md) | Fix the shape, not the instance: where a fail-closed guard belongs | Accepted | 2026-08-29 | — |
-| [011](011-engine-only-pivot.md) | Engine-only pivot | **Proposed** | 2026-10-07 | — |
-| [012](012-python-reference-oracle.md) | Python reference oracle | **Proposed** | 2026-10-07 | — |
-| [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | **Proposed** | 2026-10-14 | — |
+| [011](011-engine-only-pivot.md) | Engine-only pivot | Accepted | 2026-10-07 | — |
+| [012](012-python-reference-oracle.md) | Python reference oracle | Accepted | 2026-10-07 | — |
+| [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | Accepted | 2026-10-14 | — |
 
 **What ADR-011 supersedes in part** (its "Supersession" section is authoritative):
 

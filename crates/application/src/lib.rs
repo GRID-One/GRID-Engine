@@ -5,6 +5,6 @@
 //! services" are the application services behind that library API. This repository has no user
 //! interface (ADR-011); the headless CLI is a thin adapter over this API.
 //!
-//! P1-01 renames this crate to `pipeline` and adds the `grid-cli` binary over it (DR-A8, pending
-//! owner ratification). Crate boundaries are defined in `docs/CLAUDE.md`; see
+//! P1-01 renames this crate to `pipeline` and adds the `grid-cli` binary over it (DR-A8, ratified
+//! by the owner). Crate boundaries are defined in `docs/CLAUDE.md`; see
 //! `docs/02-adr/001-repo-bootstrap-decisions.md` and `docs/02-adr/011-engine-only-pivot.md`.

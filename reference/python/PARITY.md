@@ -6,16 +6,18 @@ defects, and where Rust deliberately differs. Read `README.md` first.
 Status words used here:
 
 - **DR-A** decisions were ratified on 2026-10-08 in the owner's decision interview
-  (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and are to be named again in the P0-01
-  merge comment. Two exceptions: DR-A3 is ratified as a direction only, so Windows stays
-  merge-authoritative until its follow-up ADR, and the DR-A10 licence ruling is still owed (the
-  owner posts it on PR #4).
+  (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and were named again in the P0-01
+  merge review on 2026-10-15 (PR #4 comment 6185953773). Two exceptions: DR-A3 is ratified as a
+  direction only, so Windows stays merge-authoritative until its follow-up ADR, and DR-A10 was ruled
+  on 2026-10-15 (option 1, `MIT OR Apache-2.0`: PR #4 comment 6185953773, as edited by the owner
+  on 2026-10-15).
 - **DR-B**, **DR-C** and **DR-D** decisions were settled in the same interview (2026-10-08 and
   2026-10-09), in full or in part; what an entry leaves open stays open. The exceptions: DR-D2,
   DR-D3 and DR-D13 stay open under their interim rules, DR-D9 and DR-D10 were not asked, and
   DR-D31 was ratified on 2026-10-08 (option 1). On 2026-10-14 the owner settled further parts of
-  DR-D14 and DR-D17, decided the new DR-D32, and chose a reversal in part of DR-D19 that binds once
-  the owner accepts ADR-013 (Proposed) (`docs/06-sessions/2026-10-14-P0-01.md`).
+  DR-D14 and DR-D17, decided the new DR-D32, and chose a reversal in part of DR-D19, recorded in
+  ADR-013, which the owner accepted on 2026-10-15 (`docs/06-sessions/2026-10-14-P0-01.md`; PR #4
+  comment 6185953773).
   `docs/00-meta/decision-register.md` is authoritative for status.
 - One correction-ledger entry has been applied: **L0**, the golden master's platform pin
   (KI-NEW-Z78), which implements DR-D31. It changes no engine code, test or tolerance.

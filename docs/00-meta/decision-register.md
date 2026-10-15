@@ -26,14 +26,18 @@ status, and the work packages it blocks.
   - Section D holds the decisions raised after the critic's report, by the engine-spec drafts,
     `docs/03-contracts/` and `docs/05-model-specs/`.
   - Each A-entry's **Implementation check** records what the P0-01 worktree implemented on 2026-10-07,
-    and what must still land before the merge.
-  - **Status as of 2026-10-14.** The owner decision interview
+    and what then still had to land before the merge.
+  - **Status as of 2026-10-15.** The owner decision interview
     (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) settled most entries in full or in part.
     Each entry's **Status** line names what is settled, and its **Still open** clause names the rest.
     Not asked: DR-D9 and DR-D10, which need real-data measurements first. On 2026-10-14 the owner
     settled further parts of DR-D14 and DR-D17, decided the new DR-D32, and chose a reversal in part
-    of DR-D19 that binds once the owner accepts ADR-013 (Proposed)
-    (`docs/06-sessions/2026-10-14-P0-01.md`).
+    of DR-D19, recorded through ADR-013 (`docs/06-sessions/2026-10-14-P0-01.md`). On 2026-10-15,
+    PR #4 comment 6185953773 held the owner's DR-A10 ruling (its licence sentence corrected by the
+    owner's edit at 12:57Z) and the P0-01 merge comment, which named DR-A1, DR-A2, DR-A4 to DR-A9,
+    DR-A11 and DR-A12 again, restated DR-A3, confirmed both decision records as transcribed here, and
+    accepted ADR-011, ADR-012 and ADR-013. P0-01 then merged (`b819ae0`;
+    `docs/06-sessions/2026-10-15-P0-02.md`).
 - **ID scheme.**
   - Critic ID `A-n` maps to `DR-An`; likewise `B-n` → `DR-Bn` and `C-n` → `DR-Cn`. These IDs never change
     meaning and are never reused.
@@ -73,17 +77,20 @@ status, and the work packages it blocks.
      that record; answer 11 covers answers 9 and 10, which came after answer 8). The owner answered
      through the question tool or, while it was unavailable, in chat, and the implementing agent
      transcribed the answers. Answer 10's option, as offered, also named how it is recorded: through
-     a Proposed ADR citing DR-D19 (ADR-013; rule 6), which binds only once the owner accepts it. Each
-     record quotes every answer verbatim. The owner confirms both records in the P0-01 merge comment.
-     DR-D31 set the precedent.
+     a Proposed ADR citing DR-D19 (ADR-013; rule 6), which binds only once the owner accepts it. The
+     owner accepted it on 2026-10-15. Each record quotes every answer verbatim. The owner confirmed both
+     records in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773). The statuses dated
+     2026-10-15 that cite `docs/06-sessions/2026-10-15-P0-02.md` were set at the owner's direction
+     (answer 2 of that record), transcribing PR #4 comment 6185953773 as the owner edited it. DR-D31 set
+     the precedent.
 2. **To ratify or override,** the owner edits the entry's **Status** line and its row in the summary
    table. The edit records:
    - the date;
    - the role acting;
    - a link to the record: a PR review or comment, or an ADR.
 3. **Adopted A-decisions** were ratified at the owner decision interview (2026-10-08; step 1), and the
-   owner names them again at the merge of the P0-01 PR, in a review or comment that lists the DR IDs
-   accepted and overridden. A merge alone ratifies no DR.
+   owner named them again at the merge of the P0-01 PR, in a comment that lists the DR IDs ratified
+   (2026-10-15, PR #4 comment 6185953773). A merge alone ratifies no DR.
 4. **When an ADR is required:** a decision that is architectural (Product/Architecture owner) or
    statistical (Statistical owner) is recorded in an ADR in `docs/02-adr/`, and the entry links that ADR.
    - DR-A1 to DR-A12 are carried by ADR-011 ("Engine-only pivot") and ADR-012 ("Python reference
@@ -124,11 +131,11 @@ several roles; all are currently held by the repository owner.
 | [DR-A3](#dr-a3-authoritative-ci-platform) | Which CI platform is authoritative for merge and release? | Product/Architecture, Security/Release | Default kept (Windows authoritative) until the follow-up ADR; direction ratified 2026-10-08: Linux authoritative, Windows additional | follow-up ADR before P1-11 |
 | [DR-A4](#dr-a4-ai-governance-apparatus) | Keep the AI-governance apparatus (α§1.3–1.6, §8.7–8.12, App. B–E)? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
 | [DR-A5](#dr-a5-work-package-id-scheme) | Which work-package ID scheme applies after the pivot? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
-| [DR-A6](#dr-a6-pr-1-merge-order-and-prs-2-and-3) | How do PR #1 and PRs #2/#3 land? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining (the merge itself must still use a merge commit) |
+| [DR-A6](#dr-a6-pr-1-merge-order-and-prs-2-and-3) | How do PR #1 and PRs #2/#3 land? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining (PR #4 merged with a merge commit, `b819ae0`) |
 | [DR-A7](#dr-a7-fix-guard-findings-r4-1-and-r4-2-in-the-pivot-pr) | Fix guard findings R4-1/R4-2 in the pivot PR? | Security/Release | Ratified 2026-10-08 (decision interview) | none remaining |
 | [DR-A8](#dr-a8-crate-set) | Which crates exist, and when do they change? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining (the `application` → `pipeline` rename and `synth` happen in P1-01) |
 | [DR-A9](#dr-a9-vault-slot-for-archived-cautious-nevermore-material) | Where does archived CN material live? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
-| [DR-A10](#dr-a10-licence-for-referencepython) | Which licence covers `reference/python/` (CN has no LICENSE)? | Data/Licensing | Needs owner action: post the ruling on PR #4 (option 1 chosen 2026-10-08, decision interview) | P0-01 merge |
+| [DR-A10](#dr-a10-licence-for-referencepython) | Which licence covers `reference/python/` (CN has no LICENSE)? | Data/Licensing | Ratified 2026-10-15 (PR #4 comment 6185953773, as edited by the owner): option 1, `MIT OR Apache-2.0` (chosen 2026-10-08, decision interview) | none remaining |
 | [DR-A11](#dr-a11-fixture-licensing-policy) | May real-data-derived fixtures be committed? | Data/Licensing | Ratified 2026-10-08 (decision interview) | none remaining (no `fixtures/third-party/` ruling has been made, so no real-data fixture may be committed) |
 | [DR-A12](#dr-a12-oracle-retirement) | When is the Python oracle retired? | Product/Architecture | Ratified 2026-10-08 (decision interview) | P2-09 (the retirement review) |
 | [DR-B1](#dr-b1-oracle-correction-policy) | Is the oracle corrected before it becomes a parity target, and how? | Statistical | Ratified 2026-10-08 (decision interview) | none for the policy; each ledger entry is approved as its commit lands (P1-01, P1-06, P1-09 and P1-12 consume the corrected oracle) |
@@ -141,7 +148,7 @@ several roles; all are currently held by the repository owner.
 | [DR-C2](#dr-c2-which-modeling-architecture-governs) | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
 | [DR-C3](#dr-c3-where-grid-talent-enters-layer-d) | Where does GRID talent enter Layer D? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining (RB/WR/TE credit as an individual signal is DR-D13) |
 | [DR-C4](#dr-c4-horizons) | Which projection horizons does the engine contract cover? | Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
-| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the EB estimator, including `n0` and `k` (P1-06); the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); the windowed Kalman prior's hyperparameter estimator (P1-12, before the builder is implemented; DR-D17); the feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, binding on acceptance of ADR-013); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L (P2-03) |
+| [DR-C5](#dr-c5-primary-metric-and-gates) | What are the primary metric and the promotion gates? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the EB estimator, including `n0` and `k` (P1-06); the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); the windowed Kalman prior's hyperparameter estimator (P1-12, before the builder is implemented; DR-D17); the feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, ADR-013); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L (P2-03) |
 | [DR-C6](#dr-c6-three-season-window-for-stateful-components) | How do stateful components honour the three-season window? | Statistical | Overridden 2026-10-09 (decision interview): the Kalman restarts from the prior in production too (DR-D17) | none remaining |
 | [DR-C7](#dr-c7-gbm-on-grids-critical-path-and-the-vs-estimator) | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the V(s) estimator's spec, approved before P1-06 implements it; the Layer-1 context estimator, on recovery evidence (P1-12) |
 | [DR-C8](#dr-c8-booster-backend) | Which booster backend? | Product/Architecture | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the concrete booster crate, approved in the WP that first needs a booster |
@@ -170,7 +177,7 @@ several roles; all are currently held by the repository owner.
 | [DR-D16](#dr-d16-predictive-exposure-basis) | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | P1-08 (the definition, once Layer C exists) |
 | [DR-D17](#dr-d17-kalman-season-boundary) | How does the state-space filter cross the offseason? | Statistical | Decided 2026-10-09 (decision interview); windowed prior decided in part 2026-10-14 (owner decisions); see entry for what stays open | the κ_c and λ_c tuning criterion, the window-hyperparameter estimator (DR-C5), and the minimum class size and the degenerate-pool thresholds, before P1-12 tunes or implements the builder; real-data promotion of the windowed prior (P1-12) |
 | [DR-D18](#dr-d18-changepoint-semantics) | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Decided in part 2026-10-09 (decision interview); see entry for what stays open | automatic changepoint adjustments (`z_thresh` and the precision/recall gate; P1-12, P2-03) |
-| [DR-D19](#dr-d19-prior-scale-handoff) | On what scale does the feeder prior enter the Kalman state? | Statistical | Decided in part 2026-10-09 (decision interview); decided in part 2026-10-14 (owner decisions): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed); see entry for what stays open | `P0_form`, `P0_scheme` and P0 for window-restarted tracks (P1-12 calibration); the owner's ruling on ADR-013, and the equivalency's estimator (DR-C5), class and minimum shared players, before P1-12 implements the feeder equivalency; the owner's ruling on ADR-013 before P1-07 assembles the §6.5 prior variance `σ²_prior` |
+| [DR-D19](#dr-d19-prior-scale-handoff) | On what scale does the feeder prior enter the Kalman state? | Statistical | Decided in part 2026-10-09 (decision interview); decided in part 2026-10-14 (owner decisions): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), through ADR-013, accepted 2026-10-15; see entry for what stays open | `P0_form`, `P0_scheme` and P0 for window-restarted tracks (P1-12 calibration); the equivalency's estimator (DR-C5), class and minimum shared players, before P1-12 implements the feeder equivalency |
 | [DR-D20](#dr-d20-ensemble-stacking-level) | What does the §6.6 ensemble stack, and under which weight constraints? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
 | [DR-D21](#dr-d21-rate-model-family) | Which model family does each Layer D component use? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the yardage family and the receiving base, before P1-07 |
 | [DR-D22](#dr-d22-provider-ep-features) | May nflverse `ep`/`epa` enter features at all? | Statistical | Decided 2026-10-09 (decision interview) | none |
@@ -181,7 +188,7 @@ several roles; all are currently held by the repository owner.
 | [DR-D27](#dr-d27-value-parity-envelope) | What does V(s) parity mean against a non-reproducible oracle? | Statistical | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | parts 3 and 4 (the DR-C7 estimator spec; the re-set Class D floors) before P1-12 P-V5 |
 | [DR-D28](#dr-d28-synth-draw-tape) | How is the Rust generator proven exact without numpy streams? | Statistical | Ratified 2026-10-09 (decision interview) | none remaining |
 | [DR-D29](#dr-d29-parity-fixture-format) | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Ratified 2026-10-08 (decision interview) | none remaining |
-| [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Overridden 2026-10-09 (decision interview): always required | owner action after the P0-01 merge: make the check required in branch protection |
+| [DR-D30](#dr-d30-reference-oracle-required-check) | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Overridden 2026-10-09 (decision interview): always required | owner action now that P0-01 has merged: make the check required in branch protection |
 | [DR-D31](#dr-d31-oracle-golden-platform) | How is the oracle golden master made reproducible on CI hardware (KI-NEW-Z78)? | Statistical, Security/Release | Ratified 2026-10-08 — option 1 (owner's written approval in the implementing session); implemented in P0-01 as correction-ledger entry L0 | none remaining |
 | [DR-D32](#dr-d32-season-boundary-prior-window) | How do the season-boundary priors treat season S−3 after week 1? | Statistical | Decided 2026-10-14 (owner decisions): two priors, strict window | real-data promotion of the season-boundary priors, through P1-12's measurements (S−3's weight after week 1; the three- against two-season builds) |
 
@@ -219,7 +226,8 @@ several roles; all are currently held by the repository owner.
   - Fallback if minimal churn is preferred: option 1.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining. (Before the interview: P0-01 merge. Every later WP cites `engine-spec.md`
   sections.)
 - **Where implemented.**
@@ -273,7 +281,8 @@ several roles; all are currently held by the repository owner.
   - An accepted divergence is a Statistical-owner ADR.
 - **Status.** **Ratified (2026-10-08, Product/Architecture and Statistical owners, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3), and the order has been in force since then.
 - **Blocks.** none remaining. (Before the interview: P0-01 merge; P1-01 (oracle-fixture format and
   parity-harness skeleton).)
 - **Where implemented.**
@@ -344,7 +353,8 @@ several roles; all are currently held by the repository owner.
 - **Recommended default.** Keep it.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `engine-spec.md` §1 (constraints and governance), §8.19 (verification) and the
   carried appendices; `CLAUDE.md`; `docs/99-templates/`.
@@ -374,7 +384,8 @@ several roles; all are currently held by the repository owner.
   - Generalise `check-evidence-claims.sh`.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining. (Before the interview: P0-01 merge (its own ID must be recognised); P1-12;
   P2-00 and every P2 WP.)
 - **Where implemented.** `scripts/check-traceability.sh`; `scripts/check-evidence-claims.sh`;
@@ -416,7 +427,8 @@ several roles; all are currently held by the repository owner.
   reviews verbatim into `docs/06-sessions/`, then close #2 and #3 unmerged.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
   - P0-01 adapted the default as follows:
     - This branch contains PR #1's 49 commits as a fast-forward. Verified: PR #1's head `3823478` is the
       base of the consolidation work; `git rev-list --count origin/main..3823478` = 49; `8d43203` is an
@@ -425,10 +437,11 @@ several roles; all are currently held by the repository owner.
       reachable.
     - PR #1 can then be closed as included.
     - PRs #2/#3 can be closed after their review records are imported to `docs/06-sessions/`.
-- **Blocks.** none remaining (the merge itself must still use a merge commit). (Before the interview:
-  P0-01 merge.)
+- **Blocks.** none remaining (PR #4 merged with a merge commit, `b819ae0`, on 2026-10-15, so `8d43203`
+  stays reachable). (Before the interview: P0-01 merge.)
 - **Where implemented.** `docs/06-sessions/review-P1-00-adversarial-round1.md` to `-round4.md` (imported
-  verbatim) and `docs/06-sessions/README.md`. Closing PRs #1–#3 is an owner action on GitHub.
+  verbatim) and `docs/06-sessions/README.md`. On GitHub (2026-10-15), PR #1 is recorded as merged,
+  because its head `3823478` is contained in `main`, and PRs #2 and #3 were closed unmerged.
 - **Implementation check (2026-10-07).** The four review records are present in `docs/06-sessions/`.
   - The merge must use a merge commit, never a squash, so that `8d43203` stays reachable.
   - If PR #1 merges separately first, the PR base moves. The P0-01 evidence must then be regenerated,
@@ -456,7 +469,8 @@ several roles; all are currently held by the repository owner.
   - R4-2 applied to both files (ADR-010: guard the shape, not the instance).
 - **Status.** **Ratified (2026-10-08, Security/Release owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `scripts/check-secrets.sh`; `scripts/check-verify-parity.sh`;
   `tests/guards/run.sh`.
@@ -497,7 +511,8 @@ several roles; all are currently held by the repository owner.
   - `persistence` and SQLite stay.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining (the `application` → `pipeline` rename and `synth` happen in P1-01). (Before
   the interview: P0-01 merge; P1-01.)
 - **Where implemented.** `Cargo.toml` workspace members; removal of `crates/ffi/`; the crate list in
@@ -541,7 +556,8 @@ several roles; all are currently held by the repository owner.
   - `real-data-results.md` (G-7), labelled historical and non-parity.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining. (Before the interview: P0-01 merge.)
 - **Where implemented.** `docs/07-archive/cautious-nevermore/` (`HISTORY.md`, `real-data-results.md`,
   `MANIFEST.md`, archived docs); `docs/00-meta/authority-index.md`.
@@ -579,18 +595,27 @@ several roles; all are currently held by the repository owner.
   2. Keep `reference/python/` under a separate licence with a NOTICE.
   3. Do not import. This contradicts the owner's decision to import the oracle.
 - **Recommended default.** Option 1, recorded in the same form as PR #1 comment 5357318508.
-- **Status.** Needs owner action: post the licence ruling for `reference/python/` on PR #4. **Option
+- **Status.** **Ratified (2026-10-15, Data/Licensing owner, PR #4 comment 6185953773 as edited by the
+  owner at 12:57Z; owner-directed transcription, `docs/06-sessions/2026-10-15-P0-02.md`)**: option 1.
+  The CN-derived code imported into `reference/python/` at `59bce1d`, and later corrections made to it
+  under `reference/python/PARITY.md`, are under this repository's `MIT OR Apache-2.0` terms
+  (ADR-001 D4; `LICENSE-MIT`, `LICENSE-APACHE`). The comment first said "Apache-2.0 terms" by
+  mistake (answer 1 of the record); the owner's edit made it read "`MIT or Apache-2.0` terms" (the
+  record, "The owner's correction"), and answer 2 directs this transcription. The ruling covers code
+  only: real third-party data stays excluded (DR-A11), and so does
+  `reference/python/backend/db/data/coaching_changes_2025.json` (KI-NEW-D1) as data. **Option
   chosen (2026-10-08, Data/Licensing owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: The owner chose option 1: as sole
-  substantive author, the owner brings the CN-derived code in `reference/python/` under MIT OR Apache-2.0,
-  recorded in the same form as PR #1 comment 5357318508. The owner will post that ruling on PR #4
-  personally (the agent drafts the text).
-- **Blocks.** P0-01 merge (the import of `reference/python/`).
-- **Where implemented.** After the ruling: the PR comment, ADR-012 citing it, and the provenance section of
-  `reference/python/README.md`.
-- **Implementation check (2026-10-07).** Unchanged: the ruling is still owed. The import it covers is in the
-  worktree: `reference/python/MANIFEST.tsv` has 105 rows, 103 verbatim and 2 patched. Since 2026-10-08 it
-  has 102 verbatim and 3 patched: correction-ledger entry L0 regenerated the golden snapshot (DR-D31).
+  substantive author, the owner brings the CN-derived code in `reference/python/` under MIT OR
+  Apache-2.0, recorded in the same form as PR #1 comment 5357318508. The owner posted that ruling on
+  PR #4 personally, from the agent's draft (2026-10-15).
+- **Blocks.** none remaining. (Before the ruling: P0-01 merge (the import of `reference/python/`).)
+- **Where implemented.** PR #4 comment 6185953773, as edited by the owner on 2026-10-15; ADR-012
+  §8, which cites the ruling; and the "License" section of `reference/python/README.md`.
+- **Implementation check (2026-10-07).** Unchanged: the ruling was then still owed (given 2026-10-15;
+  see **Status**). The import it covers is in the worktree: `reference/python/MANIFEST.tsv` has 105
+  rows, 103 verbatim and 2 patched. Since 2026-10-08 it has 102 verbatim and 3 patched:
+  correction-ledger entry L0 regenerated the golden snapshot (DR-D31).
 
 ### DR-A11 Fixture licensing policy
 
@@ -621,7 +646,8 @@ several roles; all are currently held by the repository owner.
     `reference/python/tools/investigations/fetch_realdata.py`, never committed.
 - **Status.** **Ratified (2026-10-08, Data/Licensing owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** none remaining (no `fixtures/third-party/` ruling has been made, so no real-data fixture may
   be committed). (Before the interview: P1-01 (parity-fixture format); P1-03
   (`docs/04-providers/nflverse/access-and-license.md` must exist before provider work); P1-05
@@ -652,7 +678,8 @@ several roles; all are currently held by the repository owner.
   **and** Phase-2 live evidence exists. Review at P2-09.
 - **Status.** **Ratified (2026-10-08, Product/Architecture owner, decision interview,
   `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: the adopted default, as P0-01 implements
-  it. The owner names it again in the P0-01 merge comment ("How to ratify or override", step 3).
+  it. The owner named it again in the P0-01 merge comment (2026-10-15, PR #4 comment 6185953773;
+  "How to ratify or override", step 3).
 - **Blocks.** P2-09 (the retirement review). (Before the interview: P2-09.)
 - **Where implemented.** `engine-spec.md` §1.7 and §10.5 (P2-09); ADR-012.
 - **Implementation check (2026-10-07).** The oracle is imported and frozen by `MANIFEST.tsv`, and runs in the
@@ -1156,16 +1183,16 @@ several roles; all are currently held by the repository owner.
   uses include the windowed prior. The estimator for its hyperparameters is named in
   `state-space-kalman.md` before the builder is implemented, and the tuning criterion for κ_c and λ_c,
   which must include calibration, is pre-registered before P1-12 tunes anything (open — DR-D17). Under
-  DR-D19 (2026-10-14, answer 10; binding on acceptance of ADR-013, Proposed), the other shrinkage uses
+  DR-D19 (2026-10-14, answer 10; ADR-013, accepted 2026-10-15), the other shrinkage uses
   also include the feeder equivalency's measurement-error fit: its estimator for the line and σ²_u,
   including the weighting and variance clustered by player and by team-season, is named in
   `cross-league-priors.md` before P1-12 implements the fit (open — DR-C5).
 - **Blocks.** the EB estimator, including `n0` and `k` (P1-06; the Layer C estimator before P1-07); the ROS
   clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); the windowed
   Kalman prior's hyperparameter estimator (P1-12, before the builder is implemented; DR-D17); the
-  feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, binding on acceptance
-  of ADR-013); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band
-  (P2-07); fixed-lag L (P2-03). (Before the interview: P1-09; P1-06 (fixed-lag `L`, EB estimator);
+  feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, ADR-013); auto-rollback
+  thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L
+  (P2-03). (Before the interview: P1-09; P1-06 (fixed-lag `L`, EB estimator);
   P1-07 (EB estimator); P1-11 (auto-rollback sanity thresholds, for recovery); P1-12 (RAPM domain
   controls); P2-03; P2-07 (`engine-spec.md` §8.8, §9.5).)
 - **Where implemented (when ratified).**
@@ -1318,8 +1345,8 @@ several roles; all are currently held by the repository owner.
   state-space form of the population prior `theta_position_draft_prior` is N(m, σ²_c) per (position
   class, role), estimated on the window, and it is the base of the windowed prior for a player without a
   feeder prior. For a player with one, the feeder prior is the base in every season. The population
-  prior's covariates stay open here. Under DR-D19 (2026-10-14, answer 10; binding on acceptance of
-  ADR-013, Proposed), "the residual variance of the equivalency" in the proposed engine form
+  prior's covariates stay open here. Under DR-D19 (2026-10-14, answer 10; ADR-013, accepted
+  2026-10-15), "the residual variance of the equivalency" in the proposed engine form
   (`engine-spec.md` §6.5; `cross-league-priors.md` §6.2) is σ̂²_u, the between-player variance net of
   the known target noise, and the widening for undrafted, transferred, position-converted or
   identity-uncertain players applies to it. Whether σ²_prior also carries the line's parameter
@@ -2222,14 +2249,13 @@ used for the same decision as `fixed-point-reseed`.
   end-of-season (smoothed) talent computed without the college prior, so the prior never trains on itself;
   no separate scale map. **Decided in part (2026-10-14, Statistical owner, owner-directed
   transcription, `docs/06-sessions/2026-10-14-P0-01.md`)**: season level, no seed; a reversal in part
-  of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed). The entry had no
+  of the 2026-10-09 decision (rule 6), through ADR-013, accepted 2026-10-15. The entry had no
   recommended default for this part; the option chosen (answer 10) was the agent's recommendation,
   and answer 11 directs its transcription. The estimand changes from end-of-season smoothed talent to
   the season level, so rule 6 requires a reversing ADR that cites this entry: ADR-013
-  (`docs/02-adr/013-feeder-target-season-level.md`). Until the owner accepts ADR-013, for example in
-  the P0-01 merge comment, the 2026-10-09 text above stands and governs. If the owner rejects
-  ADR-013, the target goes to a new decision request before P1-12 implements the feeder equivalency
-  (ADR-013, Status). Kept: the Kalman credit scale, no separate scale map, and "the prior never
+  (`docs/02-adr/013-feeder-target-season-level.md`). The owner accepted ADR-013 on 2026-10-15 in the
+  P0-01 merge comment (PR #4 comment 6185953773); its text governs the parts of the 2026-10-09 text
+  above that it reverses. Kept: the Kalman credit scale, no separate scale map, and "the prior never
   trains on itself", now because no prior of any kind enters the target. DR-D32's phrase "its own ...
   DR-D19 targets" means that each build computes its targets from its own window only, and that a
   stored production track never supplies one. Every option offered computed each build's targets
@@ -2271,12 +2297,12 @@ used for the same decision as `fixed-point-reseed`.
   pre-window NFL data; and the P1-12 measurements, pre-registered per class and build (ADR-013,
   Compliance).
 - **Blocks.** `P0_form`, `P0_scheme` and P0 for window-restarted tracks (P1-12 calibration); the
-  owner's ruling on ADR-013, and the equivalency's estimator (DR-C5), class and minimum shared
-  players, before P1-12 implements the feeder equivalency; the owner's ruling on ADR-013 before P1-07
-  assembles the §6.5 prior variance `σ²_prior`. (Before the interview: P1-07; P1-12.)
+  equivalency's estimator (DR-C5), class and minimum shared players, before P1-12 implements the
+  feeder equivalency. (Before 2026-10-15: also the owner's ruling on ADR-013, for P1-12 and P1-07.
+  Before the interview: P1-07; P1-12.)
 - **Where implemented (when decided).** `cross-league-priors.md` §3.3, §4.3, §4.4 and §9;
-  `state-space-kalman.md` §6.5; `engine-spec.md` §6.5. For the 2026-10-14 part, binding on acceptance
-  of ADR-013: ADR-013; `engine-spec.md` §2.5, §6.2 Components 8 and 9, §6.4.7, §6.5, §9.2.5, §9.5,
+  `state-space-kalman.md` §6.5; `engine-spec.md` §6.5. For the 2026-10-14 part (ADR-013, accepted
+  2026-10-15): ADR-013; `engine-spec.md` §2.5, §6.2 Components 8 and 9, §6.4.7, §6.5, §9.2.5, §9.5,
   §11.6, §12.3 and Appendix G; `cross-league-priors.md` §1, §2, §3.1, §3.3, §6.2, §8.2 (P-1) and §9;
   `state-space-kalman.md` §6.5 and §9; `layer1-credit.md` §4.8.2 and §9; `rapm-attribution.md` §2.3;
   `value-model.md` §6.2; `evaluation-and-leakage.md` §4.2 (G13), §4.3 and §9;
@@ -2580,9 +2606,9 @@ used for the same decision as `fixed-point-reseed`.
 - **Status.** **Overridden (2026-10-09, Security/Release and Product/Architecture owners, decision
   interview, `docs/06-sessions/2026-10-09-P0-01-decision-interview.md`)**: Always required: the
   reference-oracle job becomes a required status check for every PR to main (not only parity-touching
-  PRs). The owner applies it in GitHub branch protection after PR #4 merges; no workflow edit is needed.
-- **Blocks.** owner action after the P0-01 merge: make the check required in branch protection. (Before
-  the interview: No WP. It decides the branch-protection configuration.)
+  PRs). The owner applies it in GitHub branch protection after PR #4's merge; no workflow edit is needed.
+- **Blocks.** owner action now that P0-01 has merged: make the check required in branch protection.
+  (Before the interview: No WP. It decides the branch-protection configuration.)
 - **Where implemented (when ratified).** `engine-spec.md` §8.19; `.github/workflows/alpha-ci.yml`; the
   repository's branch-protection settings.
 
@@ -2615,7 +2641,8 @@ used for the same decision as `fixed-point-reseed`.
   recorded in the P0-01 PR description. The Statistical owner's choice is the approval of correction-ledger
   entry L0. The Security/Release part (the runner choice) is moot: ordinary `ubuntu-latest` runners
   suffice. This Status line was written by the implementing agent from the owner's answer; "How to ratify
-  or override" step 1 reserves that edit to the owner, who checks it when reviewing the P0-01 diff.
+  or override" step 1 reserves that edit to the owner, who was to check it when reviewing the P0-01
+  diff; the owner merged P0-01 on 2026-10-15 (`b819ae0`).
 - **Blocks.** None remaining.
 - **Where implemented.** In P0-01, as correction-ledger entry **L0**:
   - `reference/python/tests/grid/golden/snapshot.npz`, regenerated once with
@@ -2680,14 +2707,13 @@ used for the same decision as `fixed-point-reseed`.
   δ^team. **Still open:** S−3's measured weight in the states and in the forecast level from week 2
   on, which under this rule enters only through those three inputs and the model version's learned
   hyperparameters; a real-data accuracy comparison of the three- and two-season builds, which needs
-  Layer-1′ on real data (DR-D15; KI-NEW-Z50); for feeder-linked tracks, the owner's ruling on ADR-013
-  (Proposed; DR-D19, 2026-10-14): once it is accepted, both canaries can hold, because each build's
-  DR-D19 targets come only from its own prior-builder records and its own r_c and ω_c; until then
-  DR-D19's 2026-10-09 text governs those targets, and if the owner rejects ADR-013, the target goes
-  to a new decision request; if `feeder_sv` is built with an NFL-fitted model (the DR-C9
-  college-rating source), whether that model must be season S's V(s), so that the static-metadata
-  exemption carries no pre-window NFL data (open — DR-C9); the keys of the `prior` field's source and
-  build labels (`engine-output-contract.md` §4.2). The first two are P1-12 measurements.
+  Layer-1′ on real data (DR-D15; KI-NEW-Z50); if `feeder_sv` is built with an NFL-fitted model (the
+  DR-C9 college-rating source), whether that model must be season S's V(s), so that the
+  static-metadata exemption carries no pre-window NFL data (open — DR-C9); the keys of the `prior`
+  field's source and build labels (`engine-output-contract.md` §4.2). The first two are P1-12
+  measurements. For feeder-linked tracks both canaries can hold, because ADR-013 (DR-D19,
+  2026-10-14) was accepted on 2026-10-15 and each build's DR-D19 targets come only from its own
+  prior-builder records and its own r_c and ω_c.
 - **Blocks.** real-data promotion of the season-boundary priors, through the P1-12 measurements under
   **Still open**. (Before the decision: P1-12.)
 - **Where implemented (when decided).** `engine-spec.md` §2.4, §6.2 Component 8 and the corrected DAG,
@@ -2696,7 +2722,7 @@ used for the same decision as `fixed-point-reseed`.
   `layer1-credit.md` §4.8.2 (per-build prior-builder records); `synthetic-world.md` §4.12 and §6 item 1;
   `value-model.md` §6.2; `evaluation-and-leakage.md` §4.2 (G13) and §4.3; `projection-stack.md` §1.3 and
   §4.8.2 (the week-1 talent covariate); `engine-output-contract.md` §4.2 (the `prior` field). For the
-  estimand of each build's DR-D19 targets, binding on its acceptance: ADR-013 (Proposed).
+  estimand of each build's DR-D19 targets: ADR-013 (accepted 2026-10-15).
 
 ### Owner information request (not a decision)
 

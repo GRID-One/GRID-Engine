@@ -26,7 +26,8 @@ is a decision request; oracle behaviour is never a reason to weaken a rule. The 
 (`docs/00-meta/specs/superseded/`), `docs/07-archive/` and `docs/06-sessions/` are history only.
 Registers in `docs/00-meta/` change requirements only once carried into the spec, an accepted ADR
 or a model spec. This order is DR-A2: adopted by P0-01, ratified by the owner on 2026-10-08 (decision
-interview), and in force once the P0-01 merge comment names it again (`docs/02-adr/README.md`).
+interview), and in force since the P0-01 merge review named it again on 2026-10-15 (PR #4 comment
+6185953773; `docs/02-adr/README.md`).
 
 ## Commands
 

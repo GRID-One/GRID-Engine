@@ -13,7 +13,8 @@ pending-rulings: real-data provider fixtures under fixtures/third-party/nflverse
 **Status: Draft.** This document records what was **verified** on 2026-10-01 and marks
 everything else as requiring a ruling by the Data/Licensing owner. It is required before the
 P1-03 adapter is Ready ([README.md](README.md)) and implements critic.md G-5 and owner decision
-DR-A11 (ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment).
+DR-A11 (ratified 2026-10-08 in the decision interview; named again in the P0-01 merge review on
+2026-10-15, PR #4 comment 6185953773).
 
 Nothing here is legal advice. Where a question turns on interpreting a licence, this document
 names the question and leaves the answer to the Data/Licensing owner.

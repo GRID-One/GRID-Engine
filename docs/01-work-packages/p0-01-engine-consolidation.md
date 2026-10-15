@@ -1,35 +1,40 @@
 ---
 work-package-id: P0-01
-status: Review
+status: Done
 risk-class: High
 owner: Product/Architecture owner
 implementer: Claude Code (the implementing agent; model identity unrecorded, see Evidence required)
-reviewer: Pending — a fresh-context reviewer who is not the implementer
+reviewer: "Fresh-context agent reviews, as recorded in .ai/evidence/P0-01/ and docs/06-sessions/review-P0-01-adversarial-round1.md; the owner's merge review of 2026-10-15, PR #4 comment 6185953773"
 phase: 0
 ---
 
 # P0-01 — Engine-only consolidation
 
 ## Status
-**Review.** The content is written on branch `claude/grid-engine-consolidation-e7kmh9`. P0-01 is
-**not Done** until three things have happened:
+**Done.** The owner merged PR #4 on 2026-10-15 with a merge commit, `b819ae0`, after the owner's merge
+review (PR #4 comment 6185953773). The content was written on branch
+`claude/grid-engine-consolidation-e7kmh9`. The conditions for Done were:
 
 - every acceptance criterion below has passed on the final commit, and the evidence has been generated
   from that commit;
 - a fresh-context review is complete;
 - the owner has merged with the ratifications listed under "Required human approvals".
 
-No criterion is claimed as passing here. Each is to be run against the final commit (`CLAUDE.md`,
-"Before claiming done").
+No criterion is ticked here. The runs on the final content commit are recorded in
+`.ai/evidence/P0-01/`, and the Windows and `reference-oracle` runs are CI evidence on PR #4
+(`CLAUDE.md`, "Before claiming done").
 
 ## Ownership and risk
 - **Owner.** Product/Architecture owner. The repository owner holds every role today.
 - **Implementer.** Claude Code (the implementing agent), run as a multi-agent consolidation workflow.
-- **Reviewer.** Pending. It must be a fresh-context reviewer who is not the implementer (`CLAUDE.md`).
+- **Reviewer.** Fresh-context agents who were not the implementer (`CLAUDE.md`), as recorded in
+  `.ai/evidence/P0-01/` and `docs/06-sessions/review-P0-01-adversarial-round1.md`, and the owner's
+  merge review of 2026-10-15 (PR #4 comment 6185953773).
 - **Risk class: High.** The package:
   - replaces authority 1;
   - makes the first D5 amendment that removes a step (ADR-011 D6);
-  - imports 105 files whose licence ruling is still pending (DR-A10);
+  - imports 105 files whose licence (DR-A10) was pending until the owner's ruling, PR #4 comment
+    6185953773, as edited by the owner on 2026-10-15;
   - lands as one pull request of about 260 non-trivial paths.
 - **Required human approvals:**
   1. **Product/Architecture owner.** In one merge review or comment that names each DR ID, name again
@@ -38,19 +43,24 @@ No criterion is claimed as passing here. Each is to be run against the final com
      (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and the 2026-10-14 decision record
      (`docs/06-sessions/2026-10-14-P0-01.md`); and accept ADR-011 and ADR-012, as the owner chose in
      the decision interview (`docs/00-meta/decision-register.md`, "How to ratify or override", steps 1
-     and 3).
+     and 3). Given on 2026-10-15 in the owner's merge review, PR #4 comment 6185953773.
   2. **Statistical owner.** DR-A2, the oracle placement, jointly with item 1. Also accept or reject
-     ADR-013 (DR-D19, answer 10 of the 2026-10-14 record), which binds only once accepted; until then
-     DR-D19's 2026-10-09 text governs, and on rejection the feeder-equivalency target goes to a new
-     decision request.
+     ADR-013 (DR-D19, answer 10 of the 2026-10-14 record). Both given on 2026-10-15 in the same merge
+     review: ADR-013 is accepted, and its text governs the parts of DR-D19 it reverses.
   3. **Security/Release owner.** DR-A7 and the guard changes (ADR-011 D7). Also the design of the
      `reference-oracle` job: the runner image's tool-cache CPython 3.11, failing if it is absent, and no
      `actions/setup-python` (ADR-012 §4). DR-D31 (how the job turns green, KI-NEW-Z78) was ratified by
-     the owner on 2026-10-08 (option 1) and is implemented here as correction-ledger entry L0.
+     the owner on 2026-10-08 (option 1) and is implemented here as correction-ledger entry L0. The rest
+     was given on 2026-10-15 in the merge review: DR-A7 named again, and ADR-011 (D7) and ADR-012 (§4)
+     accepted.
   4. **Data/Licensing owner.** The DR-A10 licence ruling (option 1, chosen on 2026-10-08 in the decision
      interview), **posted by the owner on the pull request before merge** in the form of GRID-Engine
-     PR #1 comment 5357318508. Also DR-A11, ratified on 2026-10-08 and named again in the merge comment.
-  5. **Merge reviewer.** A merge commit, never a squash (DR-A6, ADR-011 D10).
+     PR #1 comment 5357318508. Posted as PR #4 comment 6185953773 before the merge; after the merge the
+     owner corrected it by an edit, so that it reads "`MIT or Apache-2.0` terms" (it first said
+     "Apache-2.0 terms" by mistake). Also DR-A11, ratified on 2026-10-08 and named again in the merge
+     review.
+  5. **Merge reviewer.** A merge commit, never a squash (DR-A6, ADR-011 D10). Done: PR #4 merged with
+     the merge commit `b819ae0`, and `8d43203` is an ancestor of `main`.
 - **Agent budget (engine-spec §8.18.1).** Not declared in advance. §8.18.1 is introduced by this package.
   This is recorded under Known limitations.
 
@@ -65,17 +75,18 @@ No criterion is claimed as passing here. Each is to be run against the final com
   Both are now at `docs/00-meta/specs/superseded/`.
 - **Owner instruction.** The owner's request of 2026-10-01 and the owner's choice of option (ADR-011,
   Context).
-- **ADRs.** ADR-011, ADR-012 and ADR-013 (all proposed); ADR-001 D5 and ADR-005 (the amendment
+- **ADRs.** ADR-011, ADR-012 and ADR-013 (Proposed while this package was executed; all three
+  accepted on 2026-10-15, PR #4 comment 6185953773); ADR-001 D5 and ADR-005 (the amendment
   conditions); ADR-009; ADR-010.
 - **Contracts, model specs and provider manifests:** the drafts this package creates (Scope).
 
 ## Owner decisions depended on
 
 **Adopted by this package, and ratified by the owner on 2026-10-08 in the decision interview, except
-DR-A3 (direction only; the follow-up ADR is owed) and DR-A10 (the ruling is still to be posted)**
+DR-A3 (direction only; the follow-up ADR is owed) and DR-A10 (option 1 chosen; ruled on 2026-10-15)**
 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`). This package is gated on its own
-A-decisions being ratified (engine-spec §9.5), not on Ready; the owner names them again in the merge
-comment.
+A-decisions being ratified (engine-spec §9.5), not on Ready; the owner named them again in the merge
+review of 2026-10-15 (PR #4 comment 6185953773).
 
 | DR | Decision | Owner role | Status | Recorded in |
 |---|---|---|---|---|
@@ -88,7 +99,7 @@ comment.
 | DR-A7 | Fix R4-1 and R4-2 in this PR | Security/Release | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D7 |
 | DR-A8 | Drop only `ffi` now; P1-01 restructures | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D11 |
 | DR-A9 | `docs/07-archive/cautious-nevermore/` as non-authoritative history | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-011 D12 |
-| DR-A10 | Licence for `reference/python/` | Data/Licensing | **Needs owner action: post the licence ruling for reference/python/ on the PR** (option 1 chosen 2026-10-08, decision interview). Merge-blocking | ADR-012 §8 |
+| DR-A10 | Licence for `reference/python/` | Data/Licensing | Ruled 2026-10-15: option 1, `MIT OR Apache-2.0` (PR #4 comment 6185953773, as edited by the owner on 2026-10-15; option 1 chosen 2026-10-08, decision interview) | ADR-012 §8 |
 | DR-A11 | Parity fixtures synthetic-only; no real data committed | Data/Licensing | Adopted; ratified 2026-10-08 (decision interview) | ADR-012 §9 |
 | DR-A12 | Frozen CI oracle until parity and Phase 2 live evidence; review at P2-09 | Product/Architecture | Adopted; ratified 2026-10-08 (decision interview) | ADR-012 §10 |
 
@@ -97,7 +108,7 @@ comment.
 P0-01 decides none of these itself. The owner settled most of them, in full or in part, in the decision
 interview of 2026-10-08/09 (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`), and further
 parts of DR-D14 and DR-D17 on 2026-10-14 (`docs/06-sessions/2026-10-14-P0-01.md`), where the owner
-also chose a reversal in part of DR-D19 that binds once ADR-013 (Proposed) is accepted; the rest stay
+also chose a reversal in part of DR-D19, recorded in ADR-013 and accepted on 2026-10-15; the rest stay
 proposed or open, as each register entry says. A work package that depends on an unsettled decision, or
 on an unsettled part of one, is not Ready until the named owner rules (engine-spec §8.16.1). The blocked
 packages are listed in `docs/01-work-packages/README.md`. `docs/00-meta/decision-register.md` is
@@ -177,10 +188,9 @@ calibrated by rolling origin, generally on seasons before the window, and are no
 (answer 11 of the same record). Two of its open parts, S−3's measured weight after week 1 and a
 real-data comparison of the three- and two-season builds, are P1-12 measurements. The output
 contract (`docs/03-contracts/engine-output-contract.md` §4.2, §12) has not yet named the keys of the
-`prior` field's source and build labels. For feeder-linked tracks, both canaries can hold once the
-Statistical owner accepts ADR-013 (DR-D19, answer 10), under which each build's DR-D19 targets come
-only from its own prior-builder records and its own r_c and ω_c; until then DR-D19's 2026-10-09 text
-governs.
+`prior` field's source and build labels. For feeder-linked tracks, both canaries can hold under
+ADR-013 (DR-D19, answer 10), which the Statistical owner accepted on 2026-10-15 and under which each
+build's DR-D19 targets come only from its own prior-builder records and its own r_c and ω_c.
 
 ## Objective
 At the P0-01 merge commit, the repository is engine-only and consistent with itself:
@@ -208,7 +218,8 @@ None for engine consumers, because no engine code changes. A maintainer can obse
 - The owner's request and choice of option, 2026-10-01.
 - The tools pinned in `toolchains/dev-tools.lock`, and CPython 3.11 for the oracle (verified on
   3.11.15).
-- A merge gate rather than a precondition: the DR-A10 ruling.
+- A merge gate rather than a precondition: the DR-A10 ruling, posted before the merge in PR #4 comment
+  6185953773 and corrected by the owner's edit of that comment after the merge.
 
 ## Scope
 - **Modules and files expected to change:** every path in "Paths affected" below, and no other.
@@ -387,9 +398,11 @@ parity target until ledger entry 1 has run (DR-B1).
   manual invocation only, never in CI.
 - **CI security boundary.** No third-party action is added. `actions/setup-python` would need
   Security/Release approval.
-- **Licence.** `reference/python/` is pending DR-A10, and that is merge-blocking: the owner chose
-  option 1 on 2026-10-08 and still has to post the ruling on the pull request. As ADR-001 D4 noted,
-  publishing code permissively is not cleanly reversible once third parties can rely on it.
+- **Licence.** `reference/python/` is under `MIT OR Apache-2.0` by the DR-A10 ruling (option 1, chosen
+  on 2026-10-08). The ruling was merge-blocking: the owner posted it before the merge in PR #4 comment
+  6185953773 and corrected its licence sentence by editing that comment after the merge. It
+  covers code only; real third-party data stays excluded (DR-A11). As ADR-001 D4 noted, publishing
+  code permissively is not cleanly reversible once third parties can rely on it.
 - **Provider terms.**
   - nflverse participation is CC-BY-SA 4.0, and no real data is committed (DR-A11).
   - `docs/04-providers/nflverse/access-and-license.md` is a draft. Its per-dataset terms for
@@ -440,7 +453,8 @@ Each criterion is verified by the command shown, run against the final content c
 - [ ] `git diff --quiet 3823478 HEAD -- .ai/evidence/P1-00` exits 0, so the P1-00 record is untouched.
 - [ ] `git merge-base --is-ancestor 8d43203 HEAD` exits 0.
 - [ ] `grep -L '^status: Proposed' docs/02-adr/011-engine-only-pivot.md docs/02-adr/012-python-reference-oracle.md docs/02-adr/013-feeder-target-season-level.md`
-      prints nothing: all three ADRs are still Proposed.
+      prints nothing on P0-01's final content commit, `6cc6bbb`: all three ADRs were still Proposed
+      there. They were accepted on 2026-10-15 (PR #4 comment 6185953773).
 
 **Reference oracle**
 
@@ -510,9 +524,9 @@ recipe to make a failure disappear.
   checks that.
 - **Rollback.** Reverting the merge commit restores `app/`, `crates/ffi/`, the two specs at the root,
   and the 9-recipe chain. The specs were moved with git renames, so their history follows them.
-- **Licence.** If DR-A10 is not ruled as recommended, `reference/python/` and the `reference-oracle` job
-  cannot merge, and ADR-012 must be revised before acceptance. Once the tree is merged under
-  `MIT OR Apache-2.0`, the relicensing is not cleanly reversible (ADR-001 D4).
+- **Licence.** DR-A10 was ruled as recommended (option 1; PR #4 comment 6185953773, as edited by
+  the owner on 2026-10-15), and the tree is merged under `MIT OR Apache-2.0`. The relicensing is
+  not cleanly reversible (ADR-001 D4).
 
 ## Evidence required
 The verification-command outputs, the CI results (`linux-smoke`, `windows-authoritative`, `guards`,
@@ -524,15 +538,15 @@ steps follow; do them last, on the final commit.
    - **Why.** The implementing agent's harness policy forbids writing model identifiers into repository
      artifacts.
    - **This deviates from engine-spec §8.20,** which requires the model and harness actually used.
-   - **The owner may record the real values** before step 5. Once the P0-01 record merges it is
-     immutable (`scripts/check-evidence-claims.sh` refuses a rewrite), so a later correction cannot go
-     into this record.
+   - **The owner could have recorded the real values** before step 5. The P0-01 record merged on
+     2026-10-15 and is immutable (`scripts/check-evidence-claims.sh` refuses a rewrite), so a later
+     correction cannot go into this record.
    - These fields still hold the P1-00 values until they are set.
 2. **Commit.** Commit all P0-01 content. At least one commit message cites `P0-01` and `ADR-011`. Call
    the final content commit X. The worktree must be clean apart from the evidence files.
 3. **Verify.** Run the Verification commands on X. Record the traceability count N, which depends on the
-   base the pull request targets (`origin/main` is `48ee320`, or the post-PR-#1 merge commit if that
-   lands first).
+   base the pull request targets (`origin/main` was `48ee320` until PR #4 merged; PR #1 did not land
+   first).
 4. **Write the input.** Write `.ai/evidence/P0-01/verification-input.json` by hand from the real results,
    in the same shape as P1-00's. Set `run_against_commit` to X, set `"canonical": true` on `just verify`,
    and include the literal phrase `All N non-trivial paths traced`.
@@ -584,8 +598,8 @@ here and in ADR-011.
 | 4 | `cargo audit` reports `chacha20 0.10.1` yanked, while `deny.toml` sets `yanked = "deny"` and `cargo deny check` passes | Security/Release | A dependency policy that is not enforced as written |
 | 5 | Pin the runner image (or approve `actions/setup-python`) for `reference-oracle`, so the tool-cache CPython 3.11 patch level cannot change under the pinned golden unannounced (DR-D31 implemented the kernel pin; the interpreter minor version is enforced by the platform-pin plugin) | Security/Release | A new 3.11 patch release could move the golden; the plugin catches a minor-version change but not a patch-level one |
 | 6 | Crate restructure: `application` → `pipeline`, plus `grid-cli` and `synth` (DR-A8) | P1-01 | None until P1-01; the crate-count claims change then |
-| 7 | `.gitattributes` rules for the verbatim trees (`reference/python/`, `docs/07-archive/`, `docs/00-meta/specs/superseded/`, the imported session records), if they do not land in P0-01 | Product/Architecture | A `core.autocrlf` checkout breaks the `MANIFEST.tsv` hashes and the verbatim copies |
-| 8 | After merge, close PR #1 as included. Close PRs #2 and #3 unmerged | Owner | Merging #2 or #3 recreates the invalid `docs/05-sessions/` |
+| 7 | `.gitattributes` rules for the verbatim trees (`reference/python/`, `docs/07-archive/`, `docs/00-meta/specs/superseded/`, the imported session records), if they do not land in P0-01. They landed in P0-01 | Product/Architecture | A `core.autocrlf` checkout breaks the `MANIFEST.tsv` hashes and the verbatim copies |
+| 8 | After merge, close PR #1 as included. Close PRs #2 and #3 unmerged. Done on 2026-10-15: GitHub records PR #1 as merged, because its head `3823478` is in `main`, and PRs #2 and #3 were closed unmerged | Owner | Merging #2 or #3 recreates the invalid `docs/05-sessions/` |
 | 9 | Tag `oracle-legacy-59bce1d` on the import commit (`reference/python/PARITY.md` (a)) | Owner | The legacy reference has no stable name |
 | 10 | Keep `engine-spec.md` Appendix F and §9.5 in step with the register's DR-D entries. The spec drafts list most DR-D items as "not yet in the register", and they describe DR-D7 and DR-D8 as one question, which the register separates | Register owner, spec assembler | Readiness is read from a stale table |
 | 11 | Known-issues entries for defects that the model-spec authors raised without KI IDs, if not complete at merge | Register owner | Defects are cited by prose instead of ID |
@@ -601,7 +615,7 @@ here and in ADR-011.
 - **`ai-toolchain.lock` provenance is `unrecorded` for P0-01.** This deviates from engine-spec §8.20
   (Evidence required, step 1).
 - **The branch name was assigned by the harness:** `claude/grid-engine-consolidation-e7kmh9`, not
-  `wp/P0-01-…` (ADR-001 D1 convention). The owner may rename it when opening the pull request.
+  `wp/P0-01-…` (ADR-001 D1 convention). PR #4 merged from that branch on 2026-10-15 (`b819ae0`).
 - **No agent budget was declared** (engine-spec §8.18.1).
 - **Windows is unproven.** The full chain and the new `run.sh` evidence fixtures have run only under pwsh
   on Linux, in a scratch copy. The first `windows-authoritative` run is the evidence for Windows.

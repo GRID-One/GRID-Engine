@@ -14,8 +14,8 @@ at [`docs/00-meta/specs/engine-spec.md`](../engine-spec.md).
 
 - **Superseded.** `engine-spec.md` (Draft v1.0, 2026-10-01) supersedes both documents for all
   purposes. The decision is ADR-011, "Engine-only pivot"
-  ([`docs/02-adr/011-engine-only-pivot.md`](../../../02-adr/011-engine-only-pivot.md)). ADR-011 is
-  proposed and takes effect on owner ratification at merge of P0-01.
+  ([`docs/02-adr/011-engine-only-pivot.md`](../../../02-adr/011-engine-only-pivot.md)). ADR-011 was
+  accepted on 2026-10-15 in the owner's P0-01 merge review (PR #4 comment 6185953773).
 - **Archived verbatim.** Each file is byte-for-byte the document as it stood at the repository root.
   Neither changed after it was added on 2026-08-19 (commit `48ee320`). P0-01 moved them here without
   edits. The sha256 values above identify the archived bytes; recompute them with

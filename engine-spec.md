@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Document status | Draft v1.0 — for owner ratification (P0-01, ADR-011) |
+| Document status | Draft v1.0 — authority 1 since the owner accepted ADR-011 on 2026-10-15 (P0-01; PR #4 comment 6185953773). Clauses tagged "(proposed — DR-xx)" or "(open — DR-xx)" are not settled (Decision status, below) |
 | Date | 2026-10-01 |
 | Scope | Engine-only. The GRID statistical projection engine, delivered as a Rust library plus a headless CLI over SQLite. This repository contains no user interface, installer, or FFI layer. |
 | Supersedes | `alpha-spec.md` (August 12, 2026) and `final-build-spec.md`, for all purposes. Both are archived verbatim at `docs/00-meta/specs/superseded/`. |
@@ -12,8 +12,8 @@
 | Reference oracle | `reference/python/`: the cautious-nevermore Python GRID engine at `59bce1d`. Development and CI time only; never shipped (§1.7, ADR-012). |
 | Primary implementation agent | The project-designated frontier coding model ("the designated coding model", referenced through a configurable alias, §1.3), working through Claude Code or an equivalent repository-aware harness |
 | Implementation mode | AI-first, contract-driven, human-governed |
-| Governing ADRs | ADR-011 "Engine-only pivot" (`docs/02-adr/011-engine-only-pivot.md`); ADR-012 "Python reference oracle" (`docs/02-adr/012-python-reference-oracle.md`); ADR-013 "Feeder-equivalency target: the season level, with no seed" (`docs/02-adr/013-feeder-target-season-level.md`), Proposed, which binds once the owner accepts it (DR-D19). All three are created by P0-01. |
-| Decision status | This consolidation adopts the structural decisions DR-A1 to DR-A12. The owner ratified them on 2026-10-08 in the decision interview (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and names them again in the P0-01 merge comment, with two exceptions: DR-A3 keeps the existing default until its follow-up ADR (only that ADR's direction is ratified), and DR-A10's licence ruling is still to be posted by the owner. The same interview (2026-10-08 and 2026-10-09) settled most DR-B, DR-C and DR-D items in full or in part, and a settled clause is cited plainly as "(DR-xx)". A clause that still relies on an unsettled decision, or on the unsettled part of one, is tagged "(proposed — DR-xx)" when a default is proposed and "(open — DR-xx)" when none is. Neither is settled. DR-D9 and DR-D10 were not asked. DR-D31 was ratified on 2026-10-08 (option 1; implemented by oracle correction-ledger entry L0, §1.7). On 2026-10-14 the owner settled further parts of DR-D14 and DR-D17, decided the new DR-D32 and chose DR-D19's equivalency target (`docs/06-sessions/2026-10-14-P0-01.md`); that choice reverses DR-D19's 2026-10-09 decision in part and binds once the owner accepts ADR-013 (Proposed). A work package that depends on an unsettled item or part is not Ready until the owner settles it (§8.16.1). The register is `docs/00-meta/decision-register.md`; Appendix F lists the open items. |
+| Governing ADRs | ADR-011 "Engine-only pivot" (`docs/02-adr/011-engine-only-pivot.md`); ADR-012 "Python reference oracle" (`docs/02-adr/012-python-reference-oracle.md`); ADR-013 "Feeder-equivalency target: the season level, with no seed" (`docs/02-adr/013-feeder-target-season-level.md`; DR-D19). All three are created by P0-01, and the owner accepted them on 2026-10-15 (PR #4 comment 6185953773). |
+| Decision status | This consolidation adopts the structural decisions DR-A1 to DR-A12. The owner ratified them on 2026-10-08 in the decision interview (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`) and named them again in the P0-01 merge review on 2026-10-15 (PR #4 comment 6185953773), with two exceptions: DR-A3 keeps the existing default until its follow-up ADR (only that ADR's direction is ratified), and DR-A10 was settled by the Data/Licensing owner's licence ruling of 2026-10-15, option 1 (`MIT OR Apache-2.0`; PR #4 comment 6185953773 as edited by the owner on 2026-10-15). The same interview (2026-10-08 and 2026-10-09) settled most DR-B, DR-C and DR-D items in full or in part, and a settled clause is cited plainly as "(DR-xx)". A clause that still relies on an unsettled decision, or on the unsettled part of one, is tagged "(proposed — DR-xx)" when a default is proposed and "(open — DR-xx)" when none is. Neither is settled. DR-D9 and DR-D10 were not asked. DR-D31 was ratified on 2026-10-08 (option 1; implemented by oracle correction-ledger entry L0, §1.7). On 2026-10-14 the owner settled further parts of DR-D14 and DR-D17, decided the new DR-D32 and chose DR-D19's equivalency target (`docs/06-sessions/2026-10-14-P0-01.md`); that choice reverses DR-D19's 2026-10-09 decision in part and binds through ADR-013, which the owner accepted on 2026-10-15. A work package that depends on an unsettled item or part is not Ready until the owner settles it (§8.16.1). The register is `docs/00-meta/decision-register.md`; Appendix F lists the open items. |
 | Known issues | `docs/00-meta/known-issues.md` (IDs `KI-…`). The defects recorded there are never required engine behaviour. |
 | Superseded-section lookup | Appendix H maps every superseded section to its disposition in this document. |
 
@@ -368,8 +368,8 @@ repository with them. The constraints that remain are:
       additional matrix job (DR-A3, §8.19). `just verify` is the Linux smoke check.
     - The Python oracle CI job (`reference-oracle`) is Linux-only and sits outside the frozen
       verify chain (§1.7, §8.19). It becomes a required status check for every pull request to
-      `main` once the owner applies that setting in branch protection after P0-01 merges; until
-      then it is not a required check (DR-D30).
+      `main` once the owner applies that setting in branch protection, due now that P0-01 has
+      merged; until the setting is applied, it is not a required check (DR-D30).
 
 The crate set that realizes these constraints is defined in §8.1 (DR-A8).
 
@@ -512,7 +512,7 @@ roles are currently held by the repository owner.
 | Product/architecture owner | Resolves requirements and architecture conflicts, approves ADRs, owns scope. Ratifies DR-A decisions and owns the oracle retirement review (DR-A12). |
 | Statistical owner | Approves model equations, priors, evaluation design, calibration changes, and model-promotion criteria. Also approves oracle correction-ledger entries (DR-B1; the ingest-bias entry jointly with the Data/Licensing owner), the parity tolerance table (DR-B3), the synthetic world (DR-B4), and every accepted divergence between the engine and the reference oracle. |
 | Data/licensing owner | Approves provider access methods, retention, attribution, and benchmark import rights. Rules on the licence for `reference/python/` (DR-A10) and on fixture licensing (DR-A11). |
-| Security/release owner | Approves agent permissions, secret handling, dependencies, signing, release-artifact publication, and releases. Approves CI-surface changes such as third-party actions for the oracle job, and changes to the authoritative verification platform (DR-A3). Decides, with the product/architecture owner, whether the oracle job is a required merge check (DR-D30: required for every pull request to `main`, applied in branch protection after P0-01 merges). |
+| Security/release owner | Approves agent permissions, secret handling, dependencies, signing, release-artifact publication, and releases. Approves CI-surface changes such as third-party actions for the oracle job, and changes to the authoritative verification platform (DR-A3). Decides, with the product/architecture owner, whether the oracle job is a required merge check (DR-D30: required for every pull request to `main`; P0-01 has merged, and the owner now applies the setting in branch protection). |
 | Merge reviewer | Reviews the final diff and evidence bundle. The implementation agent cannot be the sole reviewer. |
 
 The agent reviewer roles, including the reference-parity reviewer, are defined in §8.18. They support
@@ -774,20 +774,22 @@ survives only inside the evaluation lineup simulation, the retained start/sit me
   the job is expected green on ordinary `ubuntu-latest` runners. A different platform is a new ledger
   entry; no tolerance is loosened and no test is skipped.
 - The job becomes a required status check for every pull request to `main` once the owner applies
-  that setting in branch protection after P0-01 merges; no workflow edit is needed. Until then it is
-  not a required check (DR-D30). It never becomes the merge-authoritative chain, which stays Windows
-  until the DR-A3 follow-up ADR.
+  that setting in branch protection, due now that P0-01 has merged; no workflow edit is needed. Until
+  the setting is applied, it is not a required check (DR-D30). It never becomes the merge-authoritative
+  chain, which stays Windows until the DR-A3 follow-up ADR.
 - Wall-clock performance assertions in the oracle suite are non-gating and are listed in
   `PARITY.md` §(f).
 
 **Never shipped.** The oracle is outside every engine build, binary and release artifact (§1.1
 item 8). It is never a runtime input.
 
-**Licence.** Pending DR-A10, which needs an owner ruling. cautious-nevermore carried no licence file.
-The owner chose its content on 2026-10-08 (option 1): the ruling brings `reference/python/` under
-`MIT OR Apache-2.0`, and the owner will post it on the pivot pull request (PR #4) in the same form as
-GRID-Engine PR #1 comment 5357318508. Until that ruling exists, its licence status is "pending",
-and the directory is not treated as licensed under the repository's LICENSE files.
+**Licence** (DR-A10). cautious-nevermore carried no licence file. The Data/Licensing owner ruled on
+2026-10-15, as chosen on 2026-10-08 (option 1): the code imported into `reference/python/` at
+`59bce1d` is licensed under the repository's `MIT OR Apache-2.0` terms (ADR-001 D4), as are later
+corrections made to it under `PARITY.md`, so `LICENSE-MIT` and `LICENSE-APACHE` cover them. The ruling
+is PR #4 comment 6185953773 as edited by the owner on 2026-10-15
+(`docs/06-sessions/2026-10-15-P0-02.md`). It covers code only: real third-party data stays excluded
+(DR-A11), and so does `backend/db/data/coaching_changes_2025.json` as data (KI-NEW-D1).
 
 **Data restrictions.**
 
@@ -1012,12 +1014,11 @@ it as the base of his windowed prior in every season, and across seasons its wei
 through window evidence (§2.4; DR-D17). A wide prior gives high early gain and fast washout (§6.5;
 `docs/05-model-specs/state-space-kalman.md`; prior-based, look-ahead-free initialization, DR-C10).
 The prior is expressed on the filter's own talent scale, the prior never trains on itself, and no
-separate scale map is used (DR-D19). As decided on 2026-10-09, the feeder translation is fitted
-directly against end-of-season (smoothed) talent computed without the college prior. ADR-013
-(Proposed) replaces that target with the season level of each build's own window evidence (§6.5),
-reversing DR-D19's 2026-10-09 decision in part. It binds once the owner accepts it; until then the
-2026-10-09 text stands. The initial form and scheme-fit variances of prior-seeded players are open
-(open — DR-D19; `docs/05-model-specs/cross-league-priors.md`).
+separate scale map is used (DR-D19). As decided on 2026-10-09, the feeder translation was to be
+fitted directly against end-of-season (smoothed) talent computed without the college prior. ADR-013
+(accepted on 2026-10-15) replaces that target with the season level of each build's own window
+evidence (§6.5), reversing DR-D19's 2026-10-09 decision in part. The initial form and scheme-fit
+variances of prior-seeded players are open (open — DR-D19; `docs/05-model-specs/cross-league-priors.md`).
 
 The v1 feeder and prior design (DR-C9; the parts still open are listed in §6.5):
 
@@ -1970,10 +1971,10 @@ _Source: alpha-spec §4.6 last two rules, §7.6, §10.3, §14 (superseded) — c
    fetched files (`reference/python/tools/investigations/fetch_realdata.py`; critic G-2).
 4. Fixtures derived from licensed or private material are sanitized and reviewed before commit (§4.6).
 
-**Oracle code license** (DR-A10, needs owner action). The owner chose the ruling in the decision
-interview (2026-10-08): it brings the CN-derived code under `reference/python/` under
-`MIT OR Apache-2.0`, in the same form as PR #1 comment 5357318508, and the owner posts it personally
-on the pivot pull request (PR #4). Until that comment exists, its licence status is "pending" (§1.7).
+**Oracle code license** (DR-A10). The Data/Licensing owner ruled on 2026-10-15, as chosen in the
+decision interview (2026-10-08, option 1): the CN-derived code under `reference/python/` is under the
+repository's `MIT OR Apache-2.0` terms, as are later corrections made to it under `PARITY.md`
+(PR #4 comment 6185953773 as edited by the owner on 2026-10-15; §1.7).
 Real third-party data is excluded from that ruling.
 
 **CFBD and other providers.** Terms, retention and attribution are recorded in each provider's
@@ -3034,8 +3035,8 @@ The time index throughout is the NFL game-week `(season, week)` (§1.2, §8.6.5)
   - retrospective smoothed talent, which later seasons use as a retrospective feature (§11.6). It is
     never window evidence for a Kalman prior (DR-D17). A stored production track never supplies a
     feeder equivalency target: each build computes its own targets from its own window (§6.5;
-    DR-D19, DR-D32). Under ADR-013 (Proposed), once the owner accepts it, they are season-level
-    targets with known variance; until then DR-D19's 2026-10-09 text stands.
+    DR-D19, DR-D32). Under ADR-013, accepted on 2026-10-15, they are season-level targets with
+    known variance.
 - **Model spec.** `docs/05-model-specs/state-space-kalman.md`.
 - **Oracle.** `grid/statespace.py`: `kalman_two_component` (batch, with RTS), `kalman_step`
   (incremental), `detect_changepoints`, `KalmanState`, `SSParams`.
@@ -3141,9 +3142,10 @@ The time index throughout is the NFL game-week `(season, week)` (§1.2, §8.6.5)
   - prior variance is data-derived (KI-NEW-P1, KI-NEW-P4);
   - the age and draft step functions are not ported (KI-#49);
   - the prior is expressed on the scale of the state it initializes (DR-D19). As decided on
-    2026-10-09, the feeder translation is fitted against the tracker's own end-of-season smoothed
-    talent, computed without the college prior. Under ADR-013 (Proposed), once the owner accepts it,
-    each build fits it against its own window's season-level targets with their known variance (§6.5).
+    2026-10-09, the feeder translation was to be fitted against the tracker's own end-of-season
+    smoothed talent, computed without the college prior. ADR-013, accepted on 2026-10-15, replaces
+    that target: each build fits it against its own window's season-level targets with their known
+    variance (§6.5).
 
 **The corrected GRID DAG.** This DAG replaces the superseded final-build-spec §12.1 topology for the GRID
 stages. It reads V(s) → dV → {offseason RAPM → priors/features; weekly Layer-1′ credit} → Kalman →
@@ -3687,7 +3689,7 @@ Requirements:
   normal–normal as the alternative (proposed — DR-C5). For the windowed Kalman prior, the form is the
   normal–normal posterior with recency-discounted evidence (§6.5; DR-D17). `state-space-kalman.md` names
   the estimator of its class hyperparameters before the builder is implemented (open — DR-C5).
-  Under ADR-013 (Proposed), `cross-league-priors.md` names the estimator of the feeder equivalency's
+  Under ADR-013, `cross-league-priors.md` names the estimator of the feeder equivalency's
   line and residual variance, including the weighting, before P1-12 implements the fit
   (open — DR-C5).
 - **Shrinkage strengths are estimated.** The oracle's volume shrinkage `w = g / (g + k_shrink)` has the same
@@ -3861,7 +3863,7 @@ V(s) needs only `Regressor`.
 
 ### 6.5 NCAA and rookie prior formulation
 
-_Source: alpha-spec §6.3 (superseded) — kept verbatim; new (GRID: feeder-SV equivalency as one translated component and the Kalman hand-off; docs/05-model-specs/cross-league-priors.md §1, §4–§6, §9; docs/05-model-specs/state-space-kalman.md §6.5; reference/python/backend/grid/priors.py; critic §2 X-18, §3 C-9; reconcile-spec-first R40; DR-C6, DR-C10; proposed — DR-C9; DR-D17, DR-D19, DR-D32, DR-D9; ADR-013, proposed)._
+_Source: alpha-spec §6.3 (superseded) — kept verbatim; new (GRID: feeder-SV equivalency as one translated component and the Kalman hand-off; docs/05-model-specs/cross-league-priors.md §1, §4–§6, §9; docs/05-model-specs/state-space-kalman.md §6.5; reference/python/backend/grid/priors.py; critic §2 X-18, §3 C-9; reconcile-spec-first R40; DR-C6, DR-C10; proposed — DR-C9; DR-D17, DR-D19, DR-D32, DR-D9; ADR-013)._
 
 alpha-spec §6.3 (superseded), kept verbatim:
 
@@ -3910,7 +3912,7 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
   usage and share features, under the Layer C model spec (`docs/05-model-specs/projection-stack.md`).
 - **Prior variance.** `σ²_prior` is the residual variance of the equivalency. It is widened for undrafted,
   transferred, position-converted or identity-uncertain players. It is never a hand-set constant
-  (KI-NEW-P1). Under ADR-013 (Proposed), once the owner accepts it, the residual variance of the
+  (KI-NEW-P1). Under ADR-013, accepted on 2026-10-15, the residual variance of the
   equivalency is `σ̂²_u`, the between-player variance of the targets around the line, net of their
   known sampling variance (**Two builds**, below), and the widening applies to it. Whether `σ²_prior`
   also carries the line's parameter uncertainty stays open (open — DR-C9).
@@ -3939,13 +3941,13 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
   a target computed without the college prior, so that the prior never trains on itself. There is no
   separate scale map (DR-D19).
   - **Target as decided on 2026-10-09.** End-of-season smoothed talent computed without the college
-    prior (DR-D19). This text stands and governs until ADR-013 binds.
-  - **Target under ADR-013 (Proposed).** The season level of the build's own window evidence, with
+    prior (DR-D19). ADR-013, accepted on 2026-10-15, replaces it.
+  - **Target under ADR-013.** The season level of the build's own window evidence, with
     its known variance, and no prior of any kind in the target (**Two builds**, below). ADR-013
     records the owner's 2026-10-14 answer (`docs/06-sessions/2026-10-14-P0-01.md`, answer 10). It
     reverses DR-D19's 2026-10-09 decision in part, because the estimand changes from end-of-season
     smoothed talent to the season level. It keeps the Kalman credit scale and the absence of a
-    separate scale map, and binds once the owner accepts it, for example in the P0-01 merge comment.
+    separate scale map. The owner accepted it on 2026-10-15 (PR #4 comment 6185953773), and it governs.
 - **Players without a feeder prior** take `theta_position_draft_prior` as their base: a population prior
   `N(m, σ²_c)` for each class `c = (position class, role)`, estimated at the season boundary on the
   window from the window evidence below (DR-D17). Its covariates stay open (open — DR-C9). Every
@@ -3972,7 +3974,7 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
     on every play of the build's window, held-out folds included (DR-D17). Only the context model and
     the opponent feature are cross-fitted, on the build's window with the DR-D14 fold design; the
     opponent feature comes from a team-level ridge on `dV` with one offence and one defence intercept
-    per (team, season) and no market rows. Only the prior builder and, under ADR-013 (Proposed), the
+    per (team, season) and no market rows. Only the prior builder and, under ADR-013, the
     same build's feeder equivalency use this window frame; Layer 1's own offseason frame stays a
     single season (DR-D14). No RAPM rating, offseason Layer-1 credit or retrospective smoothed talent
     enters. Apart from season `S`'s frozen V(s), the input the two builds share (§2.4), no NFL data
@@ -4036,7 +4038,7 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
 - exposure weighting of the equivalency;
 - whether `σ²_prior` also carries the equivalency line's parameter uncertainty, and the variance of
   the `q` blend, which must be defined together with the equivalency target, the influence cap and
-  exposure weighting (DR-D19; ADR-013, Proposed).
+  exposure weighting (DR-D19; ADR-013).
 
 **Lifecycle** (`cross-league-priors.md` §6.2):
 
@@ -4065,8 +4067,7 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
   - A track whose only window evidence is in `S−3` takes a windowed preseason prior and, as its
     in-season prior, the base of the `S−2..S−1` build unchanged.
   - Both priors are persisted with their window.
-  - **Equivalency targets** (DR-D19; ADR-013, Proposed). ADR-013 binds once the owner accepts it;
-    until then DR-D19's 2026-10-09 text stands and governs. In each build `b`, the targets come only
+  - **Equivalency targets** (DR-D19; ADR-013). In each build `b`, the targets come only
     from `b`'s own prior-builder records (`layer1-credit.md` §4.8.2) and `b`'s own `r_c` and `ω_c`,
     read from `b`'s hyperparameter record; `b`'s population prior `N(m, σ²_c)` does not enter the
     target. There is one target per feeder-linked, non-ambiguous (player, role) track
@@ -4085,7 +4086,7 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
 
     `v_i` is known. `σ̂²_u` is the residual variance of the equivalency (**Prior variance**, above).
     The estimator, including the weighting, is named in `cross-league-priors.md` before P1-12
-    implements the fit (open — DR-C5). Once ADR-013 binds, both §12.3 canaries can hold for
+    implements the fit (open — DR-C5). Under ADR-013, both §12.3 canaries can hold for
     feeder-linked tracks.
 
 **Rules.**
@@ -4100,14 +4101,13 @@ stays open). The equations are in `docs/05-model-specs/cross-league-priors.md` �
 - **Readiness.** DR-C9 is ratified in part. Its open parts block P1-04's play-by-play scope (the
   college-rating source) and P1-07 (`q` and the variance of the `q` blend, the position/draft
   baseline, the influence cap, and whether `σ²_prior` also carries the equivalency line's parameter
-  uncertainty). P1-07 also waits on DR-D9, and assembles `σ²_prior` only after the owner's ruling on
-  ADR-013 (DR-D19). `P0_form`, `P0_scheme` and `P0` for window-restarted tracks stay open until
+  uncertainty). P1-07 also waits on DR-D9, and assembles `σ²_prior` under ADR-013, accepted on
+  2026-10-15 (DR-D19). `P0_form`, `P0_scheme` and `P0` for window-restarted tracks stay open until
   P1-12's washout and calibration measurements set them (DR-D19; §8.16.1, Appendix F). P1-12
   implements the windowed-prior builder only after `state-space-kalman.md` names its estimator
   (open — DR-C5) and the minimum class size and the degenerate-pool thresholds are set
-  (open — DR-D17). It implements the feeder equivalency only after the owner's ruling on ADR-013
-  (Proposed; on rejection, the target goes to a new decision request, which the fit then waits on)
-  and once the equivalency's estimator (open — DR-C5), class and minimum shared-player count
+  (open — DR-D17). It implements the feeder equivalency, under ADR-013 (accepted 2026-10-15), only
+  once the equivalency's estimator (open — DR-C5), class and minimum shared-player count
   (open — DR-D19, DR-C9; KI-G8) are set. It tunes nothing before the `κ_c` and `λ_c` tuning
   criterion is pre-registered (open — DR-D17). Real-data promotion of the season-boundary priors
   waits on P1-12's own measurements (open — DR-D17, DR-D32).
@@ -5094,9 +5094,9 @@ status. A proposed default is not a ratification.
   - It uses the runner image's tool-cache CPython 3.11 and the pinned lock, and fails if that
     interpreter is absent (§8.19). A setup action needs Security/Release owner approval.
   - It is outside the frozen verify chain, whose Windows run stays merge-authoritative until the DR-A3
-    follow-up ADR is accepted. It is not a required check today; it becomes a required status check for
-    every PR to `main` once the owner applies that setting in GitHub branch protection after P0-01
-    merges (DR-D30). No workflow edit is needed.
+    follow-up ADR is accepted. It becomes a required status check for every PR to `main` once the owner
+    applies that setting in GitHub branch protection, due now that P0-01 has merged; until the setting
+    is applied, it is not a required check (DR-D30). No workflow edit is needed.
   - It never runs on Windows: the oracle's golden Layer C and its cache-TTL test fail there. Linux is
     not sufficient on its own, because Layer C moves with the OpenBLAS kernel (KI-NEW-Z78). The job pins
     `OPENBLAS_CORETYPE=Haswell`, and the oracle's pytest plugin `tools/pytest_platform_pin.py` enforces
@@ -6748,8 +6748,9 @@ A work package is ready for implementation only when:
   any DR it depends on is unratified, whether that DR appears in its "Must be ratified" or its
   "Also open" column of `docs/01-work-packages/README.md` (decision register, "How to ratify or
   override", step 5). The DR-A decisions adopted by P0-01 were ratified on 2026-10-08 in the
-  decision interview, and the owner's merge comment names them again; DR-A10's licence ruling is
-  still owed;
+  decision interview and named again in the owner's merge review on 2026-10-15
+  (PR #4 comment 6185953773), and DR-A10 was ruled the same day (that comment as edited by
+  the owner on 2026-10-15);
 - a package that implements a production model component has its model spec in
   `docs/05-model-specs/` approved by the statistical owner (§6.8);
 - a package that declares oracle parity targets has:
@@ -6974,8 +6975,9 @@ Rules for the `reference-oracle` job:
   entry. Tolerances are never loosened and tests are never skipped.
 - **Merge status** (DR-D30, overridden 2026-10-09). The job becomes a required status check for
   every pull request to `main`, not only for those that touch `reference/python/`, fixtures or
-  parity tests. The owner applies the setting in GitHub branch protection after the P0-01 pull
-  request (PR #4) merges; no workflow edit is needed. Until then it is not a required check.
+  parity tests. The P0-01 pull request (PR #4) merged on 2026-10-15 (`b819ae0`), and the owner now
+  applies the setting in GitHub branch protection; no workflow edit is needed. Until the setting is
+  applied, the job is not a required check.
 
 **Coverage required by the superseded orchestration list:**
 
@@ -7196,8 +7198,8 @@ is in §6.2 and its model spec, which govern.
 | 6. Layer-1 credit (offseason) and participation-free Layer-1′ credit (live) | Offseason Layer-1: week-grouped cross-fitting with fold-wise opponent ratings; the context model is chosen on recovery evidence and judged at C-L1 (`docs/05-model-specs/layer1-credit.md` §10.3). A defender missing from the fold's ratings is a typed failure. A defender with no defensive exposure in the fold's training plays, or a `no_data` rating there, contributes his RAPM prior mean to the opponent feature, counted and persisted, and no real-data run that used this substitute is promoted until its R-7 recovery check passes. The training rows stay as ratified and are compared with a nested out-of-fold design in the DR-C7 context-model comparison. Live Layer-1′: the observation is per role event (value per dropback, carry or target, with the event count setting precision), not per snap. It is not promoted until penalty-play handling and the snap-count source are settled and it has recovery evidence on the stat-vector world. RB/WR/TE credit is not promoted as an individual signal until its estimand is decided. | DR-B3 (C-L1), DR-C1, DR-C7, DR-D14, DR-D15; open — DR-C7 (the context model, chosen on recovery evidence), DR-D13, DR-D14 (the R-7 check's rates, offsets, statistics, margins, pass rule and gate kind; the training-row comparison's statistics, margin, worlds and seed ensemble), DR-D15 (penalty plays, snap-count source, recovery evidence) |
 | 7. Fixed point | Dropped: GRID's fit is a single pass (rounds fixed at 1), with no Layer-1 credit fed back into the RAPM prior means. Feedback may return only by ADR with recovery evidence. How the parity fixtures treat the oracle's own three-round loop is a `rapm-attribution.md` matter; the engine does not implement the loop. | DR-D11 |
 | 8. State space `[talent, form, scheme_fit]` | Discount, interventions and "rust", changepoints: a changepoint flagged from week w's result takes effect from week w+1 only, and flags stay informational until `z_thresh` and its precision/recall gate are set. Filtered, one-step predictive, RTS and fixed-lag outputs; a did-not-play week's predictive is reported as not applicable. Weekly-credit observation with real exposure, one track per player and role, causal initialization, and state keyed by (season, week). At every season boundary, in production and in backtest replay, each filter restarts from the in-season prior built on S−2..S−1, and the preseason and week-1 forecast use the prior built on S−3..S−1. Each windowed prior is a recency-weighted pooled mean of window Layer-1′ residuals on a feeder or population base, fixed for the season. | DR-C3, DR-C6, DR-C10, DR-D1 (the record form), DR-D16, DR-D17, DR-D18, DR-D19, DR-D32; open — DR-C5 (the window-hyperparameter estimator), DR-D1 (the sources for real coaching resets), DR-D16 (the predictive's exact definition), DR-D17 (the `κ_c` and `λ_c` tuning criterion; the class thresholds), DR-D18 (`z_thresh` and the gate), DR-D19 (`P0_form`, `P0_scheme`; `P0` for window-restarted tracks) |
-| 9. Cross-league priors | NCAA only in v1. The equivalency is one translated component of the §6.5 prior. The oracle's hand-set age and draft step functions are not ported (KI-#49). The translation is on the Kalman credit scale, with no separate scale map, and no stored production track supplies its targets. As decided on 2026-10-09, it is fitted against the tracker's own end-of-season talent, computed without the college prior; under ADR-013 (Proposed), once the owner accepts it, each build fits it against its own window's season-level targets with their known variance, by a Fay–Herriot-type measurement-error regression. The feeder prior is the base of the player's windowed prior in every season, and the equivalency is estimated once per build, twice per boundary. | DR-C9 (NCAA only; the §6.5 form), DR-D17, DR-D19, DR-D32; ADR-013 (Proposed; the equivalency target); proposed — DR-C9 (the equivalency as the college rating); open — DR-C5 (the equivalency's estimator), DR-C9 (whether `σ²_prior` carries the line's parameter uncertainty), DR-D19 (`P0_form`, `P0_scheme`; with DR-C9, the equivalency's class and minimum shared players) |
-| Synthetic world | A Rust-native generator of the corrected world, in the `synth` crate. It is proven exact against the oracle's generative model by draw-tape replay, and statistically by Class D gates over a declared seed ensemble, on its median and a declared low quantile. | DR-A8 (ratified 2026-10-08 in the decision interview; to be named again in the merge comment); DR-B4, DR-D26, DR-D28; open — DR-D26 (the seed set, quantile and margins) |
+| 9. Cross-league priors | NCAA only in v1. The equivalency is one translated component of the §6.5 prior. The oracle's hand-set age and draft step functions are not ported (KI-#49). The translation is on the Kalman credit scale, with no separate scale map, and no stored production track supplies its targets. As decided on 2026-10-09, it was to be fitted against the tracker's own end-of-season talent, computed without the college prior; ADR-013, accepted on 2026-10-15, replaces that target: each build fits it against its own window's season-level targets with their known variance, by a Fay–Herriot-type measurement-error regression. The feeder prior is the base of the player's windowed prior in every season, and the equivalency is estimated once per build, twice per boundary. | DR-C9 (NCAA only; the §6.5 form), DR-D17, DR-D19, DR-D32; ADR-013 (the equivalency target); proposed — DR-C9 (the equivalency as the college rating); open — DR-C5 (the equivalency's estimator), DR-C9 (whether `σ²_prior` carries the line's parameter uncertainty), DR-D19 (`P0_form`, `P0_scheme`; with DR-C9, the equivalency's class and minimum shared players) |
+| Synthetic world | A Rust-native generator of the corrected world, in the `synth` crate. It is proven exact against the oracle's generative model by draw-tape replay, and statistically by Class D gates over a declared seed ensemble, on its median and a declared low quantile. | DR-A8 (ratified 2026-10-08 in the decision interview; named again in the merge review, PR #4 comment 6185953773); DR-B4, DR-D26, DR-D28; open — DR-D26 (the seed set, quantile and margins) |
 
 Requirements:
 
@@ -7360,7 +7362,8 @@ Engine notes:
   - `check-sqlx` passes;
   - the `reference-oracle` job regenerates every committed parity fixture without hash drift (DR-B2).
     That job becomes a required status check for every pull request once the owner applies the setting
-    in branch protection after P0-01 merges (DR-D30). It stays outside the frozen verify chain (§8.19).
+    in branch protection, due now that P0-01 has merged (DR-D30). It stays outside the frozen verify
+    chain (§8.19).
 - Every schema or model-semantic change has the required fresh-context and human review.
 - At least one complete Phase 1 vertical slice is rebuilt by a fresh Claude session using repository
   documentation alone, demonstrating that critical knowledge is not trapped in prior chat context.
@@ -7398,10 +7401,10 @@ Suffixed IDs such as `P1-12a` are not used, because the traceability guard resol
 
 ```text
 P1-00  Agent-ready repository, authority index, CI, fixtures, verify scripts
-       [review complete: PR #1 approved at round 4 with 0 blockers; lands with P0-01 (DR-A6)]
+       [review complete: PR #1 approved at round 4 with 0 blockers; landed with P0-01 (DR-A6)]
    ↓
 P0-01  Engine-only consolidation: ADR-011, ADR-012, ADR-013, this specification
-       [this change; done when merged]
+       [done: merged on 2026-10-15 as b819ae0]
    ↓
 P1-01  Domain IDs, time/as-of types (incl. publication timestamps), typed errors,
        engine public API + output-contract skeleton, oracle-fixture format +
@@ -7455,16 +7458,17 @@ still-open part that its register entry's "Blocks" field names. A DR with a scop
 gates only that scope: the scope is not Ready, and is not built or promoted, until the DR is
 ratified. DR-D14 and DR-D17, settled further in part on 2026-10-14, likewise gate only the still-open
 parts their "Blocks" fields name. DR-D19's 2026-10-14 part, a reversal in part recorded through
-ADR-013 (Proposed), adds to its "Blocks" field the owner's ruling on ADR-013, before P1-07 assembles
-`σ²_prior` and before P1-12 implements the feeder equivalency. DR-D32, raised and decided on
-2026-10-14, is not listed: it gates only the real-data promotion of the season-boundary priors,
-through P1-12's own measurements. The A-decisions adopted by P0-01 (DR-A1 to DR-A12 except DR-A3 and
-DR-A10) were ratified on 2026-10-08 in the decision interview and are named again in the owner's
-merge comment (Appendix F).
+ADR-013, added to its "Blocks" field the owner's ruling on ADR-013, before P1-07 assembles
+`σ²_prior` and before P1-12 implements the feeder equivalency. The owner accepted ADR-013 on
+2026-10-15, so that precondition is met. DR-D32, raised and decided on 2026-10-14, is not listed:
+it gates only the real-data promotion of the season-boundary priors, through P1-12's own
+measurements. The A-decisions adopted by P0-01 (DR-A1 to DR-A12 except DR-A3 and DR-A10) were
+ratified on 2026-10-08 in the decision interview and were named again in the owner's merge review
+on 2026-10-15 (PR #4 comment 6185953773; Appendix F).
 
 | WP | Scope (one line) | Parity targets (§7.12.7) | Must be ratified before Ready | Also open, or other preconditions |
 |---|---|---|---|---|
-| P0-01 | The consolidation itself. **Specification and decisions:** ADR-011, ADR-012, ADR-013 (Proposed; DR-D19); `engine-spec.md` and its mirror; the superseded specs archived verbatim; the registers, contracts, model specs and provider documents. **Repository:** `crates/ffi/`, `app/`, the Flutter toolchain pin, the FRB dependency and `test-ffi` removed; traceability regex extended to `P[0-9]-[0-9]{2}`; `check-evidence-claims.sh` generalized; `check-authority-sync.sh` retargeted to `engine-spec.md` and its mirror; R4-1/R4-2 guard fixes. **Oracle:** `reference/python/` imported with its manifest, ledger and patches P1/P2, correction-ledger entry L0 (the golden regenerated under the platform pin, with `tools/pytest_platform_pin.py`), plus the `reference-oracle` job. **Records:** session and archive imports. | No Rust parity. At import, the oracle's own suite passes on Linux (python-closure record, CPython 3.11.15). After ledger entry L0 its golden is frozen on CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and the suite passes there (446; KI-NEW-Z78 fixed). | DR-A1, DR-A2, DR-A4–DR-A9, DR-A11, DR-A12: adopted; ratified 2026-10-08 in the decision interview and to be named again in the owner's merge comment | DR-A10: the licence ruling (option 1, chosen 2026-10-08) must be recorded on the PR by the owner before merge. DR-A3: the default is kept; the follow-up ADR is due before P1-11, and its direction was ratified on 2026-10-08 (Linux authoritative, Windows an additional job). DR-D31 (raised by P0-01; ratified by the owner on 2026-10-08, option 1; implemented here as ledger entry L0): the `reference-oracle` job must be green on the final commit. No tolerance is loosened and no test is skipped. |
+| P0-01 | The consolidation itself. **Specification and decisions:** ADR-011, ADR-012, ADR-013 (DR-D19), all three accepted on 2026-10-15; `engine-spec.md` and its mirror; the superseded specs archived verbatim; the registers, contracts, model specs and provider documents. **Repository:** `crates/ffi/`, `app/`, the Flutter toolchain pin, the FRB dependency and `test-ffi` removed; traceability regex extended to `P[0-9]-[0-9]{2}`; `check-evidence-claims.sh` generalized; `check-authority-sync.sh` retargeted to `engine-spec.md` and its mirror; R4-1/R4-2 guard fixes. **Oracle:** `reference/python/` imported with its manifest, ledger and patches P1/P2, correction-ledger entry L0 (the golden regenerated under the platform pin, with `tools/pytest_platform_pin.py`), plus the `reference-oracle` job. **Records:** session and archive imports. | No Rust parity. At import, the oracle's own suite passes on Linux (python-closure record, CPython 3.11.15). After ledger entry L0 its golden is frozen on CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and the suite passes there (446; KI-NEW-Z78 fixed). | DR-A1, DR-A2, DR-A4–DR-A9, DR-A11, DR-A12: adopted; ratified 2026-10-08 in the decision interview and named again in the owner's merge review (PR #4 comment 6185953773) | DR-A10: ruled 2026-10-15, option 1 (`MIT OR Apache-2.0`, chosen 2026-10-08), in PR #4 comment 6185953773 as edited by the owner on 2026-10-15. DR-A3: the default is kept; the follow-up ADR is due before P1-11, and its direction was ratified on 2026-10-08 (Linux authoritative, Windows an additional job). DR-D31 (raised by P0-01; ratified by the owner on 2026-10-08, option 1; implemented here as ledger entry L0): the `reference-oracle` job must be green on the final commit. No tolerance is loosened and no test is skipped. |
 | P1-01 | Domain IDs, the `AsOf` type with publication-lag axis, typed errors; library API and output-contract skeleton; the `domain` dependency boundary for serializable DTOs (an ADR; §8.1 rule 5); oracle-fixture format, synthetic-fixture loader and parity-harness skeleton; `application` → `pipeline` plus `grid-cli` and `synth` skeletons; agent definitions | Committed canonical synthetic fixtures load hash-identically (`data_adapters.py` contract invariants) | DR-A2, DR-A8, DR-A11 (ratified 2026-10-08); DR-B1, DR-B2, DR-B3, DR-C4 | DR-D7; DR-D8; DR-D29 |
 | P1-02 | §8.5 schema groups including the GRID state group; migrations; durable jobs with the full job-type enumeration (§8.10); raw-data, version and artifact-manifest primitives; atomic writes; production pointers | None. The oracle's `.npz`, joblib and Parquet caches are not ported. Corrupt persisted state is a typed failure (§7.12.6). | DR-B6, DR-C15 | — |
 | P1-03 | nflverse provider contracts and raw/normalized ingestion; plays-contract builder; official labels (§4.7); fetch cap and offline replay; per-dataset publication rules; the Phase 1 manual availability override import (§4.1.2, §9.2.2) | Behavioural only: the oracle loader and adapter cases on synthetic nflverse-shaped toy frames, not parity fixtures. KI-NEW-I1 to KI-NEW-I5 and KI-NEW-V0a to KI-NEW-V0d are not reproduced. | DR-A11, DR-C12, DR-C13, DR-C14 | DR-D15 (the involvement-roles field only; KI-NEW-Z50); `docs/04-providers/nflverse/access-and-license.md` (draft exists; per-dataset terms await Data/Licensing verification); a declared publication-lag rule for every dataset (§4.5); `docs/04-providers/availability/` (planned; created by this package) before the override import is built (§4.6); before Layer-1′ consumes snap counts, a snap-count provider contract with a PFR → GSIS crosswalk and a licence ruling (KI-NEW-Z50) |
@@ -7482,10 +7486,11 @@ merge comment (Appendix F).
 on 2026-10-09: EPA-type features come from GRID `dV` only, permanently; nflverse `ep` and `epa` never
 enter features, and only an ADR reopens the question (§11.6). DR-D30 (overridden 2026-10-09: always
 required) makes the `reference-oracle` job a required status check for every pull request; the owner
-applies that setting in branch protection after P0-01 merges (§8.19). DR-D31, which decided how that
-job's golden master reproduces on CI hardware, was ratified by the owner on 2026-10-08 (option 1) and
-implemented in P0-01 as correction-ledger entry L0; it blocks no package any more, and the job is
-expected green. P1-12's oracle-exported parity fixtures are made under the same platform pin (above).
+applies that setting in branch protection, due now that P0-01 has merged (§8.19). DR-D31, which
+decided how that job's golden master reproduces on CI hardware, was ratified by the owner on
+2026-10-08 (option 1) and implemented in P0-01 as correction-ledger entry L0; it blocks no package
+any more, and the job is expected green. P1-12's oracle-exported parity fixtures are made under the
+same platform pin (above).
 
 **P1-12 internal order.** P1-12 SHOULD be split into several packages in dependency order (consolidation
 inventory `reconcile-code-first.md` §7.3):
@@ -7859,7 +7864,7 @@ ensemble weight like any other feature (§6.6). The producing components are spe
 | Situation splits: usage and dV efficiency inside the canonical situation masks (for example `red_zone`, `passing_downs`, `two_minute`, `goal_line`); WR situational features use the separate `goal_line_wr` mask | Component 2 | live | Same eligibility as the underlying statistics. `two_minute` exists only when the plays contract carries `half_seconds_remaining`. | Layer C opportunity (§11.2 red-zone, two-minute and third-down usage); Layer D | DR-C13 |
 | Matchup `E_def`: the opposing defense's gauge-invariant aggregate effect. The matchup grade is `+E_def`, so higher means tougher, and the sign convention is stated in the output. | Component 5. In the live tier, the team-level defensive effect from Component 4's team-level ridge on `dV` stands in, because there is no participation (§6.3). In the offseason tier it is built from the defender ratings. | live (team-level); offseason (player-level) | The opponent's games `≤ W−1`. Market rows only at lock. | Layer E | DR-B5. The oracle's inverted sign (KI-NEW-A2) is not reproduced. |
 | Market net-strength anchor: team net strength `E_off + E_def`, reconciled to the spread and total at lock | Component 4 (Layer 3) | live | Only a line observed before the applicable lock; never a closing line (§4.3). Historical backtests treat it as unavailable, with a missingness indicator, until a timestamped pre-lock source is approved. | Layer B team environment (§11.1 spread and total) | DR-B5; open — DR-D10, DR-D2 |
-| Feeder prior mean, prior variance and remaining prior weight | Component 9 with the §6.5 prior assembly. The remaining weight is computed exactly by linearity (`cross-league-priors.md` §4.4). | offseason (prior); live (remaining weight, through the filter gain) | College data as of the projection. Static metadata MAY predate the window (§2.4). | the §11.5 family; the state-space `x0`/`P0` | DR-C9 (NCAA only; the §6.5 form), DR-C10, DR-D19; ADR-013 (Proposed; the equivalency target); proposed — DR-C9 (the equivalency as the college rating); open — DR-C5 (the equivalency's estimator), DR-D19 (`P0_form`, `P0_scheme`; with DR-C9, the equivalency's class and minimum shared players), DR-D9 |
+| Feeder prior mean, prior variance and remaining prior weight | Component 9 with the §6.5 prior assembly. The remaining weight is computed exactly by linearity (`cross-league-priors.md` §4.4). | offseason (prior); live (remaining weight, through the filter gain) | College data as of the projection. Static metadata MAY predate the window (§2.4). | the §11.5 family; the state-space `x0`/`P0` | DR-C9 (NCAA only; the §6.5 form), DR-C10, DR-D19; ADR-013 (the equivalency target); proposed — DR-C9 (the equivalency as the college rating); open — DR-C5 (the equivalency's estimator), DR-D19 (`P0_form`, `P0_scheme`; with DR-C9, the equivalency's class and minimum shared players), DR-D9 |
 
 Rules for every GRID-derived feature:
 
@@ -8053,8 +8058,8 @@ canary that proves the guard is not vacuous.
 - Apart from the model version's learned hyperparameters (`κ_c`, `λ_c` and the `SSParams`),
   pre-window data reaches neither season-boundary prior; with the model version held fixed, changing
   any NFL data from before `S−3`, static metadata excepted, leaves both priors bit-identical (DR-D32).
-- For a track with a feeder prior, both canaries can hold once the owner accepts ADR-013 (Proposed):
-  each build's DR-D19 targets then come only from its own prior-builder records, and a stored
+- For a track with a feeder prior, both canaries can hold under ADR-013 (accepted 2026-10-15):
+  each build's DR-D19 targets come only from its own prior-builder records, and a stored
   production track never supplies one (§6.5; DR-D19).
 
 Oracle parity sources: `backend/validation/asof.py` (the as-of type, the tripwire frame and the leakage
@@ -8231,8 +8236,8 @@ authoritative if local and CI results differ.
 
 The merge-authoritative CI is set by DR-A3 (§8.19). The reference-oracle job is Linux-only, sits outside
 the frozen verify chain, and does not by itself authorize a merge. It becomes a required status check
-for every pull request once the owner applies that setting in branch protection after P0-01 merges
-(DR-D30).
+for every pull request once the owner applies that setting in branch protection, due now that P0-01
+has merged (DR-D30).
 
 ### 12.9 Independent review checklist
 
@@ -8580,7 +8585,7 @@ season (Appendix A.2). Its mitigation stands until the Data/Licensing owner re-v
 | Booster parity is only statistical. V(s) and the Layer-1 context model cannot be bit-matched, and the Class C criterion first proposed under DR-B3 is unattainable even by the oracle against itself under a seed change (KI-NEW-Z74). | Stage-specific criteria that replace Class C, pre-registered before any Rust result: C-V for V(s) (DR-D27) and C-L1 for the Layer-1 context model (DR-B3; `layer1-credit.md` §10.3). Stage-isolated injection of oracle `dV` and credit for everything downstream (§7.12.4). A deterministic in-house V(s) estimator (DR-C7). End-to-end correctness carried by the Class D recovery gates over a seed ensemble (DR-D26). |
 | Proposed defaults are treated as settled decisions | Every B, C and D default not yet ratified, and every still-open part that has a recommended default, is tagged "(proposed — DR-xx)"; every open question, and every still-open part with no default, "(open — DR-xx)"; a settled decision is cited plainly "(DR-xx)". The readiness rule (§8.16.1) and Appendix F. The register is authoritative for status, and only the named owner role changes it. Appendix D item 15. |
 | Label bias from play-by-play reconstruction: sacks counted as attempts, non-offensive TDs credited, fumbles mis-attributed, postseason rows included (KI-NEW-I1 to KI-NEW-I4, KI-NEW-V0a) | Official nflverse weekly stats are the labels, REG weeks only, two-point conversions included (§4.7; DR-C12). The engine's play-by-play rebuild is reconciled against them for every player-week: the official figure always wins, every disagreement is recorded, and disagreements above a threshold set in the P1-03 ingestion spec are flagged for review. The rebuild never changes a label. |
-| The Python reference rots or blocks the Rust build | The oracle is isolated under `reference/python/` with pinned requirements and a lock file. Its CI job is Linux-only and sits outside the verify chain. It becomes a required status check for every PR to `main` once the owner applies that branch-protection setting after P0-01 merges (DR-D30). No cargo dependency on it (§1.1 item 8). An explicit retirement review (P2-09; DR-A12). |
+| The Python reference rots or blocks the Rust build | The oracle is isolated under `reference/python/` with pinned requirements and a lock file. Its CI job is Linux-only and sits outside the verify chain. It becomes a required status check for every PR to `main` once the owner applies that branch-protection setting, due now that P0-01 has merged (DR-D30). No cargo dependency on it (§1.1 item 8). An explicit retirement review (P2-09; DR-A12). |
 | Scope creep back into application features (UI, league sync, draft or trade tools, rankings outputs) | The non-goals of §16. The consumer-agnostic principle (§1.6): consumers adapt to the versioned output contract (§5.5), and the engine never changes shape for them. Application layers stay in Seismic-Fate/cautious-nevermore. The port scope excludes application modules (ADR-011). A new output needs a work package and an output-contract change approved by the Product/Architecture owner. |
 
 ---
@@ -9075,11 +9080,12 @@ decision's question, options, recommended default, status and blocked packages. 
 named in an entry changes its status (register, "How to ratify or override").
 
 - **A-decisions.** Ten of the twelve were adopted by P0-01 and ratified on 2026-10-08 in the owner's
-  decision interview (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the owner names them
-  again in the P0-01 merge comment. The other two are not settled: DR-A3 keeps the default (Windows
-  authoritative) until a follow-up ADR, whose direction is ratified (Linux authoritative, Windows as an
-  additional job), and for DR-A10 the owner chose option 1 but must still post the licence ruling on
-  the pull request.
+  decision interview (`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the owner named them
+  again in the P0-01 merge review on 2026-10-15 (PR #4 comment 6185953773). DR-A3 is not settled: it
+  keeps the default (Windows authoritative) until a follow-up ADR, whose direction is ratified (Linux
+  authoritative, Windows as an additional job). DR-A10 was ruled on 2026-10-15: option 1, chosen on
+  2026-10-08, puts the code in `reference/python/` under `MIT OR Apache-2.0` (PR #4 comment 6185953773
+  as edited by the owner on 2026-10-15; `docs/06-sessions/2026-10-15-P0-02.md`).
 - **B-, C- and D-decisions** were settled in the same interview (2026-10-08 and 2026-10-09), in full or
   in part, with five exceptions: DR-D2, DR-D3 and DR-D13 stay open with their interim rules confirmed,
   and DR-D9 and DR-D10 were not asked because they need real-data measurements first. The owner
@@ -9088,7 +9094,7 @@ named in an entry changes its status (register, "How to ratify or override").
   (2026-10-08, option 1; implemented in P0-01 as ledger entry L0). On 2026-10-14 the owner settled
   further parts of DR-D14 and DR-D17, decided the new DR-D32 and chose DR-D19's equivalency target
   (`docs/06-sessions/2026-10-14-P0-01.md`). That choice reverses DR-D19's 2026-10-09 decision in part
-  and binds once the owner accepts ADR-013 (Proposed).
+  and binds through ADR-013, which the owner accepted on 2026-10-15 (PR #4 comment 6185953773).
 - **Tags.** Text that relies on a settled decision cites it plainly, "(DR-xx)". Text that relies on an
   unratified default, or on a still-open part that has a recommended default, keeps the tag
   "(proposed — DR-xx)". Text that relies on an open entry's interim rule, or on a still-open part with
@@ -9106,11 +9112,11 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-A3 | Which CI platform is authoritative for merge and release? | Product/Architecture, Security/Release | Keep `windows-authoritative` in the pivot; a separate ADR then makes Linux authoritative with a Windows matrix job. The oracle job is Linux-only either way. | Default kept (Windows authoritative) until the follow-up ADR; direction ratified 2026-10-08: Linux authoritative, Windows additional | follow-up ADR before P1-11 |
 | DR-A4 | Keep the AI-governance apparatus? | Product/Architecture | Keep it (§1.3–§1.6, §8.15–§8.20, Appendices B–E) | Ratified 2026-10-08 (decision interview) | none remaining |
 | DR-A5 | Which work-package ID scheme applies after the pivot? | Product/Architecture | `P<phase>-NN`; P1-10 and P1-11 re-scoped; new P1-12; traceability regex `P[0-9]-[0-9]{2}` | Ratified 2026-10-08 (decision interview) | none remaining |
-| DR-A6 | How do PR #1 and PRs #2/#3 land? | Product/Architecture | PR #1's commits are carried as a fast-forward and merged with a merge commit, never a squash; reviews imported to `docs/06-sessions/`; #2 and #3 closed | Ratified 2026-10-08 (decision interview) | none remaining (the merge itself must still use a merge commit) |
+| DR-A6 | How do PR #1 and PRs #2/#3 land? | Product/Architecture | PR #1's commits are carried as a fast-forward and merged with a merge commit, never a squash; reviews imported to `docs/06-sessions/`; #2 and #3 closed | Ratified 2026-10-08 (decision interview) | none remaining (PR #4 merged with a merge commit, `b819ae0`) |
 | DR-A7 | Fix guard findings R4-1/R4-2 in the pivot PR? | Security/Release | Fix both, guard-only, with new `run.sh` cases and controls | Ratified 2026-10-08 (decision interview) | none remaining |
 | DR-A8 | Which crates exist, and when do they change? | Product/Architecture | P0-01 drops `ffi` only; P1-01 renames `application` → `pipeline`, adds `grid-cli` and `synth`; `persistence` and SQLite stay | Ratified 2026-10-08 (decision interview) | none remaining (the `application` → `pipeline` rename and `synth` happen in P1-01) |
 | DR-A9 | Where does archived cautious-nevermore material live? | Product/Architecture | `docs/07-archive/cautious-nevermore/`, registered as non-authoritative history | Ratified 2026-10-08 (decision interview) | none remaining |
-| DR-A10 | Which licence covers `reference/python/` (cautious-nevermore has no LICENSE)? | Data/Licensing | Owner ruling on the pivot PR bringing the code under `MIT OR Apache-2.0`, in the form of PR #1 comment 5357318508 | Needs owner action: post the ruling on PR #4 (option 1 chosen 2026-10-08, decision interview) | P0-01 merge |
+| DR-A10 | Which licence covers `reference/python/` (cautious-nevermore has no LICENSE)? | Data/Licensing | Owner ruling on the pivot PR bringing the code under `MIT OR Apache-2.0`, in the form of PR #1 comment 5357318508 | Ratified 2026-10-15 (PR #4 comment 6185953773, as edited by the owner): option 1, `MIT OR Apache-2.0` (chosen 2026-10-08, decision interview) | none remaining |
 | DR-A11 | May real-data-derived fixtures be committed? | Data/Licensing | Parity fixtures synthetic-only; real-data fixtures only under `fixtures/third-party/<provider>/` with attribution and licence notice, after a ruling | Ratified 2026-10-08 (decision interview) | none remaining (no `fixtures/third-party/` ruling has been made, so no real-data fixture may be committed) |
 | DR-A12 | When is the Python oracle retired? | Product/Architecture | Frozen CI oracle until every ported component has parity evidence and Phase 2 live evidence exists; review at P2-09 | Ratified 2026-10-08 (decision interview) | P2-09 (the retirement review) |
 | DR-B1 | Is the oracle corrected before it becomes a parity target, and how? | Statistical | Verbatim legacy tag, then approved Python correction commits: synthetic defenders → team-strength convention → grade sign → causal Kalman initialization → ingest bias. Rust targets the corrected oracle. | Ratified 2026-10-08 (decision interview) | none for the policy; each ledger entry is approved as its commit lands (P1-01, P1-06, P1-09 and P1-12 consume the corrected oracle) |
@@ -9123,7 +9129,7 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-C2 | Which modeling architecture governs: Layers A–F or the GRID pipeline? | Product/Architecture, Statistical | Layers A–F are the skeleton; GRID is a signal provider (Layer D latent, Layer E matchup, Layer B anchor, priors) | Ratified 2026-10-09 (decision interview) | none remaining |
 | DR-C3 | Where does GRID talent enter Layer D? | Statistical | Role-specific talent as covariates in EB-shrunk per-component rate models; the Kalman state splits by role (one state-space track per player and role) | Ratified 2026-10-09 (decision interview) | none remaining (RB/WR/TE credit as an individual signal is DR-D13) |
 | DR-C4 | Which projection horizons does the engine contract cover? | Product/Architecture | Weekly primary; ROS and preseason as derived sums of weekly draws; H1 no longer a kill criterion | Ratified 2026-10-08 (decision interview) | none remaining |
-| DR-C5 | What are the primary metric and the promotion gates? | Statistical | PB-MAE primary; §9.4 thresholds kept verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; open parameters set in model specs; calibrate-then-gate only for unnumbered KPIs on a disjoint period | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the EB estimator, including `n0` and `k` (P1-06); the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); the windowed Kalman prior's hyperparameter estimator (P1-12, before the builder is implemented; DR-D17); the feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, binding on acceptance of ADR-013); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L (P2-03) |
+| DR-C5 | What are the primary metric and the promotion gates? | Statistical | PB-MAE primary; §9.4 thresholds kept verbatim and pre-registered; week-clustered bootstrap; union pool with inactive = 0; open parameters set in model specs; calibrate-then-gate only for unnumbered KPIs on a disjoint period | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the EB estimator, including `n0` and `k` (P1-06); the Layer C estimator (before P1-07); the ROS clustering scheme and threshold meanings (P1-09); the RAPM domain controls (P1-12); the windowed Kalman prior's hyperparameter estimator (P1-12, before the builder is implemented; DR-D17); the feeder equivalency's estimator (P1-12, before the fit is implemented; DR-D19, ADR-013); auto-rollback thresholds (P1-11, P2-07); the non-inferiority margin and calibration band (P2-07); fixed-lag L (P2-03) |
 | DR-C6 | How do stateful components honour the three-season window? | Statistical | Per-(season, week) `XᵀX`/`Xᵀy` blocks, the window their exact sum (in season from week 2: the S−2 and S−1 blocks); V(s) fit once per season on S−3..S−1 and frozen; the Kalman restarts from the windowed prior at every season boundary, in production and backtest replay alike (DR-D17) | Overridden 2026-10-09 (decision interview): the Kalman restarts from the prior in production too (DR-D17) | none remaining |
 | DR-C7 | Gradient boosting on GRID's critical path, and the V(s) estimator? | Product/Architecture, Statistical | Deterministic in-house V(s) behind a `Regressor` trait; no nflfastR `ep`; ridge/GAM vs GBM for the Layer-1 context model decided on recovery evidence | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the V(s) estimator's spec, approved before P1-06 implements it; the Layer-1 context estimator, on recovery evidence (P1-12) |
 | DR-C8 | Which booster backend? | Product/Architecture | Pure-Rust first, no native artifacts; `xgb` optional behind a feature once a booster earns its place; a work package may propose an existing crate (e.g. `linfa-trees`) as a documented exception to §6.4.3, subject to dependency approval | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the concrete booster crate, approved in the WP that first needs a booster |
@@ -9152,7 +9158,7 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-D16 | Which exposure conditions the published predictive, and how is a did-not-play week reported? | Statistical | A did-not-play week's predictive is reported as not applicable. The published pre-game predictive is conditioned on Layer C's projected exposure and graded against realized exposure; calibration reports show both the known- and forecast-exposure views. The exact definition waits for Layer C (P1-07) | Decided in part 2026-10-09 (decision interview); see entry for what stays open | P1-08 (the definition, once Layer C exists) |
 | DR-D17 | How does the state-space filter cross the offseason? | Statistical | Re-initialization: at every season boundary, in live production and backtest replay alike, each player's filter restarts from the prior built on the new window (its seasons: DR-D32); no offseason predict steps or discount (this also settles DR-C6's Kalman clause). The windowed prior is the recency-weighted pooled mean: a normal–normal posterior over the track's per-season mean Layer-1′ residuals in the window, with recency weights, starting from the player's feeder prior if he has one and otherwise the population prior `N(m, σ²_c)` of his (position class, role), whose covariates stay open under DR-C9; the window evidence comes from participation-free prior-builder records cross-fitted on the build's window with the DR-D14 fold design under season S's frozen V(s), each season mean observed with variance `r_c/N_s + ω_c·Σ_w (n_{s,w}/N_s)²`; per class, the base scale `κ_c` and the recency weight `λ_c` (not the RAPM ridge penalty λ) are learned by rolling-origin validation, with a tuning criterion that includes calibration; the prior is fixed for the season, no changepoint flag crosses the boundary, and RAPM ratings and offseason Layer-1 credit do not seed it; the §2.5 eligibility list no longer gates it | Decided 2026-10-09 (decision interview); windowed prior decided in part 2026-10-14 (owner decisions); see entry for what stays open | the κ_c and λ_c tuning criterion, the window-hyperparameter estimator (DR-C5), and the minimum class size and the degenerate-pool thresholds, before P1-12 tunes or implements the builder; real-data promotion of the windowed prior (P1-12) |
 | DR-D18 | Same-week or next-week changepoints, `z_thresh`, and a precision/recall gate? | Statistical | Next week: a changepoint flagged from week `w`'s result takes effect from week `w + 1` only and never changes week `w`'s own update. `z_thresh` and the precision/recall gate stay open; until a synthetic world plants changepoints, flags are informational and trigger no production adjustment | Decided in part 2026-10-09 (decision interview); see entry for what stays open | automatic changepoint adjustments (`z_thresh` and the precision/recall gate; P1-12, P2-03) |
-| DR-D19 | On what scale does the feeder prior enter the Kalman state? | Statistical | Option 1 (2026-10-09): the feeder translation is fitted directly against the tracker's own talent scale, the end-of-season smoothed talent computed without the college prior; no separate scale map. Season level, no seed (2026-10-14; ADR-013, Proposed, binding once the owner accepts it; until then the 2026-10-09 text stands): in each DR-D32 build, each feeder-linked track's target is the mean of its prior-builder residuals in its first window season with role events, with its known variance; the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`, whose residual variance `σ̂²_u` is net of that known noise; no filter run and no prior enters the target, and a stored production track never supplies one; the Kalman credit scale and no separate scale map are kept. `P0_form` and `P0_scheme` stay open, and so does the equivalency's estimator (DR-C5) | Decided in part 2026-10-09 (decision interview); decided in part 2026-10-14 (owner decisions): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed); see entry for what stays open | `P0_form`, `P0_scheme` and P0 for window-restarted tracks (P1-12 calibration); the owner's ruling on ADR-013, and the equivalency's estimator (DR-C5), class and minimum shared players, before P1-12 implements the feeder equivalency; the owner's ruling on ADR-013 before P1-07 assembles the §6.5 prior variance `σ²_prior` |
+| DR-D19 | On what scale does the feeder prior enter the Kalman state? | Statistical | Option 1 (2026-10-09): the feeder translation is fitted directly against the tracker's own talent scale, the end-of-season smoothed talent computed without the college prior; no separate scale map. Season level, no seed (2026-10-14; ADR-013, accepted 2026-10-15): in each DR-D32 build, each feeder-linked track's target is the mean of its prior-builder residuals in its first window season with role events, with its known variance; the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`, whose residual variance `σ̂²_u` is net of that known noise; no filter run and no prior enters the target, and a stored production track never supplies one; the Kalman credit scale and no separate scale map are kept. `P0_form` and `P0_scheme` stay open, and so does the equivalency's estimator (DR-C5) | Decided in part 2026-10-09 (decision interview); decided in part 2026-10-14 (owner decisions): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), through ADR-013, accepted 2026-10-15; see entry for what stays open | `P0_form`, `P0_scheme` and P0 for window-restarted tracks (P1-12 calibration); the equivalency's estimator (DR-C5), class and minimum shared players, before P1-12 implements the feeder equivalency |
 | DR-D20 | What does the §6.6 ensemble stack, and under which weight constraints? | Statistical | Option 1 (`projection-stack.md` §4.8.4): per position; ridge-estimated non-negative weights that sum to 1, fitted on out-of-fold rolling-origin predictions; Layer F stays downstream of the stacked quantities | Ratified 2026-10-09 (decision interview) | none remaining |
 | DR-D21 | Which model family does each Layer D component use? | Statistical | `projection-stack.md` §4.8.2: a binomial GLM (logit link, trials = exposure) for the probability components, accepted on design grounds; for yardage, exposure-weighted least squares or a log-link Gamma GLM, decided on rolling-origin evidence before P1-07. The receiving rate base has no default | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | the yardage family and the receiving base, before P1-07 |
 | DR-D22 | May nflverse `ep`/`epa` enter features at all? | Statistical | Permanent: EPA-type features are computed from GRID `dV` only, and nflverse `ep`/`epa` never enter features; reopened only by ADR | Decided 2026-10-09 (decision interview) | none |
@@ -9163,7 +9169,7 @@ _Source: `docs/00-meta/decision-register.md` "Summary" and §A–§D; recommende
 | DR-D27 | What does V(s) parity mean against a non-reproducible oracle? | Statistical | C-V (`value-model.md` §10.3) replaces Class C for V(s), all four parts: corr(dV) ≥ 0.98 over all rows; max \|ΔV\| ≤ 0.30 EP on states with support ≥ 120; P-V4; P-V8 with Rust dV. The two numeric limits are pre-registered now; the fixture stores the seeds 1–10 envelope, computed on the corrected world once it exists | Ratified in part 2026-10-09 (decision interview); see entry for what stays open | parts 3 and 4 (the DR-C7 estimator spec; the re-set Class D floors) before P1-12 P-V5 |
 | DR-D28 | How is the Rust generator proven exact without numpy streams? | Statistical | Option 3, draw-tape replay: the oracle exporter records each draw's result by wrapping the generator (`synth.py` is never edited); the Rust generator takes its randomness through an injectable draw source and, fed the tape, reproduces `plays`, `players`, `gt` and `college` exactly (S-2) | Ratified 2026-10-09 (decision interview) | none remaining |
 | DR-D29 | What is the on-disk parity-fixture format? | Statistical, Product/Architecture | Option 1: one deterministic JSON manifest per case; one raw little-endian file per array; UTF-8 JSON arrays for strings; offsets + values for ragged lists; hash verification in a shell guard | Ratified 2026-10-08 (decision interview) | none remaining |
-| DR-D30 | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Always required: the job becomes a required status check for every PR to `main`, which the owner applies in branch protection after the P0-01 merge; no workflow edit is needed | Overridden 2026-10-09 (decision interview): always required | owner action after the P0-01 merge: make the check required in branch protection |
+| DR-D30 | Is the `reference-oracle` job a required merge check? | Security/Release, Product/Architecture | Always required: the job becomes a required status check for every PR to `main`, which the owner applies in branch protection after the P0-01 merge; no workflow edit is needed | Overridden 2026-10-09 (decision interview): always required | owner action now that P0-01 has merged: make the check required in branch protection |
 | DR-D31 | How is the oracle golden master made reproducible on CI hardware? The imported Layer C reproduced only on CPython 3.11 with OpenBLAS AVX-512 kernels (KI-NEW-Z78) | Statistical, Security/Release | Option 1: pin `OPENBLAS_CORETYPE=Haswell` for every oracle run and regenerate the Layer C golden once under it as a correction-ledger entry; never loosen the tolerance | Ratified 2026-10-08 — option 1 (owner's written approval in the implementing session); implemented in P0-01 as correction-ledger entry L0 | none remaining |
 | DR-D32 | How do the season-boundary priors treat season S−3 after week 1? | Statistical | Two priors, strict window: every season-boundary prior is built twice from the same data version, a preseason prior on S−3..S−1 for the preseason and week-1 published forecast and an in-season prior on S−2..S−1 that the season-S filter restarts from; the only data input the two builds share is the frozen V(s), and both use the model version's learned hyperparameters, which are not window evidence; two canaries, which hold the model version fixed, prove the window (§12.3) | Decided 2026-10-14 (owner decisions): two priors, strict window | real-data promotion of the season-boundary priors, through P1-12's measurements (S−3's weight after week 1; the three- against two-season builds) |
 
@@ -9179,7 +9185,7 @@ package that depends on one is not Ready until the value is ratified (§8.16.1).
 | DR-C5 | Fixed-lag window `L` | `docs/05-model-specs/state-space-kalman.md` | P2-03 (live); P1-06 tests MAY use any `L` |
 | DR-C5 | Empirical-Bayes estimator, including `n0` and `k` estimation (proposed: Gamma–Poisson method of moments for Layer C) | `cross-league-priors.md`, `projection-stack.md` | P1-06, P1-07 |
 | DR-C5 | Estimator of the windowed Kalman prior's class hyperparameters (DR-D17) | `state-space-kalman.md` | P1-12, before it implements the builder |
-| DR-C5 | Estimator of the feeder equivalency's line and residual variance `σ²_u`, including the weighting (DR-D19; ADR-013, Proposed) | `cross-league-priors.md` | P1-12, before it implements the feeder equivalency |
+| DR-C5 | Estimator of the feeder equivalency's line and residual variance `σ²_u`, including the weighting (DR-D19; ADR-013) | `cross-league-priors.md` | P1-12, before it implements the feeder equivalency |
 | DR-C5 | Auto-rollback sanity thresholds | the model spec of each component | P1-11 (recovery), P2-07 |
 | DR-C5 | Home-field, garbage-time and overtime treatment in RAPM, with minimum exposure and play weights | `rapm-attribution.md` | P1-12 |
 | DR-C5 | Non-inferiority margin for routine promotion | `evaluation-and-leakage.md` | P2-07 |
@@ -9210,7 +9216,7 @@ A–F of §6.1.
 | **Drive points** | The V(s) training label: the points the offense scores on the possession. The v1 vocabulary is 7 for a touchdown, 3 for a field goal and 0 otherwise. Safeties and opponent return scores count 0, and an unknown drive result is a typed error, not 0 (DR-C13; KI-NEW-V0b). |
 | **dV** | The value of one play, `V(s′) − V(s)`. For a drive-ending play, `s′` is absorbing and its value is the realized terminal value. Each `dV` is tagged with the V(s) version that produced it. |
 | **E_off, E_def** | Gauge-invariant aggregate team effects: a team's offensive or defensive intercept plus the exposure-weighted sum of its on-field players' ratings. Unlike raw intercepts, they do not depend on how the solve splits an effect between intercept and players (DR-B5). |
-| **Equivalency (feeder → NFL)** | The per-league affine map `E[NFL talent \| feeder SV]`, estimated on players observed in both the feeder league and the NFL (slope, intercept, out-of-sample R²). It translates a prospect's feeder SV into an NFL-scale prior mean and variance (§6.5; proposed — DR-C9). It is fitted on the Kalman credit scale, with no separate scale map (DR-D19). As decided on 2026-10-09, its NFL target is the tracker's own end-of-season (smoothed) talent, computed without the college prior. Under ADR-013 (Proposed), once the owner accepts it, the target is the season level of each build's own window evidence with its known variance, and the fit is a Fay–Herriot-type measurement-error regression (§6.5). |
+| **Equivalency (feeder → NFL)** | The per-league affine map `E[NFL talent \| feeder SV]`, estimated on players observed in both the feeder league and the NFL (slope, intercept, out-of-sample R²). It translates a prospect's feeder SV into an NFL-scale prior mean and variance (§6.5; proposed — DR-C9). It is fitted on the Kalman credit scale, with no separate scale map (DR-D19). As decided on 2026-10-09, its NFL target was the tracker's own end-of-season (smoothed) talent, computed without the college prior. ADR-013, accepted on 2026-10-15, replaces that target with the season level of each build's own window evidence with its known variance, and the fit is a Fay–Herriot-type measurement-error regression (§6.5). |
 | **Feeder league** | A league whose players later enter the NFL. In v1 it is NCAA only; the oracle's UFL/USFL/XFL/CFL factors are documented but unused (DR-C9). |
 | **Fixed-lag smoothing** | A backward smoothing pass over only the last `L` game-weeks after each filter step. Over those indices it equals full RTS restricted to them. `L` is open (proposed — DR-C5; §8.7.3). |
 | **Fixed point** | The oracle's `fit` loop: Layer-2 RAPM → defender ratings → Layer-1 opponent adjustment → Layer-1 credit re-seeding the Layer-2 prior mean, for a fixed number of iterations. The engine does not implement it: GRID's fit is a single pass, with no Layer-1 credit fed back into the RAPM prior means, and feedback returns only by ADR with recovery evidence (DR-D11; KI-G14). How parity fixtures treat the oracle's loop is a `rapm-attribution.md` matter. |

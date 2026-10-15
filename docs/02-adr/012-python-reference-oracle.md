@@ -1,6 +1,6 @@
 ---
 adr-id: 012
-status: Proposed
+status: Accepted
 date: 2026-10-07
 deciders: Product/Architecture owner (DR-A2, DR-A12); Statistical owner (DR-A2 oracle placement, accepted divergences); Data/Licensing owner (DR-A10, DR-A11); Security/Release owner (the CI job and its setup)
 supersedes:
@@ -11,12 +11,16 @@ superseded-by:
 
 ## Status
 
-**Proposed** 2026-10-07 under work package P0-01, as the companion to ADR-011. It is not accepted.
+**Proposed** 2026-10-07 under work package P0-01, as the companion to ADR-011. **Accepted**
+2026-10-15 by the owner, in every deciding role, in the owner's merge review of the P0-01 pull request,
+PR #4 comment 6185953773. This status was transcribed at the owner's direction (answer 2 of
+`docs/06-sessions/2026-10-15-P0-02.md`).
 
 - **What it adopts.** DR-A2 (oracle placement), DR-A11 and DR-A12, which the owner ratified on
-  2026-10-08 in the decision interview and names again at the merge of the P0-01 pull request.
-- **DR-A10 is not adopted here.** The owner chose option 1 on 2026-10-08, but the Data/Licensing
-  owner's ruling must still be posted on the pull request before merge (§8).
+  2026-10-08 in the decision interview and named again in that merge review.
+- **DR-A10 is ruled by the owner, not adopted here.** The owner chose option 1 on 2026-10-08, and the
+  Data/Licensing owner's ruling is PR #4 comment 6185953773, as edited by the owner on
+  2026-10-15 (§8).
 - **What it does not decide.** No B, C or D decision it mentions is decided by this ADR. The owner
   settled most of them, in full or in part, in the decision interview of 2026-10-08/09, and the register
   records each status. The correction-ledger policy (DR-B1, ratified 2026-10-08) in particular is
@@ -38,8 +42,8 @@ superseded-by:
   generator.
 - **The oracle is Linux-only.** Golden-master Layer C and `tests/grid/test_cache.py::test_ttl_expired`
   are recorded as failing on Windows (critic G-6).
-- **There is no licence.** cautious-nevermore has no LICENSE file. GRID-Engine is `MIT OR Apache-2.0`
-  (ADR-001 D4).
+- **There was no licence** before the DR-A10 ruling (§8). cautious-nevermore has no LICENSE file.
+  GRID-Engine is `MIT OR Apache-2.0` (ADR-001 D4).
 - **Some data cannot be committed.** nflverse participation is CC-BY-SA 4.0 (checked 2026-10-01; see
   `docs/04-providers/nflverse/access-and-license.md`), so real-data-derived fixtures cannot simply be
   committed into this tree.
@@ -115,7 +119,7 @@ scope never puts a module in the port scope.
   - `tools/`, which includes the inventory's investigation scripts under `tools/investigations/`.
 - **Line endings.** A Windows `core.autocrlf=true` checkout would rewrite the verbatim bytes and break
   every `MANIFEST.tsv` hash. The protection is a `.gitattributes` rule for the verbatim tree, which
-  extends ADR-004's narrow policy. P0-01 tracks it until it lands.
+  extends ADR-004's narrow policy. It landed with P0-01 (`.gitattributes`).
 
 ### 4. The `reference-oracle` CI job runs outside the frozen verify chain
 
@@ -163,7 +167,7 @@ OpenMP and OpenBLAS oversubscription slowed one test file by more than 10×.
 **Related decisions.**
 
 - Whether this job is a required merge check was **DR-D30**. The owner decided on 2026-10-09 that it is
-  required for every pull request to `main`, applied in branch protection after PR #4 merges, with no
+  required for every pull request to `main`, applied in branch protection after PR #4's merge, with no
   workflow edit. Being a required check does not wire it into the frozen verify chain.
 - How its golden master is made reproducible on CI hardware was **DR-D31** (KI-NEW-Z78). It is no longer
   open: the owner ratified option 1 on 2026-10-08, and P0-01 implements it as ledger entry L0.
@@ -241,7 +245,7 @@ This ADR records that requirement. It does not adopt the policy. The owner ratif
 DR-B6 on 2026-10-08, and a new ADR is to record it. The numeric ill-conditioning threshold stays open
 until a model spec proposes it, before P1-06's solver failure semantics are final.
 
-### 8. Licence (DR-A10): owner action required before merge
+### 8. Licence (DR-A10): the owner's ruling
 
 cautious-nevermore has no LICENSE file. Its visible history has these authors:
 
@@ -250,15 +254,25 @@ cautious-nevermore has no LICENSE file. Its visible history has these authors:
 - one `posthog[bot]` commit, which touched only `backend/api/*`, `.env.example` and `requirements.txt`.
   None of those paths is imported, and `reference/python/requirements.txt` is a new engine-only file.
 
-The recommended default, which the owner chose on 2026-10-08 (option 1, decision interview):
+The owner chose the recommended default, option 1, on 2026-10-08 (decision interview). The ruling
+and its effect:
 
-- **The ruling.** The Data/Licensing owner records a ruling **on the P0-01 pull request** bringing
-  `reference/python/` under `MIT OR Apache-2.0`. It takes the same form as GRID-Engine PR #1 comment
-  5357318508, the ruling behind ADR-001 D4.
-- **Before the ruling.** The licence status is "pending", and `reference/python/README.md` says not to
-  treat the tree as licensed.
-- **This is merge-blocking.** Before acceptance, this section is amended to cite the ruling comment.
-- **Third-party data** is outside any such ruling.
+- **The ruling.** The Data/Licensing owner recorded the ruling **on the P0-01 pull request** on
+  2026-10-15, bringing `reference/python/` under `MIT OR Apache-2.0`: PR #4 comment 6185953773. The
+  comment first said "Apache-2.0 terms" by mistake (answer 1 of
+  `docs/06-sessions/2026-10-15-P0-02.md`); at 12:57Z the owner edited it to read
+  "`MIT or Apache-2.0` terms" (that record, "The owner's correction"). The ruling
+  covers the code imported at `59bce1d` and later corrections made to it under
+  `reference/python/PARITY.md`. It takes the same form as GRID-Engine PR #1 comment 5357318508, the
+  ruling behind ADR-001 D4.
+- **Before the ruling.** The licence status was "pending", and `reference/python/README.md` said not
+  to treat the tree as licensed. Since the ruling, the tree's code is covered by the repository's
+  `LICENSE-MIT` and `LICENSE-APACHE` files, and `reference/python/README.md` cites the ruling.
+- **It was merge-blocking.** The owner posted the ruling before merging, in the same comment as the
+  merge review, and corrected its licence sentence by editing the comment after the merge; this
+  section cites the corrected comment.
+- **Third-party data** is outside the ruling, which covers code only (DR-A11), and so is
+  `backend/db/data/coaching_changes_2025.json`, which is data (KI-NEW-D1).
 
 ### 9. Fixture and data policy (DR-A11)
 
@@ -309,7 +323,7 @@ The recommended default, which the owner chose on 2026-10-08 (option 1, decision
   part on 2026-10-08 and 2026-10-09. The parity packages consume the corrected oracle, whose ledger
   entries are each approved as their commits land (DR-B1), and the open parts (the Class D floor values;
   DR-D26's seed set, quantile and margins; DR-D27's parts 3 and 4) keep P1-12 from being Ready.
-- **The merge waits on a licence ruling**, outside the implementer's control.
+- **The merge waited on a licence ruling**, outside the implementer's control (§8).
 - **`.env` leaks into the oracle.** `backend/db/connection.py` calls `load_dotenv()`, which walks up to
   the repository-root `.env`. That file's `DATABASE_URL` and `SQLX_OFFLINE` therefore enter the Python
   process. This is harmless today, and documented in `reference/python/README.md`.
@@ -333,7 +347,7 @@ The recommended default, which the owner chose on 2026-10-08 (option 1, decision
 | No Python in the engine | Review: `grep -rn -i 'python\|pyo3' crates/ Cargo.toml` empty. No guard asserts it yet (ADR-011 Compliance) |
 | No real data committed | Both `.gitignore` files; `scripts/check-secrets.sh` and `scripts/check-traceability.sh` see every untracked file; review |
 | Spelling over the oracle | `typos`, with justified allowlist entries in `_typos.toml`. `reference/python/` is never excluded |
-| Licence (§8) | An owner comment on the pull request, cited here before acceptance. No script can check it |
+| Licence (§8) | The owner's ruling on the pull request, PR #4 comment 6185953773 as edited by the owner on 2026-10-15, cited in §8. No script can check it |
 
 ## Alternatives considered
 

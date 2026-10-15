@@ -10,9 +10,9 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Synthetic world (planted ground truth and the recovery-gate contract)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment) it is
-an authority-level-3 document. It defines the planted-truth generator that every GRID estimator is
-validated against (engine-spec §6.9, §7.13).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge review, PR #4
+comment 6185953773) it is an authority-level-3 document. It defines the planted-truth generator that
+every GRID estimator is validated against (engine-spec §6.9, §7.13).
 The statistical owner approves the generative model. The implementing agent may not redefine it
 (superseded alpha-spec §6.6; carried into engine-spec §6.8).
 

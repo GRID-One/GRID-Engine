@@ -178,3 +178,33 @@ every recommendation was the agent's.
 - At the owner's direction (answers 8 and 11), the register and the documents that implement these
   answers were updated. The owner confirms the record in the P0-01 merge comment and accepts or
   rejects ADR-013 there; on rejection, the feeder-equivalency target goes to a new decision request.
+
+## 2026-10-15 — P0-01 owner merge review, DR-A10 ruling and merge
+
+The owner posted the merge review as PR #4 comment 6185953773 (06:27:27Z) and merged PR #4 with a
+merge commit, `b819ae0` (06:27:42Z; first parent `48ee320`, second parent `1ee42f7`, the PR head,
+whose tree it equals). The record, with the owner's three answers verbatim, is
+`docs/06-sessions/2026-10-15-P0-02.md`.
+
+- Merge review (owner, all roles): ADR-011 and ADR-012 accepted; DR-A1, DR-A2, DR-A4 to DR-A9,
+  DR-A11 and DR-A12 named again (ratified 2026-10-08), so the `engine-spec.md` §1.5 order is in
+  force; DR-A3 restated: Windows stays merge-authoritative until the follow-up ADR, whose direction
+  (Linux authoritative, Windows additional) is ratified. Both decision records confirmed as
+  transcribed into the register. ADR-013 accepted (DR-D19: the season level, with no seed), so it
+  governs the parts of DR-D19's 2026-10-09 text it reverses.
+- DR-A10: the ruling in the same comment said "Apache-2.0 terms". Asked, the owner answered
+  `MIT OR Apache-2.0` (answer 1), option 1 as chosen on 2026-10-08, and edited the comment at 12:57Z
+  to read "`MIT or Apache-2.0` terms". The imported `reference/python/` code, and later corrections
+  to it under `PARITY.md`, is under `MIT OR Apache-2.0`. Real third-party data stays excluded
+  (DR-A11), and so does `backend/db/data/coaching_changes_2025.json` as data (KI-NEW-D1).
+- PR #1's attested commit `8d43203` is an ancestor of `main` (DR-A6). GitHub records PR #1 as
+  merged, its head `3823478` being in `main`; PRs #2 and #3 were closed unmerged.
+- P0-01 is Done. The follow-up (answer 2) is one PR from `main`, run as work package P0-02 (answer 3;
+  `docs/01-work-packages/p0-02-record-p0-01-merge-rulings.md`). It cites the corrected ruling and, at
+  the owner's direction, sets ADR-011, ADR-012 and ADR-013 to Accepted; the owner reviews and merges
+  it.
+- Now that P0-01 has merged, the owner applies the branch-protection setting that makes
+  `reference-oracle` a required status check (DR-D30). Still open: DR-A3's follow-up ADR before
+  P1-11; the KI-NEW-Z79 decision request, still to raise; the P1-12 pre-registrations (DR-D14,
+  DR-D17, DR-D19 with DR-C5 and DR-C9); every open B, C and D part; `ai-toolchain.lock` provenance
+  for P0-01, unrecorded.

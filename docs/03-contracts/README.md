@@ -8,8 +8,8 @@ rely on.
 
 Contracts are **authority level 3** in the order of `engine-spec.md` §1.5, together with
 `docs/05-model-specs/` and `docs/04-providers/`. This follows owner decision DR-A2 (adopted by
-the P0-01 consolidation; ratified 2026-10-08 in the owner's decision interview, and to be named
-again in the P0-01 merge comment).
+the P0-01 consolidation; ratified 2026-10-08 in the owner's decision interview, and named again
+in the P0-01 merge review on 2026-10-15, PR #4 comment 6185953773).
 
 - **Above them:** the engine spec and accepted ADRs.
 - **Below them:** the approved work package, then tests and fixtures (including committed

@@ -57,8 +57,7 @@ Section references to `engine-spec.md` follow its consolidated outline: §1 cons
 §6.9 the synthetic world), §7 validation (§7.12 oracle parity, §7.13 synthetic recovery gates, §7.14
 retained GRID diagnostics), §8 architecture, §9 and §10 phases, §12 testing, §13 performance. "KI-"
 identifiers are rows of `docs/00-meta/known-issues.md`; "DR-" identifiers are entries of
-`docs/00-meta/decision-register.md` (A entries adopted by P0-01 pending ratification; B and C entries
-proposed defaults).
+`docs/00-meta/decision-register.md` (A to D entries each carry their own status there).
 "cn-docs", "cn-issues" and "critic" are reports of the consolidation inventory in
 `docs/06-sessions/2026-10-01-consolidation-inventory/`.
 

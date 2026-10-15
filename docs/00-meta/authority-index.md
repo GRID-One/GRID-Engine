@@ -6,8 +6,8 @@ priority number wins.
 > **Replaced in P0-01.** The previous revision ranked `final-build-spec.md` and `alpha-spec.md` at
 > levels 1 and 2. ADR-011 replaces both with `engine-spec.md` and archives them as superseded
 > (DR-A1, DR-A2). The order below is adopted by P0-01. The owner ratified DR-A2 on 2026-10-08 in the
-> decision interview; the order is in force once the P0-01 merge comment names it again, and until then
-> the superseded `alpha-spec.md` §1.5 order applies (`docs/02-adr/README.md`).
+> decision interview and named it again in the P0-01 merge review on 2026-10-15 (PR #4 comment
+> 6185953773), so the order is in force (`docs/02-adr/README.md`).
 
 ## Order of authority (engine-spec.md §1.5)
 
@@ -97,14 +97,17 @@ just bootstrap                                                            # once
   oracle suite with threads pinned to 1, on the runner image's tool-cache CPython 3.11 (the job fails
   if that interpreter is absent) and with `OPENBLAS_CORETYPE=Haswell`. It is never wired into
   `verify.ps1`, `just verify` or `windows-authoritative`. The owner decided on 2026-10-09 that it
-  becomes a required status check for every pull request, applied in branch protection after P0-01
-  merges (DR-D30). The oracle's golden is frozen on that pinned platform (KI-NEW-Z78; DR-D31, ratified 2026-10-08; correction-ledger entry L0), `reference/python/tools/pytest_platform_pin.py` enforces it,
+  becomes a required status check for every pull request (DR-D30). P0-01 has merged, and the owner now
+  applies the setting in branch protection. The oracle's golden is frozen on that pinned platform (KI-NEW-Z78; DR-D31, ratified 2026-10-08; correction-ledger entry L0), `reference/python/tools/pytest_platform_pin.py` enforces it,
   and the job is expected green. Never loosen a tolerance to absorb a platform difference.
 
 ## Active work
 
-- **Current work package:** P0-01 — Engine-only consolidation
-  (`docs/01-work-packages/p0-01-engine-consolidation.md`). P1-00 lands with it (DR-A6).
+- **Last merged work package:** P0-01 — Engine-only consolidation
+  (`docs/01-work-packages/p0-01-engine-consolidation.md`), merged on 2026-10-15 (`b819ae0`). P1-00
+  landed with it (DR-A6). Work package P0-02
+  (`docs/01-work-packages/p0-02-record-p0-01-merge-rulings.md`) records the merge review, the DR-A10
+  ruling and the ADR acceptances (`docs/06-sessions/2026-10-15-P0-02.md`).
 - **Next:** P1-01 (domain types, API and output-contract skeleton, oracle-fixture format, crate
   restructure). P1-06 (numerical primitives) then runs in parallel with the P1-02 → P1-05 chain once
   the P1-01 contracts stabilize.

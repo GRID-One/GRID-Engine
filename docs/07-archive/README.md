@@ -5,7 +5,8 @@ design notes, review reports and results that the current specification replaced
 the reasoning behind a rule can still be read after the original repository moves on or deletes it.
 
 Created by the P0-01 engine consolidation (2026-10-01 to 2026-10-07), under decision DR-A9 (adopted by
-P0-01 / ADR-011, pending owner ratification at merge; `docs/00-meta/decision-register.md`).
+P0-01 / ADR-011, ratified on 2026-10-08 and named again in the owner's merge review on 2026-10-15,
+PR #4 comment 6185953773; `docs/00-meta/decision-register.md`).
 
 ## Status: history, never authority
 

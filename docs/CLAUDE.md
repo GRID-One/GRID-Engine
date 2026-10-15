@@ -112,8 +112,8 @@ status, correction ledger, tolerances and divergences: `reference/python/PARITY.
   `python3 tools/verify_manifest.py` must pass.
 - **CI.** The `reference-oracle` job is outside the frozen verify chain and never wired into
   `verify.ps1`, `just verify` or `windows-authoritative` (DR-A3). It becomes a required status check for
-  every pull request once the owner applies that setting in branch protection after P0-01 merges
-  (DR-D30).
+  every pull request once the owner applies that setting in branch protection, due now that P0-01 has
+  merged (DR-D30).
   It runs on the runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, fails if
   that interpreter is absent, and is expected green (446 passed). If the runner's interpreter or BLAS
   kernel still moves a golden, escalate; never loosen a tolerance, disable the platform pin or skip a
