@@ -1,0 +1,119 @@
+{
+  "verification": {
+    "commands": [
+      {
+        "command": "just verify",
+        "exit_status": 0,
+        "canonical": true,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "environment": "Linux 6.18.44-fc-v114 x86_64 (Claude Code on the web container); rustc 1.98.1",
+        "summary": "All 8 recipes passed: nextest 3 tests run, 3 passed; tests/guards/run.sh 78 passed, 0 failed; check-traceability OK (44 paths); check-authority-sync OK; check-verify-parity OK (15 steps); typos clean."
+      },
+      {
+        "command": "pwsh -NoProfile -File scripts/verify.ps1 -Scope Full",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "environment": "Portable PowerShell 7.4.6 on Linux, not Windows. This is not the merge-authoritative Windows run (DR-A3); the windows-authoritative CI job on the pull request is.",
+        "summary": "[verify] All checks passed. The same 15 steps as just verify, each guarded by Assert-Ok."
+      },
+      {
+        "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "A fresh clone compiles offline against the committed .sqlx cache."
+      },
+      {
+        "command": "./scripts/check-traceability.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "All 44 non-trivial paths traced individually, without PR_BODY, against base origin/main (b819ae0), to ADR-001, ADR-011, ADR-012, ADR-013, P0-01, P0-02 and P1-00. Run as a step of just verify."
+      },
+      {
+        "command": "bash tests/guards/run.sh",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "78 passed, 0 failed. Run as a step of just verify; no case was added or changed."
+      },
+      {
+        "command": "./scripts/check-authority-sync.sh",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "engine-spec.md and docs/00-meta/specs/engine-spec.md are byte-identical (750543 bytes). Run as a step of just verify."
+      },
+      {
+        "command": "cd reference/python && python3 tools/verify_manifest.py && python3 tools/verify_manifest.py --upstream <cautious-nevermore clone>",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "environment": "CPython 3.11.15 in reference/python/.venv",
+        "summary": "OK (105 rows: 102 verbatim, 3 patched), local and against the upstream clone. No oracle file changed."
+      },
+      {
+        "command": "cd reference/python && OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m pytest",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "environment": "Linux, CPython 3.11.15, OPENBLAS_CORETYPE=Haswell set by tools/pytest_platform_pin.py",
+        "summary": "446 passed; isolation guard: 0 violations."
+      },
+      {
+        "command": "typos",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "Clean. Run as a step of just verify."
+      },
+      {
+        "command": "! git grep -n -E 'CORRECTION[_](ID|RECORD)|WORK[_]COMPLETED|VERIFICATION[_]RUN'",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "No drafting placeholder remains in the tree."
+      },
+      {
+        "command": "git diff --quiet b819ae0 HEAD -- .ai/evidence/P0-01 .ai/evidence/P1-00 reference/python/backend reference/python/tests reference/python/MANIFEST.tsv",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "P0-01's and P1-00's evidence records and the oracle's imported files are untouched."
+      },
+      {
+        "command": "grep -L '^status: Accepted' docs/02-adr/011-*.md docs/02-adr/012-*.md docs/02-adr/013-*.md",
+        "exit_status": 0,
+        "run_against_commit": "47501bd21061087a57f9da436276720eec25ac5f",
+        "summary": "Prints nothing: ADR-011, ADR-012 and ADR-013 all have status Accepted."
+      }
+    ],
+    "note": "Populated from actual runs on the final content commit 47501bd. A command that was not executed is never recorded as passing. The Windows run and the reference-oracle run on ubuntu-latest are CI evidence on the pull request, not claimed here."
+  },
+  "review": {
+    "reviewer_type": "independent adversarial agents, fresh context (not the implementer)",
+    "reviewer": "Drafting: per file group, a drafting agent and an adversarial verifier, then a completeness sweep over the repository; read-only. Review: three fresh-context rounds over the applied diff, each finding re-checked by an adversarial verifier: round 1 with four lenses (factual fidelity, completeness, repository rules and guards, readability), round 2 with two (fidelity and rules; readability and completeness), round 3 on the switch from a correction comment to the owner's edit of PR #4 comment 6185953773; read-only.",
+    "reviewed_commit": "the uncommitted diff on b819ae0, before c2fc7b0 and 47501bd",
+    "verdict": "Round 1: 49 findings, 48 applied and 1 refuted. Round 2: 20 findings, 19 applied; 1 left because it was stale before the merge and is outside P0-02. Round 3: 8 findings, all applied.",
+    "findings": [],
+    "resolved": []
+  },
+  "human_approvals": {
+    "required": [
+      "Owner: review and merge the P0-02 pull request with a merge commit, confirming the transcription of PR #4 comment 6185953773 and answers 1 to 3 of docs/06-sessions/2026-10-15-P0-02.md"
+    ],
+    "obtained": [
+      "2026-10-15 06:27:27Z, PR #4 comment 6185953773: the owner's P0-01 merge review (ADR-011, ADR-012 and ADR-013 accepted; DR-A1, A2, A4-A9, A11, A12 named again; both decision records confirmed) and the DR-A10 licence ruling.",
+      "2026-10-15 06:27:42Z: the owner merged PR #4 with merge commit b819ae0.",
+      "2026-10-15, answer 1 (question tool): \"No, MIT OR Apache-2.0 (Recommended)\".",
+      "2026-10-15, answer 2 (question tool): \"Citations + ADR status (Recommended)\", the owner's explicit approval to transcribe the ADR acceptances into their status.",
+      "2026-10-15, answer 3 (question tool): \"New P0-02 (Recommended)\".",
+      "2026-10-15 12:57:32Z: the owner edited PR #4 comment 6185953773 so that its licence sentence reads \"`MIT or Apache-2.0` terms (ADR-001 D4)\"."
+    ]
+  },
+  "known_limitations": [
+    "ai-toolchain.lock model and harness-version identity are 'unrecorded' for P0-02, a deviation from engine-spec §8.20: the implementing agent's harness policy forbids writing model identifiers into repository artifacts.",
+    "The branch name was assigned by the harness (claude/grid-engine-consolidation-e7kmh9, P0-01's branch restarted from main at b819ae0), not wp/P0-02-… (ADR-001 D1 convention).",
+    "No maximum agent turns, wall-clock timeout or concurrent-writer limit was declared (engine-spec §8.18.1).",
+    "Windows is proven only by the pull request's windows-authoritative CI job; verify.ps1 ran here under portable PowerShell on Linux.",
+    "The edits were reviewed by agents only; the owner's merge of this pull request confirms the transcription.",
+    "After editing the comment, the owner wrote in chat: \"License comment is not corrected at https://github.com/GRID-One/GRID-Engine/pull/4#issuecomment-6185953773\". The agent re-read the comment, found it edited to read \"`MIT or Apache-2.0` terms\", and recorded that edit as the correction. The owner's review of this pull request confirms that reading."
+  ],
+  "follow_up": [
+    "DR-D30: the owner makes reference-oracle (Linux only) a required status check on main.",
+    "DR-A3: the follow-up ADR on the authoritative CI platform, before P1-11.",
+    "KI-NEW-Z79: raise its decision request (which team data the live context model's training features may carry).",
+    "Before P1-12 tunes, gates or implements the affected steps: the DR-D14, DR-D17 and DR-D19 pre-registrations (with DR-C5 and DR-C9)."
+  ]
+}
