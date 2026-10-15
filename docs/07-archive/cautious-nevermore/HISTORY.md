@@ -293,5 +293,7 @@ In October 2026 the engine moved to `GRID-One/GRID-Engine`. The P0-01 consolidat
 - it rewrote the specifications engine-only (`engine-spec.md`), with the decisions in
   `docs/00-meta/decision-register.md` and the defects in `docs/00-meta/known-issues.md`.
 
-ADR-011 and ADR-012 and the A decisions are adopted by P0-01 pending owner ratification at merge.
-CN itself was not modified. From here on, the engine's history is the history of this repository.
+ADR-011 and ADR-012 and the A decisions were adopted by P0-01. The owner accepted both ADRs in the
+P0-01 merge review of 2026-10-15 (PR #4 comment 6185953773), which also named again the A decisions
+ratified on 2026-10-08. CN itself was not modified. From here on, the engine's history is the history
+of this repository.

@@ -1,6 +1,6 @@
 ---
 adr-id: 013
-status: Proposed
+status: Accepted
 date: 2026-10-14
 deciders: Statistical owner (DR-D19)
 supersedes:
@@ -11,8 +11,10 @@ superseded-by:
 
 ## Status
 
-**Proposed** 2026-10-14 under work package P0-01. It is not accepted. The deciding role is the
-Statistical owner (DR-D19).
+**Proposed** 2026-10-14 under work package P0-01. **Accepted** 2026-10-15 by the Statistical owner
+(DR-D19), the deciding role, in the owner's merge review of the P0-01 pull request, PR #4 comment
+6185953773. This status was transcribed at the owner's direction (answer 2 of
+`docs/06-sessions/2026-10-15-P0-02.md`).
 
 - **What it records.** The Statistical owner's answer 10 in `docs/06-sessions/2026-10-14-P0-01.md`,
   "Season level, no seed (Recommended)", on DR-D19; answer 11 directs its transcription. The option
@@ -20,15 +22,14 @@ Statistical owner (DR-D19).
   description, as offered, said how it is recorded: "This changes DR-D19's estimand from talent to
   season level, so it's recorded through a Proposed ADR citing DR-D19 that binds once you accept it
   (e.g. in the merge comment)."
-- **When it binds.** Only once the Statistical owner accepts it, for example in the P0-01 merge
-  comment. An implementing agent writes ADRs as Proposed and never marks one Accepted
+- **When it binds.** From its acceptance on 2026-10-15. An implementing agent writes ADRs as Proposed
+  and marks one Accepted only to transcribe the owner's acceptance at the owner's direction
   (`docs/02-adr/README.md`, "Status").
-- **Until then.** DR-D19's 2026-10-09 text stands and governs (`docs/00-meta/decision-register.md`,
-  DR-D19). No seed fits that text (Context), so if the owner rejects this ADR, the target is a decision
-  request to the Statistical owner before P1-12 implements the feeder equivalency.
+- **Before acceptance.** DR-D19's 2026-10-09 text stood and governed
+  (`docs/00-meta/decision-register.md`, DR-D19). No seed fits that text (Context).
 - **Reverses** DR-D19's 2026-10-09 decision in part (register rule 6; "Reverses" below).
-- **Rank.** Once accepted it is authority level 2 (`engine-spec.md` §1.5) and cannot override
-  `engine-spec.md`. The documents that implement DR-D19 carry the same rule, marked as binding on this
+- **Rank.** As an accepted ADR it is authority level 2 (`engine-spec.md` §1.5) and cannot override
+  `engine-spec.md`. The documents that implement DR-D19 carry the same rule, binding since this
   ADR's acceptance (`docs/00-meta/decision-register.md`, DR-D19, "Where implemented").
 - **What it does not decide.** The items under "Still open" below.
 
@@ -212,8 +213,7 @@ register rule 6).
 **Harder.**
 
 - **It reverses the owner's 2026-10-09 choice in part.** The estimand of Option 1 changes. It binds
-  only once the owner accepts this ADR, and until then the 2026-10-09 text, for which no seed fits,
-  governs. P1-12 does not implement the feeder equivalency before the owner accepts or rejects it.
+  from its acceptance on 2026-10-15; before then the 2026-10-09 text, for which no seed fits, governed.
 - **The weighting matters.** Precision weights are informative when exposure follows talent: a
   precision-weighted line overstates the base mean. In the scratch runs (not evidence) that bias did
   not shrink as the pool grew, and an equal-weight line showed little of it. The DR-C5 estimator
@@ -268,7 +268,7 @@ register rule 6).
 | Window-local target audit | Review in P1-12: the equivalency's targets read only b's own prior-builder records and the r_c and ω_c of b's hyperparameter record. The fit never reads a stored production track or state, live Layer-1′ residuals, RAPM ratings, offseason Layer-1 credit, an earlier boundary's prior, or NFL data from before b's window other than through season S's frozen V(s) behind the records' dV, and it runs no filter and reads no prior to build a target |
 | Prior variance | σ̂²_u is persisted in the equivalency's versioned record (`cross-league-priors.md` §6.2, "Lifecycle requirements"). A zero estimate is a typed failure, never clamped and never replaced by a default (`engine-spec.md` §6.4.7) |
 | Pre-registered measurements | Pre-registered per class and build before P1-12 runs them. Primary, and neutral between estimands: weekly one-step predictive log score, NIS, PIT and coverage for rookies and feeder-linked veterans run through the filter from `x0 = [μ_f, 0, 0]`. Secondary: slope and base-mean bias against planted truth, by exposure tier and career stage; prior variance against planted truth; the learned κ_c; the share of zero variance estimates. They run on a multi-season synthetic world (DR-B4) that plants within-season talent drift, team-offence context, career development, and exposure and selection driven by talent. A rolling-origin real-data check on the same yardstick follows once Layer-1′ and CFBD `feeder_sv` exist (KI-NEW-Z50, DR-C9). The `engine-spec.md` §6.5 and §9.4 rule that NCAA priors improve low-evidence-player PB-MAE or calibration is checked in P1-09 on the §2.5 low-evidence slice (`evaluation-and-leakage.md` §4.12), where DR-D9 gates it; it is not one of these measurements |
-| Binding | Until the owner accepts this ADR, nothing enforces it, and DR-D19's 2026-10-09 text governs. The window-local part does not wait on this ADR (Context) |
+| Binding | Binding since its acceptance on 2026-10-15 (PR #4 comment 6185953773); before then nothing enforced it, and DR-D19's 2026-10-09 text governed. The window-local part does not wait on this ADR (Context) |
 
 ## Alternatives considered
 

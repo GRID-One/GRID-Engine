@@ -10,10 +10,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec — Situational value V(s), play value dV, and situation masks
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge
-comment) it is an authority-level-3 document. The statistical owner approves the equations. The
-implementing agent may not redefine them (superseded alpha-spec §6.6; carried into engine-spec
-§6.8).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge review, PR #4
+comment 6185953773) it is an authority-level-3 document. The statistical owner approves the
+equations. The implementing agent may not redefine them (superseded alpha-spec §6.6; carried into
+engine-spec §6.8).
 
 **How to read this spec**
 
@@ -547,9 +547,9 @@ the oracle disagree:
      the `SSParams`), which are calibrated by rolling origin, generally on seasons before the
      window, and are not window evidence; both DR-D32 canaries hold them fixed. Apart from this
      V(s), the gap item 1 accepts, and those hyperparameters, `prior_in` reads no `S−3` data. For a
-     feeder-linked track, that holds once ADR-013 (Proposed) binds, because each build then takes
-     its DR-D19 targets from its own prior-builder records, whose dV uses this same V(s); until
-     then DR-D19's 2026-10-09 text governs those targets (state-space-kalman.md §6.5; DR-D19).
+     feeder-linked track, that holds under ADR-013 (Accepted 2026-10-15), because each build takes
+     its DR-D19 targets from its own prior-builder records, whose dV uses this same V(s)
+     (state-space-kalman.md §6.5; DR-D19).
    - The season-`S` filter restarts from `prior_in`, so, apart from this V(s) behind `prior_in`'s
      dV and the model version's learned hyperparameters, `S−3` reaches no season-`S` state after
      week 1's forecast through a season-boundary prior. The season's observations still carry it

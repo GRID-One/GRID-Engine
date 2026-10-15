@@ -7,8 +7,12 @@ survives the session (critic report G-2). Each one is a repro, not a test. Nothi
 collected by pytest (`testpaths = tests`) or imported by the oracle.
 
 Defect IDs (`KI-*`) are in `docs/00-meta/known-issues.md`. Decision IDs (`DR-*`) are in
-`docs/00-meta/decision-register.md`. B and C decisions there are **proposed defaults pending
-the owner**, so a script listed as "input to DR-xx" informs a decision. It does not settle one.
+`docs/00-meta/decision-register.md`. When these scripts were written, B and C decisions there were
+**proposed defaults pending the owner**. The owner has since ruled on many of them (decision
+interview of 2026-10-08/09, confirmed in the P0-01 merge review, PR #4 comment 6185953773), so
+where a script's docstring calls a decision pending, that is its status before the interview; the
+register holds the current one. A script listed as "input to DR-xx" informs a decision. It does not
+settle one.
 
 ## How to run
 
@@ -46,7 +50,8 @@ players (`backend/grid/synth.py:193`; KI-NEW-Y0; critic G-1). Scripts that use i
   line, compiles the patched `simulate`, and swaps its code object into the oracle's
   function. `backend/grid/synth.py` on disk is never modified. The fixed generator keeps
   the legacy planted `team_strength` (off − def). A corrected planted net strength is a
-  separate decision, DR-B4 / DR-B5, still pending.
+  separate decision, DR-B4 / DR-B5, ratified on 2026-10-09 (decision interview) and not
+  applied here.
 
 `pytest_defender_fix.py` applies the same patch inside a pytest run, so the oracle's own
 gates can be re-run on the fixed generator.

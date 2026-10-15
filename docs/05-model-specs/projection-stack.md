@@ -10,9 +10,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: projection stack (volume, stat-line rates, talent features, SV→points map, preseason assembly, scoring)
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge comment) it
-is an authority-level-3 document. The statistical owner approves the equations. The implementing
-agent may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec §1).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge review, PR #4
+comment 6185953773) it is an authority-level-3 document. The statistical owner approves the
+equations. The implementing agent may not redefine them (alpha-spec §1.3, superseded; carried into
+engine-spec §1).
 
 **How to read this spec**
 

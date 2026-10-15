@@ -1,6 +1,6 @@
 ---
 adr-id: 011
-status: Proposed
+status: Accepted
 date: 2026-10-07
 deciders: Product/Architecture owner (DR-A1, DR-A2, DR-A4, DR-A5, DR-A6, DR-A8, DR-A9); Security/Release owner (DR-A7 and the guard changes); Statistical owner (DR-A2, jointly with ADR-012)
 supersedes: "001 (in part), 006 (in part), 007 (in part), 009 (in part); see Supersession"
@@ -12,11 +12,13 @@ superseded-by:
 ## Status
 
 **Proposed** 2026-10-07 under work package P0-01 (`docs/01-work-packages/p0-01-engine-consolidation.md`).
-It is not accepted. The owner accepts or overrides it at the merge of the P0-01 pull request, in the
-review or comment that names the DR-A decisions by ID (`docs/00-meta/decision-register.md`, "How to
-ratify or override", step 3). The owner ratified those decisions on 2026-10-08 in the decision interview
-(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the merge comment names them again and
-confirms that record. A merge alone does not ratify a DR that the comment does not name.
+**Accepted** 2026-10-15 by the owner, in every deciding role, at the merge of the P0-01 pull request, in
+the owner's merge review, PR #4 comment 6185953773, which names the DR-A decisions by ID
+(`docs/00-meta/decision-register.md`, "How to ratify or override", step 3). The owner ratified those
+decisions on 2026-10-08 in the decision interview
+(`docs/06-sessions/2026-10-09-P0-01-decision-interview.md`); the merge review names them again and
+confirms that record. A merge alone does not ratify a DR that the comment does not name. This status
+was transcribed at the owner's direction (answer 2 of `docs/06-sessions/2026-10-15-P0-02.md`).
 
 **Where this decision gets its force.** It replaces the two documents that outranked every ADR
 (`alpha-spec.md` §1.5, superseded). An ADR cannot do that on its own rank. ADR-001 D3 set the precedent:
@@ -184,7 +186,8 @@ ADR-005 set three conditions for amending a frozen recipe.
    Measured in tests executed, coverage goes from 0 to 0. ADR-007 and ADR-009 refuse "an amendment
    that reduces coverage". This amendment reduces none.
 3. **Explicit owner approval, recorded.** Required. The authority for this amendment is the owner's
-   scope decision, not the ADR-005 precedent, and the owner ratifies it at merge.
+   scope decision, not the ADR-005 precedent, and the owner ratified it at merge by accepting this ADR
+   (PR #4 comment 6185953773).
 
 This makes it the **fifth amendment to ADR-001 D5, and the first that removes a step.**
 
@@ -303,8 +306,9 @@ Copies are verbatim. Known errors in them are recorded in `MANIFEST.md` and neve
 
 ## Supersession
 
-Each superseded part takes effect when this ADR is accepted. Until then, the annotation in the older
-ADR's front matter reads "proposed" (`docs/02-adr/README.md`, "Partial supersession").
+Each superseded part took effect when this ADR was accepted on 2026-10-15. Until then, the annotation in
+the older ADR's front matter read "proposed"; on acceptance that qualifier was dropped
+(`docs/02-adr/README.md`, "Partial supersession").
 
 | ADR | Superseded in part | Not superseded |
 |---|---|---|
@@ -346,8 +350,9 @@ ADR's front matter reads "proposed" (`docs/02-adr/README.md`, "Partial supersess
 - **Some decisions stay open.** The owner settled most B, C and D decisions, in full or in part, in the
   decision interview of 2026-10-08/09. A Phase 1 package is not Ready while a decision it depends on, or
   a still-open part of one, is unsettled (`engine-spec.md` §8.16.1).
-- **Ratification can change the PR.** The A-decisions were implemented before ratification, and the
-  owner ratified them on 2026-10-08. If the merge comment overrides one, the PR changes before merge.
+- **Ratification could have changed the PR.** The A-decisions were implemented before ratification,
+  and the owner ratified them on 2026-10-08. The merge review overrode none of them (PR #4 comment
+  6185953773).
 
 **Inherited.** Every later package inherits the engine-only scope, the six-level order, the `P<phase>-NN`
 scheme, the 8-recipe chain and the 11-crate workspace. An error here propagates to all of them.

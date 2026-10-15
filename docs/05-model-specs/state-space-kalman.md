@@ -645,12 +645,12 @@ Two facts constrain the choice:
   **Layer-1 credit** scale. These are not the same scale. On the legacy synth the per-position slope of
   season credit on rating is 1.19–1.40, with credit SD 1.3–1.8× rating SD (§7.3). The prior MUST
   be expressed on the Kalman state's scale, with no separate scale map, and the prior never trains on
-  itself (DR-D19). As decided on 2026-10-09, the feeder translation is fitted directly against the
-  tracker's own end-of-season smoothed talent, computed without the college prior. Under ADR-013
-  (Proposed), once the owner accepts it, each build fits it against the season level of its own
-  window evidence, with no prior of any kind in the target (two builds, below); until then the
-  2026-10-09 text stands. Either way, each build computes its targets from its own window, and a
-  stored production track never supplies one (DR-D32).
+  itself (DR-D19). As decided on 2026-10-09, the feeder translation was to be fitted directly against
+  the tracker's own end-of-season smoothed talent, computed without the college prior. Under ADR-013
+  (Accepted 2026-10-15), each build fits it against the season level of its own window evidence,
+  with no prior of any kind in the target (two builds, below), and ADR-013 governs. Either way,
+  each build computes its targets from its own window, and a stored production track never
+  supplies one (DR-D32).
 - **Washout speed.** `P0_form` and `P0_scheme` (oracle 0.02 and 0.01) dominate how fast a talent prior
   washes out. They are statistical-owner parameters, not defaults, and stay open until P1-12's washout
   and calibration measurements (open — DR-D19; `cross-league-priors.md` §4.5). Under ADR-013 the base
@@ -682,7 +682,7 @@ threshold.
     held-out folds included (DR-D17, answer 9; `evaluation-and-leakage.md` §4.2 G12).
   - These are the prior-builder records of `layer1-credit.md` §4.8.2, with their own fold-map,
     context-model, opponent-source and V(s) versions. Only the prior builder and, under ADR-013
-    (Proposed), the same build's feeder equivalency fit read them (two builds, below).
+    (Accepted 2026-10-15), the same build's feeder equivalency fit read them (two builds, below).
   - No participation-derived input is used: no RAPM rating, no offseason Layer-1 credit, no
     retrospective RTS. Apart from season S's frozen V(s) behind each `dv_i`, fitted on S−3..S−1 and
     shared by both builds (the gap DR-C6 accepts; DR-D32), no NFL data from before `W_S` enters;
@@ -765,17 +765,17 @@ S−2..S−1. This covers the windowed prior and its feeder and population bases
   supplies a DR-D19 target: a window season's production filter restarted from a prior built at an
   earlier boundary, around the player's own college prior, and used that season's own V(s), `g′` and
   `δ^team`.
-- **DR-D19 targets** (ADR-013, Proposed). ADR-013 binds once the owner accepts it; until then
-  DR-D19's 2026-10-09 text stands and governs, and if the owner rejects it, the target goes to a new
-  decision request before P1-12 implements the feeder equivalency (ADR-013, Status). In each build
-  `b`, the targets come only from `b`'s own prior-builder records and the `r_c` and `ω_c` of `b`'s
-  hyperparameter record; `b`'s population prior `N(m, σ²_c)` does not enter them. There is one
-  target per feeder-linked, non-ambiguous (player, role) track with at least one regular-season role
-  event in `b`'s window from the base's placement season on. Its target season `s*` is the earliest
-  such season, and its target is `ȳ_{s*}`, the mean of `r̃_i` over `E_{s*}`, with known variance
-  `v_{s*}` from `b`'s `(r_c, ω_c)` (the **Prior** form above). No filter is run, and no prior of any
-  kind (college, population or vague) enters the target. The equivalency on these targets is a
-  Fay–Herriot-type measurement-error regression on `feeder_sv` (`cross-league-priors.md` §6.2).
+- **DR-D19 targets** (ADR-013, Accepted). The Statistical owner accepted ADR-013 on 2026-10-15
+  (PR #4 comment 6185953773), so it governs in place of the parts of DR-D19's 2026-10-09 text it
+  reverses. In each build `b`, the targets come only from `b`'s own prior-builder records and the
+  `r_c` and `ω_c` of `b`'s hyperparameter record; `b`'s population prior `N(m, σ²_c)` does not enter
+  them. There is one target per feeder-linked, non-ambiguous (player, role) track with at least one
+  regular-season role event in `b`'s window from the base's placement season on. Its target season
+  `s*` is the earliest such season, and its target is `ȳ_{s*}`, the mean of `r̃_i` over `E_{s*}`,
+  with known variance `v_{s*}` from `b`'s `(r_c, ω_c)` (the **Prior** form above). No filter is run,
+  and no prior of any kind (college, population or vague) enters the target. The equivalency on
+  these targets is a Fay–Herriot-type measurement-error regression on `feeder_sv`
+  (`cross-league-priors.md` §6.2).
 - The only data input the two builds share is season S's single frozen V(s), fitted on S−3..S−1,
   which is the gap DR-C6 accepts (`value-model.md` §6.2 item 1). Through each record's dV it carries
   S−3 into `prior_in`. Both builds also use the model version's learned hyperparameters (`κ_c`,
@@ -799,8 +799,8 @@ S−2..S−1. This covers the windowed prior and its feeder and population bases
   2. Changing any NFL data from before S−3, static metadata excepted, leaves both priors
      bit-identical.
 
-  For a feeder-linked track, both canaries can hold once ADR-013 binds, because its DR-D19 targets
-  then come only from the build's own prior-builder records (above).
+  For a feeder-linked track, both canaries can hold under ADR-013, because its DR-D19 targets
+  come only from the build's own prior-builder records (above).
 - S−3's measured weight in the season-S states and in the forecast level from week 2 on, which under
   this rule enters only through those three fixed inputs and the model version's learned
   hyperparameters, and a real-data accuracy comparison of the three-season and two-season builds are
@@ -1009,8 +1009,8 @@ from the oracle, listed in `reference/python/PARITY.md`.
 | **DR-D17** | Decided 2026-10-09: re-initialisation. At every season boundary, in production and replay, each player's filter restarts from the prior built on the new three-season window; no offseason predict steps or discount. Decided in part 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`, answers 5, 7 and 9): the windowed prior is the recency-weighted pooled mean of the track's window evidence, starting from its base, with `κ_c` and `λ_c` learned by rolling origin on a disjoint calibration period; the window evidence comes from participation-free prior-builder records: each play's dV is taken under season S's frozen V(s), and the context model and the team effect are cross-fitted on the build's window with the DR-D14 fold design, the team effect from a team ridge with one offence and one defence intercept per (team, season) and no market rows; each window season enters with variance `v_s = r_c/N_s + ω_c·Σ_w (n_{s,w}/N_s)²`, with `r_c` and `ω_c` estimated on the window; a player with a feeder prior has it as his base in every season, and every other player has the population prior `N(m, σ²_c)` of his (position class, role), estimated on the window; the engine-spec §2.5 eligibility list does not gate the prior; it is fixed for the season, and a correction to window-season data reaches it at the next boundary; no changepoint flag crosses the boundary; RAPM ratings and offseason Layer-1 credit do not seed it. Open: the `κ_c`, `λ_c` tuning criterion, which must include calibration; the hyperparameter estimator (DR-C5); the class thresholds; the population prior's covariates (DR-C9); the other open parts listed in §6.5 | §2, §3.5, §4.9, §6.4, §6.5, §6.6, §8.2 D-8, §8.3, §10.2, §10.3, §11 |
 | **DR-D16** | Decided in part 2026-10-09: a did-not-play week's predictive is not applicable; the published pre-game predictive is conditioned on Layer C's projected exposure and graded against realized exposure, with calibration shown in both the known- and forecast-exposure views. Open: the exact definition, once Layer C exists (P1-07) | §4.3, §8.2 D-9 |
 | **DR-D18** | Decided in part 2026-10-09: next-week application; a changepoint flagged from week w's result takes effect from week w+1, and the published week-w predictive is the pre-detection one. Open: `z_thresh` and the precision/recall gate; flags stay informational until then. Under DR-D17 and DR-D32 (2026-10-14), no flag crosses a season boundary, and the week-1 z-score comes from `prior_in` while the published week-1 predictive comes from `prior_pre` | §4.6, §8.2 D-8 |
-| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Decided in part (2026-10-14, Statistical owner, owner-directed transcription, `docs/06-sessions/2026-10-14-P0-01.md`): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding on acceptance of ADR-013 (Proposed). Each DR-D32 build computes its targets from its own window only, and a stored production track never supplies one. Every option offered computed each build's targets from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does not wait on ADR-013. Under ADR-013, in each DR-D32 build, each feeder-linked track's target is its mean prior-builder residual in its first window season with role events, with its known variance, and the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`; no filter run and no prior enters the target. Until ADR-013 is accepted, the 2026-10-09 text stands and governs. Open: `P0_form` / `P0_scheme` for prior-seeded tracks, and `P0` for tracks restarted from a windowed prior, including whether `P0[0,0]` should offset the week-0 predict step (P1-12 measurements); the owner's ruling on ADR-013; the equivalency's estimator (DR-C5) and the parts `cross-league-priors.md` §6.2 lists | §6.5 |
-| **DR-D32** | Decided 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`): two priors, strict window. Every season-boundary prior is built twice from the same data version: `prior_pre` on S−3..S−1 gives the preseason and week-1 published predictive, and the season-S filter restarts from `prior_in` on S−2..S−1. Each build uses only its own seasons' NFL evidence, its own feeder equivalency and its own DR-D19 targets; season S's frozen V(s) is the only shared data input, and both builds use the model version's learned hyperparameters (`κ_c`, `λ_c` and the `SSParams`). Two canaries prove the window, with the model version held fixed: its learned hyperparameters are calibrated by rolling origin, generally on seasons before the window, and are not window evidence (answer 11). Open: S−3's measured weight from week 2 on, and a real-data accuracy comparison of the two builds (P1-12 measurements). For feeder-linked tracks, both canaries can hold once ADR-013 (Proposed) binds, because each build then takes its DR-D19 targets from its own prior-builder records (DR-D19) | §3.5, §6.4 item 4, §6.5, §6.6, §8.2 D-8, §10.3 |
+| **DR-D19** | Decided in part 2026-10-09: the feeder translation is fitted against the tracker's own end-of-season smoothed talent, computed without the college prior; no separate scale map. Decided in part (2026-10-14, Statistical owner, owner-directed transcription, `docs/06-sessions/2026-10-14-P0-01.md`): season level, no seed; a reversal in part of the 2026-10-09 decision (rule 6), binding since the Statistical owner accepted ADR-013 on 2026-10-15 (PR #4 comment 6185953773). Each DR-D32 build computes its targets from its own window only, and a stored production track never supplies one. Every option offered computed each build's targets from that build's own window, and "Keep open" said so explicitly (the record, answer 10); with DR-D32's second canary (answer 6) and DR-D19's "the prior never trains on itself", that part does not wait on ADR-013. Under ADR-013, in each DR-D32 build, each feeder-linked track's target is its mean prior-builder residual in its first window season with role events, with its known variance, and the equivalency is a Fay–Herriot-type measurement-error regression on `feeder_sv`; no filter run and no prior enters the target. Since its acceptance, ADR-013 governs the parts of the 2026-10-09 text it reverses. Open: `P0_form` / `P0_scheme` for prior-seeded tracks, and `P0` for tracks restarted from a windowed prior, including whether `P0[0,0]` should offset the week-0 predict step (P1-12 measurements); the equivalency's estimator (DR-C5) and the parts `cross-league-priors.md` §6.2 lists | §6.5 |
+| **DR-D32** | Decided 2026-10-14 (Statistical owner, `docs/06-sessions/2026-10-14-P0-01.md`): two priors, strict window. Every season-boundary prior is built twice from the same data version: `prior_pre` on S−3..S−1 gives the preseason and week-1 published predictive, and the season-S filter restarts from `prior_in` on S−2..S−1. Each build uses only its own seasons' NFL evidence, its own feeder equivalency and its own DR-D19 targets; season S's frozen V(s) is the only shared data input, and both builds use the model version's learned hyperparameters (`κ_c`, `λ_c` and the `SSParams`). Two canaries prove the window, with the model version held fixed: its learned hyperparameters are calibrated by rolling origin, generally on seasons before the window, and are not window evidence (answer 11). Open: S−3's measured weight from week 2 on, and a real-data accuracy comparison of the two builds (P1-12 measurements). For feeder-linked tracks, both canaries can hold under ADR-013 (Accepted 2026-10-15), because each build takes its DR-D19 targets from its own prior-builder records (DR-D19) | §3.5, §6.4 item 4, §6.5, §6.6, §8.2 D-8, §10.3 |
 
 ---
 

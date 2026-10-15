@@ -1,17 +1,17 @@
 ---
 work-package-id: P1-00
-status: In Progress
+status: Done
 risk-class: Medium
 owner: Product/Architecture owner
 implementer: Claude Opus 5
-reviewer: Pending — fresh-context reviewer or human
+reviewer: "Fresh-context adversarial reviews, rounds 1–4 (docs/06-sessions/review-P1-00-adversarial-round1.md to round4.md), approved at round 4 with 0 blockers; it landed with P0-01, which the owner merged on 2026-10-15 (b819ae0)"
 alpha-phase: 1
 ---
 
 # P1-00 — Agent-Ready Repository, Authority Index, CI, Verification Scripts, and Work-Package Template
 
 ## Status
-In Progress
+Done. It landed with P0-01 (DR-A6), which the owner merged on 2026-10-15 (`b819ae0`).
 
 ## Ownership and risk
 - Owner: [Human Product Owner]

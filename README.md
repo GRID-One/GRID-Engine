@@ -47,8 +47,8 @@ projections* (`engine-spec.md` §3.2, §3.3).
   (`docs/00-meta/decision-register.md`). A work package is not Ready while a decision it depends on, or
   a still-open part of one, is unsettled.
 
-The active work package is P0-01, the engine-only consolidation
-(`docs/01-work-packages/p0-01-engine-consolidation.md`).
+P0-01, the engine-only consolidation (`docs/01-work-packages/p0-01-engine-consolidation.md`), is
+Done: the owner merged it on 2026-10-15 (`b819ae0`).
 
 ## Quick start
 
@@ -83,7 +83,7 @@ The oracle job (`reference-oracle` in `.github/workflows/alpha-ci.yml`) runs the
 runner image's tool-cache CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and fails if that interpreter
 is absent. It is expected green (446 passed) on ordinary `ubuntu-latest` runners. It sits outside the
 frozen verify chain (`engine-spec.md` §8.19). The owner decided that it becomes a required status check
-for every pull request (DR-D30), and applies that setting in branch protection after P0-01 merges.
+for every pull request (DR-D30); with P0-01 merged, the owner applies that setting in branch protection.
 
 ## Repository map
 
@@ -143,11 +143,12 @@ outside this repository and integrate only through the versioned engine output c
 
 The repository is licensed under `MIT OR Apache-2.0` (`LICENSE-MIT`, `LICENSE-APACHE`).
 
-`reference/python/` is the exception for now. cautious-nevermore carried no licence file. On 2026-10-08
-the owner chose to bring the imported oracle under `MIT OR Apache-2.0` (DR-A10, option 1), but the
-ruling itself is still to be posted on the pull request. Until that ruling is recorded, do not
-treat `reference/python/` as licensed under the repository's licence files
-(`reference/python/README.md`). Real third-party data is never committed (DR-A11).
+The code imported into `reference/python/` is covered too. cautious-nevermore carried no licence
+file. On 2026-10-08 the owner chose to bring the imported oracle under `MIT OR Apache-2.0` (DR-A10,
+option 1). The Data/Licensing owner's ruling, PR #4 comment 6185953773 of 2026-10-15 as the owner
+edited it that day, licenses that code, and later corrections made to it under
+`reference/python/PARITY.md`, on those terms (`reference/python/README.md`). It covers code only:
+real third-party data stays excluded and is never committed (DR-A11).
 
 ## Contributing
 

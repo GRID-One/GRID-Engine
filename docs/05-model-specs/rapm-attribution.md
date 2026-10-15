@@ -10,10 +10,10 @@ supersedes: none. First engine-only spec for this component. Replaces the cautio
 # Model spec: RAPM attribution (Layer 2), market reconciliation (Layer 3), team strength and the single-pass GRID fit
 
 This is a contract written before implementation. Under the authority order in engine-spec §1.5
-(DR-A2, ratified 2026-10-08 in the decision interview; to be named again in the P0-01 merge
-comment) it is an authority-level-3 document. The statistical owner approves the equations. The
-implementing agent may not redefine them (alpha-spec §1.3, superseded; carried into engine-spec
-§1).
+(DR-A2, ratified 2026-10-08 in the decision interview; named again in the P0-01 merge review, PR #4
+comment 6185953773) it is an authority-level-3 document. The statistical owner approves the
+equations. The implementing agent may not redefine them (alpha-spec §1.3, superseded; carried into
+engine-spec §1).
 
 **How to read this spec**
 
@@ -160,10 +160,10 @@ Kalman (state-space-kalman.md) observes weekly Layer-1/1′ credit, NEVER the cu
   - No RAPM rating seeds a Kalman prior (DR-D17). The windowed season-start prior reads none, and
     the feeder equivalency is fitted on the Kalman credit scale against DR-D19 targets that each
     DR-D32 build computes from its own window, never from a stored production track (DR-D19). As
-    decided on 2026-10-09, a target is end-of-season smoothed talent computed without the college
-    prior. Under ADR-013 (Proposed), once the owner accepts it, a target is the track's mean
-    prior-builder residual in its first window season with role events, from the build's own
-    records (layer1-credit.md §4.8.2); until then the 2026-10-09 text governs.
+    decided on 2026-10-09, a target was end-of-season smoothed talent computed without the college
+    prior. Under ADR-013, accepted on 2026-10-15, a target is the track's mean prior-builder
+    residual in its first window season with role events, from the build's own records
+    (layer1-credit.md §4.8.2); ADR-013 governs in place of the 2026-10-09 text.
   - In-season, the Kalman observes the participation-free Layer-1′ credit (layer1-credit.md §4.8).
 - The oracle's walk-forward folds current-season participation into RAPM at every origin
   (`reference/python/backend/validation/backtest.py:177-199`). Backtests built that way MUST be
@@ -814,9 +814,9 @@ Accuracy gates belong to the consuming layers (engine-spec §9.4).
 | Observed equivalence diffs (§6.2) | Replicates the two oracle tests and prints max abs diffs instead of asserting |
 | Synth market scale (§4.4); gauge-invariant market row and `team_rating` vs net (§4.4, §7.2) | Single solves with the oracle's `_solve_ridge_prior` |
 
-The scripts are scheduled for commit under `reference/python/tools/investigations/` in the same
-consolidation PR (P0-01). Until they are committed, these numbers are *recorded, not
-reproducible from the repo*.
+The scripts were scheduled for commit under `reference/python/tools/investigations/` in the
+consolidation PR (P0-01), which merged without them. Until they are committed, these numbers are
+*recorded, not reproducible from the repo*.
 
 ---
 
