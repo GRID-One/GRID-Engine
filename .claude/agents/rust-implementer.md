@@ -1,6 +1,7 @@
 ---
 name: rust-implementer
 description: Writes Rust code and tests for one work package on a disjoint file set. Use it for step 5 of the engine-spec §8.17 workflow once the plan is gated, giving it the work-package file, the paths it owns and the gates it must run; never for review.
+tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---
 
@@ -51,6 +52,9 @@ in Rust. A proposed default in `docs/00-meta/decision-register.md` is not a rati
   `cargo sqlx prepare`, `Cargo.lock` by cargo, oracle fixtures by the oracle exporter under a
   reviewed ledger entry.
 - New files are LF. An existing file keeps its line endings. Never convert a whole file.
+- No network access: no web fetch, no package download other than cargo's resolution of the
+  committed lockfile, and no GitHub write, merge or comment tool. Reading pinned documentation the
+  orchestrating session names is the only exception (engine-spec §14.1; Appendix D items 9 and 11).
 
 ## Engine rules you implement
 

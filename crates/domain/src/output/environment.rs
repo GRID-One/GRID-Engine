@@ -222,7 +222,7 @@ mod tests {
             prediction_version_id: PredictionVersionId(7),
             season: Season(2023),
             week: Week::new(5).unwrap(),
-            game_id: GameId("2023_05_KC_MIN".into()),
+            game_id: GameId("2099_05_KC_MIN".into()),
             team: TeamKey::Nfl("KC".into()),
             opponent: TeamKey::Nfl("MIN".into()),
             is_home: false,
@@ -240,7 +240,7 @@ mod tests {
             neutral_pass_tendency: summary(0.58),
             game_script: summary(3.5),
             implied_points: summary(26.5),
-            shared_latent_ids: vec!["game-2023_05_KC_MIN".into()],
+            shared_latent_ids: vec!["game-2099_05_KC_MIN".into()],
             research: ResearchFlag::none(),
         }
     }

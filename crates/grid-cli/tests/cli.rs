@@ -237,3 +237,28 @@ fn an_unknown_subcommand_exits_with_the_usage_code() {
         assert!(err.contains("unknown subcommand"), "{args:?}: {err}");
     }
 }
+
+/// An argument that is not valid UTF-8 is a usage error (exit 2), not a panic (exit 101, a code
+/// engine-output-contract §13 does not define); control characters are echoed escaped.
+#[cfg(unix)]
+#[test]
+fn non_utf8_and_control_character_arguments_are_usage_errors() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    let output = Command::new(env!("CARGO_BIN_EXE_grid"))
+        .arg(OsStr::from_bytes(b"\xff"))
+        .output()
+        .expect("the grid binary runs");
+    assert_eq!(output.status.code(), Some(2));
+    assert!(stderr(&output).contains("unknown subcommand"));
+
+    let output = grid(&["\u{1b}[31mred"]);
+    assert_eq!(output.status.code(), Some(2));
+    let err = stderr(&output);
+    assert!(
+        !err.contains('\u{1b}'),
+        "the escape byte is not echoed raw: {err:?}"
+    );
+    assert!(err.contains("\\u{1b}[31mred"));
+}

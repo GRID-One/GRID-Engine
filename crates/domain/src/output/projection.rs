@@ -949,7 +949,7 @@ pub(crate) mod test_support {
         ExplanationRecord {
             team_environment: TeamGameRef {
                 prediction_version_id: PredictionVersionId(7),
-                game_id: GameId("2023_05_KC_MIN".into()),
+                game_id: GameId("2099_05_KC_MIN".into()),
                 team: TeamKey::Nfl("KC".into()),
             },
             role_opportunity: vec![],
@@ -989,11 +989,11 @@ pub(crate) mod test_support {
                 week: Week::new(5).unwrap(),
                 is_week_18: false,
                 horizon: Horizon::Week,
-                player_id: PlayerKey::Gsis("00-0033873".into()),
+                player_id: PlayerKey::Gsis("00-9900001".into()),
                 position: Position::Qb,
                 team: TeamKey::Nfl("KC".into()),
                 opponent: TeamKey::Nfl("MIN".into()),
-                game_id: GameId("2023_05_KC_MIN".into()),
+                game_id: GameId("2099_05_KC_MIN".into()),
                 is_home: false,
                 synthetic_ids: false,
             },

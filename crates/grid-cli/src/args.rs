@@ -403,9 +403,13 @@ pub fn unavailable_message(surface: &Surface) -> String {
     )
 }
 
-/// The message for an unknown subcommand.
+/// The message for an unknown subcommand. The tokens are echoed with control characters escaped
+/// (`str::escape_debug`), so an argument cannot write terminal escape sequences to stderr.
 pub fn unknown_message(tokens: &str) -> String {
-    format!("grid: unknown subcommand `{tokens}` (run `grid --help` for the subcommand list)")
+    format!(
+        "grid: unknown subcommand `{}` (run `grid --help` for the subcommand list)",
+        tokens.escape_debug()
+    )
 }
 
 #[cfg(test)]

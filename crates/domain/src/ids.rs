@@ -513,7 +513,7 @@ mod tests {
         assert!(PlayerKey::Synthetic(1) < PlayerKey::Synthetic(10));
         assert!(PlayerKey::Synthetic(10) < PlayerKey::Synthetic(100));
         // GSIS ids order lexicographically as text as well.
-        assert!(PlayerKey::Gsis("00-0033873".into()) < PlayerKey::Gsis("00-0034796".into()));
+        assert!(PlayerKey::Gsis("00-9900001".into()) < PlayerKey::Gsis("00-9900002".into()));
     }
 
     #[test]
@@ -572,11 +572,11 @@ mod tests {
         assert_eq!(Slot::new(Season(2023), week(4)).to_string(), "(2023, 4)");
         assert_eq!(
             PlayKey {
-                game_id: GameId("2023_01_ARI_WAS".into()),
+                game_id: GameId("2099_01_ARI_WAS".into()),
                 play_id: 42
             }
             .to_string(),
-            "2023_01_ARI_WAS#42"
+            "2099_01_ARI_WAS#42"
         );
         assert_eq!(
             EngineVersion {

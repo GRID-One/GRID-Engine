@@ -73,8 +73,13 @@ where
 fn main() {
     let stdout = io::stdout();
     let stderr = io::stderr();
+    // `args_os`, not `args`: `std::env::args` panics (exit 101, a code engine-output-contract §13
+    // does not define) on an argument that is not valid UTF-8. A lossy conversion turns such an
+    // argument into one that matches no subcommand, so it is a usage error (exit 2).
     let outcome = run(
-        std::env::args().skip(1),
+        std::env::args_os()
+            .skip(1)
+            .map(|arg| arg.to_string_lossy().into_owned()),
         &mut stdout.lock(),
         &mut stderr.lock(),
     );

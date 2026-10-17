@@ -171,7 +171,7 @@ fn explanation() -> ExplanationRecord {
     ExplanationRecord {
         team_environment: TeamGameRef {
             prediction_version_id: PredictionVersionId(7),
-            game_id: GameId("2023_05_KC_MIN".into()),
+            game_id: GameId("2099_05_KC_MIN".into()),
             team: TeamKey::Nfl("KC".into()),
         },
         role_opportunity: vec![],
@@ -236,11 +236,11 @@ fn projection() -> PlayerWeekProjection {
             week: week(5),
             is_week_18: false,
             horizon: Horizon::Week,
-            player_id: PlayerKey::Gsis("00-0033873".into()),
+            player_id: PlayerKey::Gsis("00-9900001".into()),
             position: Position::Qb,
             team: TeamKey::Nfl("KC".into()),
             opponent: TeamKey::Nfl("MIN".into()),
-            game_id: GameId("2023_05_KC_MIN".into()),
+            game_id: GameId("2099_05_KC_MIN".into()),
             is_home: false,
             synthetic_ids: false,
         },
@@ -334,7 +334,7 @@ fn team_game_environment() -> TeamGameEnvironment {
         prediction_version_id: PredictionVersionId(7),
         season: Season(2023),
         week: week(5),
-        game_id: GameId("2023_05_KC_MIN".into()),
+        game_id: GameId("2099_05_KC_MIN".into()),
         team: TeamKey::Nfl("KC".into()),
         opponent: TeamKey::Nfl("MIN".into()),
         is_home: false,
@@ -356,14 +356,14 @@ fn team_game_environment() -> TeamGameEnvironment {
         neutral_pass_tendency: environment_summary(0.5625),
         game_script: environment_summary(3.5),
         implied_points: environment_summary(26.5),
-        shared_latent_ids: vec!["game-2023_05_KC_MIN".into()],
+        shared_latent_ids: vec!["game-2099_05_KC_MIN".into()],
         research: ResearchFlag::none(),
     }
 }
 
 fn projection_change() -> ProjectionChange {
     ProjectionChange {
-        player_id: PlayerKey::Gsis("00-0033873".into()),
+        player_id: PlayerKey::Gsis("00-9900001".into()),
         season: Season(2023),
         week: week(5),
         scoring_profile: profile(),
@@ -448,7 +448,7 @@ fn availability_report_row() -> AvailabilityReportRow {
 fn identity_review_item() -> IdentityReviewItem {
     IdentityReviewItem {
         review_id: ReviewId(9),
-        canonical_candidate: Some(PlayerKey::Gsis("00-0039150".into())),
+        canonical_candidate: Some(PlayerKey::Gsis("00-9900003".into())),
         source_name: "cfbd".into(),
         source_player_id: "4431611".into(),
         tier: 3,
@@ -971,7 +971,7 @@ fn player_rating_records() -> Vec<PlayerRatingRecord> {
     };
     vec![
         PlayerRatingRecord {
-            player_id: PlayerKey::Gsis("00-0033873".into()),
+            player_id: PlayerKey::Gsis("00-9900001".into()),
             slot: slot(5),
             position: Position::Qb,
             team: TeamKey::Nfl("KC".into()),
@@ -1038,7 +1038,7 @@ fn confidence_band_rows() -> Vec<ConfidenceBandRow> {
         .into_iter()
         .enumerate()
         .map(|(i, role)| ConfidenceBandRow {
-            player_id: PlayerKey::Gsis("00-0033873".into()),
+            player_id: PlayerKey::Gsis("00-9900001".into()),
             slot: slot(5),
             role,
             predictive_mean: 0.03125 / (i as f64 + 1.0).exp2(),
@@ -1191,7 +1191,7 @@ fn query_requests_round_trip() {
     round_trip(
         "PlayerProjectionDetailQuery",
         &PlayerProjectionDetailQuery {
-            player_id: PlayerKey::Gsis("00-0033873".into()),
+            player_id: PlayerKey::Gsis("00-9900001".into()),
             season: Season(2023),
             week: week(5),
             horizon: Horizon::RestOfSeason,
@@ -1214,7 +1214,7 @@ fn query_requests_round_trip() {
             season: Season(2023),
             week: week(5),
             scoring_profile: profile(),
-            player_id: Some(PlayerKey::Gsis("00-0033873".into())),
+            player_id: Some(PlayerKey::Gsis("00-9900001".into())),
             page: page_request(),
         },
     );
@@ -1263,7 +1263,7 @@ fn query_requests_round_trip() {
     round_trip(
         "ConfidenceBandsQuery",
         &ConfidenceBandsQuery {
-            player_id: PlayerKey::Gsis("00-0033873".into()),
+            player_id: PlayerKey::Gsis("00-9900001".into()),
             from: slot(1),
             to: slot(5),
             level: 0.875,
@@ -1311,7 +1311,7 @@ fn command_requests_and_receipt_round_trip() {
         "ApproveIdentityLink",
         &ApproveIdentityLink {
             review_id: ReviewId(9),
-            canonical_player_id: PlayerKey::Gsis("00-0039150".into()),
+            canonical_player_id: PlayerKey::Gsis("00-9900003".into()),
         },
     );
     round_trip(

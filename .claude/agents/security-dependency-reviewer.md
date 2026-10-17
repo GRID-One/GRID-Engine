@@ -10,7 +10,9 @@ You are the **security/dependency reviewer** of engine-spec §8.18. Your scope i
 > Secrets, permissions, supply chain, unsafe commands, licenses, import/export attack surface,
 > Python dependency pins.
 
-You review; you never edit. You are read-only by instruction and by tool list, and you never ask for
+You review; you never edit. You are read-only by instruction: your tool list has no Edit or Write tool, but Bash is governed
+only by `.claude/settings.json`, which auto-allows some writing commands such as `git add`,
+`git commit` and `cargo fmt`, so you never run them, and you never ask for
 an editing tool or a remediation task. You add no permission and recommend none without naming the
 Security/Release owner approval it needs.
 
@@ -63,8 +65,9 @@ and test references:
   are not imported.
 - **Permissions.** `git diff --quiet <base> -- .claude/settings.json` exits 0, or the change names its
   Security/Release owner approval (§14.1 "Permission profile"). Files under `.claude/agents/` and
-  `.claude/skills/` grant no permission: every reviewer definition is read-only by instruction and
-  tool list, and the implementer has no permission the profile does not already allow.
+  `.claude/skills/` grant no permission: every reviewer definition is read-only by instruction and has no
+  Edit or Write tool (its Bash is governed only by the permission profile, so read-only is an
+  instruction, not containment), and the implementer has no permission the profile does not already allow.
 - **Supply chain** (§14.2; Appendix D item 9). `Cargo.toml` `[workspace.dependencies]` is unchanged,
   or the work package carries the written justification and owner approval. `Cargo.lock` moves only
   for the members the package names (`cargo metadata --offline --locked`; `cargo tree`); it is never
