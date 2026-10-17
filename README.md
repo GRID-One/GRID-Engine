@@ -25,8 +25,12 @@ This repository builds **the engine only**:
 **Pre-implementation.** Permitted wording for anything this engine produces today: *Experimental
 projections* (`engine-spec.md` §3.2, §3.3).
 
-- **Rust engine: stubs.** The workspace has 11 crates. Only `persistence` has code and tests: the
-  SQLx scaffold with one infrastructure migration. No engine computation exists yet.
+- **Rust engine: skeleton.** The workspace has 13 crates (the DR-A8 set since P1-01). `domain`,
+  `pipeline`, `synth` and `grid-cli` hold the P1-01 skeleton: the contract types with serde derives
+  (ADR-014, Proposed), the §8.2–§8.4 library API surface as traits with no implementor, the DR-D29
+  fixture reader with the `from_legacy_v0` loader, and the thin `grid` CLI (`--version`, `--help`,
+  `exit-codes`). `persistence` holds the SQLx scaffold with one infrastructure migration. Still no
+  engine computation: nothing fits, projects or scores.
 - **Python oracle: runs.** At import it passed its own suite on Linux: 446 tests, CPython 3.11.15,
   threads pinned to 1, isolation guard clean (`reference/python/PARITY.md` §(a)). Its golden master
   is frozen on a pinned numerical platform, CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, which any
@@ -48,7 +52,9 @@ projections* (`engine-spec.md` §3.2, §3.3).
   a still-open part of one, is unsettled.
 
 P0-01, the engine-only consolidation (`docs/01-work-packages/p0-01-engine-consolidation.md`), is
-Done: the owner merged it on 2026-10-15 (`b819ae0`).
+Done: the owner merged it on 2026-10-15 (`b819ae0`). P0-02, its recording change, merged on
+2026-10-15 (`73a8e3b`, PR #5). P1-01, the engine skeleton
+(`docs/01-work-packages/p1-01-engine-skeleton.md`), is in progress.
 
 ## Quick start
 
@@ -91,17 +97,18 @@ for every pull request (DR-D30); with P0-01 merged, the owner applies that setti
 |---|---|
 | `engine-spec.md` | The engine specification: authority level 1. Mirrored byte-identically at `docs/00-meta/specs/engine-spec.md` |
 | `CLAUDE.md`, `docs/CLAUDE.md` | Durable rules for the implementing agent and for humans: authority, commands, boundaries |
-| `crates/` | Rust workspace: `domain`, `persistence`, `ingestion`, `identity`, `features`, `models`, `simulation`, `scoring`, `evaluation`, `governance`, `application` |
+| `crates/` | Rust workspace: `domain`, `persistence`, `ingestion`, `identity`, `features`, `models`, `simulation`, `scoring`, `evaluation`, `governance`, `pipeline`, `grid-cli`, `synth` |
 | `migrations/` | Append-only SQLx migrations |
 | `.sqlx/` | Generated SQLx offline query cache (never hand-edited) |
 | `reference/python/` | Python reference oracle: `backend/`, `tests/`, `MANIFEST.tsv`, `PARITY.md`, `patches/`, `tools/` |
 | `scripts/`, `tests/guards/` | Verify scripts, repository guards and the guard behaviour suite |
 | `toolchains/` | Pinned developer tools |
+| `.claude/agents/`, `.claude/skills/` | The §8.18 agent role definitions and the work-package execution skill (P1-01); `.claude/settings.json` is the permission boundary |
 | `.ai/evidence/<WP-ID>/` | Committed evidence manifests for completed work packages |
 | `docs/` | The documentation vault (below) |
 
-Not yet present: `fixtures/` (parity and provider fixtures), `crates/pipeline/`, `crates/grid-cli/`
-and `crates/synth/`. Each has an owner work package (`engine-spec.md` §8.14).
+Not yet present: `fixtures/` (parity and provider fixtures). It has an owner work package
+(`engine-spec.md` §8.14).
 
 ## Documentation map
 

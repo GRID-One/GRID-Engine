@@ -103,14 +103,16 @@ just bootstrap                                                            # once
 
 ## Active work
 
-- **Last merged work package:** P0-01 — Engine-only consolidation
-  (`docs/01-work-packages/p0-01-engine-consolidation.md`), merged on 2026-10-15 (`b819ae0`). P1-00
-  landed with it (DR-A6). Work package P0-02
-  (`docs/01-work-packages/p0-02-record-p0-01-merge-rulings.md`) records the merge review, the DR-A10
-  ruling and the ADR acceptances (`docs/06-sessions/2026-10-15-P0-02.md`).
-- **Next:** P1-01 (domain types, API and output-contract skeleton, oracle-fixture format, crate
-  restructure). P1-06 (numerical primitives) then runs in parallel with the P1-02 → P1-05 chain once
-  the P1-01 contracts stabilize.
+- **Last merged work package:** P0-02 — Record the P0-01 merge review, the DR-A10 ruling and the
+  ADR acceptances (`docs/01-work-packages/p0-02-record-p0-01-merge-rulings.md`), merged on 2026-10-15
+  (`73a8e3b`, the merge of PR #5; `docs/06-sessions/2026-10-15-P0-02.md`). Before it, P0-01, the
+  engine-only consolidation, merged on 2026-10-15 (`b819ae0`), with P1-00 (DR-A6).
+- **In progress:** P1-01 — Domain types, engine API skeleton, oracle-fixture harness and crate
+  restructure (`docs/01-work-packages/p1-01-engine-skeleton.md`), on branch
+  `claude/pensive-fermat-fgaweh` from `73a8e3b`. It proposes ADR-014 (`grid-domain` takes `serde` as
+  its only external dependency), which the owner accepts or rejects at its merge.
+- **Next:** P1-02 (SQLite schema, migrations, durable jobs) and, in parallel with the P1-02 → P1-05
+  chain, P1-06 (numerical primitives), once P1-01 has merged and its contracts are fixed.
 - **Sequence:** engine-spec §9.5; index and readiness in `docs/01-work-packages/README.md`. A package
   is not Ready while a decision it depends on is unratified (`docs/00-meta/decision-register.md`).
 

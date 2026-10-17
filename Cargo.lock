@@ -408,12 +408,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "grid-application"
+name = "grid-cli"
 version = "0.1.0-alpha.1"
+dependencies = [
+ "grid-domain",
+ "grid-pipeline",
+]
 
 [[package]]
 name = "grid-domain"
 version = "0.1.0-alpha.1"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "grid-evaluation"
@@ -447,12 +454,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "grid-pipeline"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "grid-domain",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "grid-scoring"
 version = "0.1.0-alpha.1"
 
 [[package]]
 name = "grid-simulation"
 version = "0.1.0-alpha.1"
+
+[[package]]
+name = "grid-synth"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "grid-domain",
+ "serde_json",
+]
 
 [[package]]
 name = "hashbrown"

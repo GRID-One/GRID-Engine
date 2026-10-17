@@ -1,0 +1,260 @@
+{
+  "schema": "grid-alpha/evidence-manifest/1",
+  "work_package_id": "P1-01",
+  "commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+  "branch": "claude/pensive-fermat-fgaweh",
+  "model": "unrecorded",
+  "work_package": {
+    "id": "P1-01",
+    "file": "docs/01-work-packages/p1-01-engine-skeleton.md"
+  },
+  "commit_info": {
+    "sha": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+    "branch": "claude/pensive-fermat-fgaweh",
+    "range": "origin/main...HEAD",
+    "generated_at": "2026-10-17T08:21:17Z",
+    "state": "uncommitted: 1 path(s) not yet in 6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f"
+  },
+  "model_and_harness": {
+    "project_alias": "unrecorded",
+    "provider_model_id": "unrecorded",
+    "harness": "claude-code-on-the-web",
+    "harness_version": "unrecorded",
+    "permission_profile": "least-privilege",
+    "retention_policy": "zero-transcript-for-protected-branches",
+    "source": "ai-toolchain.lock"
+  },
+  "environment": {
+    "os": "Linux 6.18.44-fc-v139 x86_64",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)"
+  },
+  "files_changed": [
+    ".ai/evidence/P1-01/verification-input.json",
+    ".claude/agents/adversarial-pr-reviewer.md",
+    ".claude/agents/data-contract-reviewer.md",
+    ".claude/agents/numerical-reviewer.md",
+    ".claude/agents/reference-parity-reviewer.md",
+    ".claude/agents/repository-explorer.md",
+    ".claude/agents/rust-implementer.md",
+    ".claude/agents/security-dependency-reviewer.md",
+    ".claude/skills/work-package/SKILL.md",
+    "Cargo.lock",
+    "Cargo.toml",
+    "README.md",
+    "crates/application/Cargo.toml",
+    "crates/application/src/lib.rs",
+    "crates/domain/Cargo.toml",
+    "crates/domain/src/asof.rs",
+    "crates/domain/src/error.rs",
+    "crates/domain/src/ids.rs",
+    "crates/domain/src/lib.rs",
+    "crates/domain/src/output/change.rs",
+    "crates/domain/src/output/environment.rs",
+    "crates/domain/src/output/explanation.rs",
+    "crates/domain/src/output/mod.rs",
+    "crates/domain/src/output/projection.rs",
+    "crates/domain/src/output/reports.rs",
+    "crates/domain/src/plays.rs",
+    "crates/domain/src/status.rs",
+    "crates/domain/src/time.rs",
+    "crates/grid-cli/Cargo.toml",
+    "crates/grid-cli/src/args.rs",
+    "crates/grid-cli/src/main.rs",
+    "crates/grid-cli/tests/cli.rs",
+    "crates/pipeline/Cargo.toml",
+    "crates/pipeline/src/commands.rs",
+    "crates/pipeline/src/events.rs",
+    "crates/pipeline/src/lib.rs",
+    "crates/pipeline/src/queries.rs",
+    "crates/pipeline/src/serialization.rs",
+    "crates/pipeline/tests/crate_boundaries.rs",
+    "crates/pipeline/tests/output_round_trip.rs",
+    "crates/pipeline/tests/serialized_spelling.rs",
+    "crates/synth/Cargo.toml",
+    "crates/synth/src/fixture.rs",
+    "crates/synth/src/legacy_v0.rs",
+    "crates/synth/src/lib.rs",
+    "crates/synth/src/truth.rs",
+    "crates/synth/tests/common/mod.rs",
+    "crates/synth/tests/fixture_hardening.rs",
+    "crates/synth/tests/fixture_reader.rs",
+    "crates/synth/tests/legacy_v0_round_trip.rs",
+    "crates/synth/tests/tolerance.rs",
+    "docs/00-meta/authority-index.md",
+    "docs/00-meta/daily-log.md",
+    "docs/00-meta/dashboard.md",
+    "docs/00-meta/specs/engine-spec.md",
+    "docs/01-work-packages/README.md",
+    "docs/01-work-packages/p1-01-engine-skeleton.md",
+    "docs/02-adr/014-domain-serialization-boundary.md",
+    "docs/02-adr/README.md",
+    "docs/03-contracts/README.md",
+    "docs/03-contracts/engine-output-contract.md",
+    "docs/03-contracts/parity-fixture-contract.md",
+    "docs/03-contracts/plays-contract.md",
+    "docs/06-sessions/2026-10-17-P1-01.md",
+    "docs/06-sessions/README.md",
+    "docs/CLAUDE.md",
+    "engine-spec.md",
+    "scripts/bootstrap-repo.sh"
+  ],
+  "contracts_and_adrs_referenced": {
+    "adrs": [
+      "docs/02-adr/001-repo-bootstrap-decisions.md",
+      "docs/02-adr/002-sqlx-offline-cache.md",
+      "docs/02-adr/003-sqlx-0-9-upgrade.md",
+      "docs/02-adr/004-line-ending-policy.md",
+      "docs/02-adr/005-check-sqlx-workspace-flag.md",
+      "docs/02-adr/006-deferred-deliverables.md",
+      "docs/02-adr/007-verify-covers-guards-and-doctests.md",
+      "docs/02-adr/008-verify-scope-guard.md",
+      "docs/02-adr/009-verify-ps1-exit-codes.md",
+      "docs/02-adr/010-guard-the-shape-not-the-instance.md",
+      "docs/02-adr/011-engine-only-pivot.md",
+      "docs/02-adr/012-python-reference-oracle.md",
+      "docs/02-adr/013-feeder-target-season-level.md",
+      "docs/02-adr/014-domain-serialization-boundary.md"
+    ],
+    "contracts": [
+      "docs/03-contracts/engine-output-contract.md",
+      "docs/03-contracts/parity-fixture-contract.md",
+      "docs/03-contracts/plays-contract.md"
+    ],
+    "model_specs": [
+      "docs/05-model-specs/cross-league-priors.md",
+      "docs/05-model-specs/evaluation-and-leakage.md",
+      "docs/05-model-specs/layer1-credit.md",
+      "docs/05-model-specs/projection-stack.md",
+      "docs/05-model-specs/rapm-attribution.md",
+      "docs/05-model-specs/state-space-kalman.md",
+      "docs/05-model-specs/synthetic-world.md",
+      "docs/05-model-specs/value-model.md"
+    ]
+  },
+  "migrations_changed": [],
+  "verification": {
+    "commands": [
+      {
+        "command": "just verify",
+        "exit_status": 0,
+        "canonical": true,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "environment": "Linux 6.18.44-fc-v139 x86_64 (Claude Code on the web container); rustc 1.99.1",
+        "summary": "All 8 recipes passed: cargo fmt check; clippy -D warnings; nextest 179 tests run, 179 passed, 0 skipped (grid-domain 62, grid-synth 51, grid-pipeline 47, grid-cli 16, grid-persistence 3); doctests 7 passed (grid-domain 3, grid-synth 4); cargo deny advisories, bans, licenses and sources ok; cargo audit exit 0 (the pre-existing allowed chacha20 0.10.1 yanked warning); tests/guards/run.sh 78 passed, 0 failed; check-traceability OK (66 paths); check-authority-sync OK; check-verify-parity OK (15 steps); typos clean."
+      },
+      {
+        "command": "pwsh -NoProfile -File scripts/verify.ps1 -Scope Full",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "environment": "Portable PowerShell 7.4.6 on Linux, not Windows. This is not the merge-authoritative Windows run (DR-A3); the windows-authoritative CI job on the pull request is.",
+        "summary": "[verify] All checks passed. The same 15 steps as just verify, each guarded by Assert-Ok."
+      },
+      {
+        "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "A fresh clone compiles offline against the committed .sqlx cache, all 13 crates."
+      },
+      {
+        "command": "./scripts/check-traceability.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "All 66 non-trivial paths traced individually, without PR_BODY, against base origin/main (73a8e3b), to ADR-006, ADR-014, P1-01, P1-05, P1-10 and docs/01-work-packages/p1-01-engine-skeleton.md. Run as a step of just verify."
+      },
+      {
+        "command": "bash tests/guards/run.sh",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "78 passed, 0 failed. Run as a step of just verify; no case was added or changed."
+      },
+      {
+        "command": "./scripts/check-authority-sync.sh",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "engine-spec.md and docs/00-meta/specs/engine-spec.md are byte-identical (752283 bytes). Run as a step of just verify."
+      },
+      {
+        "command": "cd reference/python && python3 tools/verify_manifest.py",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "OK (105 rows: 102 verbatim, 3 patched; checks: local). No oracle file changed. The oracle pytest suite was not run by this session; the reference-oracle CI job on the pull request is the Linux evidence."
+      },
+      {
+        "command": "typos",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "Clean. Run as a step of just verify."
+      },
+      {
+        "command": "git grep -n -E \"TODO|FIXME|unimplemented!|todo!\" -- crates",
+        "exit_status": 1,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "Prints nothing (git grep exits 1 when nothing matches): no placeholder in any crate."
+      },
+      {
+        "command": "git diff --quiet 73a8e3b 6eff77d -- .claude/settings.json justfile scripts/verify.sh scripts/verify.ps1 .github migrations .sqlx reference/python rust-toolchain.toml .ai/evidence/P0-01 .ai/evidence/P0-02 .ai/evidence/P1-00",
+        "exit_status": 0,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "The frozen recipes, the permission profile, CI, migrations, the SQLx cache, the oracle, the toolchain pin and the earlier evidence records are byte-for-byte unchanged."
+      },
+      {
+        "command": "cargo test -p grid-cli --doc",
+        "exit_status": 101,
+        "run_against_commit": "6eff77d27bcc1ae6fe245b8b0d8cc59b8d18859f",
+        "summary": "error: no library targets found in package grid-cli. A binary-only crate has no doctest target; not a test failure. The canonical cargo test --workspace --doc in just verify is unaffected."
+      }
+    ],
+    "note": "Populated from actual runs on the final content commit 6eff77d. A command that was not executed is never recorded as passing. The Windows run and the reference-oracle run on ubuntu-latest are CI evidence on the pull request, not claimed here."
+  },
+  "review": {
+    "reviewer_type": "independent agents, fresh context (not the implementer)",
+    "reviewer": "During implementation: a read-only verifier per crate after each implementer round. At the end: a security-dependency review and an adversarial PR review of the whole diff against origin/main at 07ecd6a; read-only by instruction.",
+    "findings": [],
+    "resolved": [
+      "Security F1, F2, F7, F8: fixture reader hardened (checked shape products, single-component file names, regular files only, size caps, manifest validation); tests/fixture_hardening.rs.",
+      "Security F5: the CLI no longer panics on non-UTF-8 arguments and escapes control characters it echoes.",
+      "Security F3, F4: reviewer agents described as read-only by instruction; rust-implementer declares its tools and a no-network rule (Amendments row 11, decision request).",
+      "Security F6: real nflverse identifiers in test inputs replaced by fabricated ones (row 12).",
+      "Adversarial B1: grid-cli and synth boundary cells reduced to status wording (row 13). B2: DR-D10 dependency recorded (row 14).",
+      "Adversarial M1-M10 and minors: rows 15 to 24 and the trailing paragraphs of the Amendments section."
+    ],
+    "reviewed_commit": "07ecd6a (whole-change reviews); remediation in 3ea80bd, 5ab8cea and 6eff77d",
+    "verdict": "Security review: no blocker; 3 major and 6 minor findings, all fixed except the commit-trailer finding, recorded for the owner. Adversarial review: CONDITIONAL; 2 blockers, 11 major and 12 minor findings, each applied or raised as work-package Amendments rows 13 to 24."
+  },
+  "human_approvals": {
+    "required": [
+      "Product/Architecture owner: accept or reject ADR-014 (Proposed).",
+      "Product/Architecture owner: rule on work-package Amendments rows 1 to 24, including the decision requests in rows 20 (synchronous facade) and 22 (CLI surface ownership).",
+      "Statistical owner: the decision request in row 21 (the A-prime norm against rapm-attribution P-3), before P1-12 writes its first A-prime test.",
+      "Security/Release owner: review .claude/agents/ and .claude/skills/, and the residual-risk decision request in row 11.",
+      "Owner: approve the three Draft contracts with the package, and merge with a merge commit."
+    ],
+    "obtained": []
+  },
+  "known_limitations": [
+    "ai-toolchain.lock model and harness-version identity are unrecorded, a deviation from engine-spec §8.20: the harness policy forbids writing model identifiers into repository artifacts. The commit trailers, written by the harness, do name a model (security finding F9; adversarial finding m6).",
+    "The branch name was assigned by the harness (claude/pensive-fermat-fgaweh), not wp/P1-01-... (ADR-001 D1 convention).",
+    "Windows is proven only by the pull request windows-authoritative CI job; verify.ps1 ran here under portable PowerShell on Linux.",
+    "Agent-only review: the owner merge review is the first human review.",
+    "The CI guards job was red on the intermediate pushes because, until this record existed, check-evidence-claims.sh re-derived the P0-02 record against this tree.",
+    "cargo test -p grid-cli --doc exits 101 (no library target in a binary-only crate).",
+    "No parity assertion: no oracle-exported fixture exists yet; S-1 is prepared and P1-05 asserts it."
+  ],
+  "follow_up": [
+    "Open owner item: whether a numerical crate parity tests may take grid-synth as a dev-dependency (engine-spec §8.1 rule 3); P1-06 or P1-12 raises it.",
+    "engine-output-contract §12 open items: serialized spellings of the status enums, PlayerKey and TeamKey; the research marker per row or per run for query 10 (before P2-06); the derived-horizon record key (P1-08); a null form for oldest_source_timestamp.",
+    "P1-10 completes the §7 status report row against engine-spec §8.3 query 6; P1-11 sets GRID_GIT_SHA in the release build.",
+    "The §9.5 and §7.12.3 wording on parity-fixture timing (a spec erratum).",
+    "Carried from P0-02: DR-D30 (reference-oracle as a required check), the DR-A3 follow-up ADR before P1-11, the KI-NEW-Z79 decision request, the P1-12 pre-registrations."
+  ],
+  "verification_status": "passed_with_exceptions",
+  "verification_summary": {
+    "canonical_command": "just verify",
+    "canonical_exit_status": 0,
+    "total_recorded": 11,
+    "passed": 9,
+    "failed": 2,
+    "not_run": 0
+  }
+}

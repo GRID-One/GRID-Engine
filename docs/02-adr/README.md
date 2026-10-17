@@ -34,6 +34,10 @@ The `status` values are those of the template: `Proposed`, `Accepted`, `Supersed
 - **ADR-013** records the Statistical owner's 2026-10-14 reversal in part of DR-D19 (register rule 6).
   The Statistical owner accepted it on 2026-10-15 in the same comment, and its text governs the parts
   of DR-D19 it reverses.
+- **ADR-014** is Proposed by P1-01 (2026-10-17) under the authority engine-spec §8.1 rule 5 gives that
+  package. P1-01 implements it while Proposed, as P0-01 implemented ADR-011 and ADR-012; the
+  Product/Architecture owner accepts or rejects it in the P1-01 merge review. It binds nothing until
+  then.
 
 ## Partial supersession
 
@@ -67,6 +71,7 @@ Editing `superseded-by` is the only change permitted to an Accepted ADR. The bod
 | [011](011-engine-only-pivot.md) | Engine-only pivot | Accepted | 2026-10-07 | — |
 | [012](012-python-reference-oracle.md) | Python reference oracle | Accepted | 2026-10-07 | — |
 | [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | Accepted | 2026-10-14 | — |
+| [014](014-domain-serialization-boundary.md) | `grid-domain` takes `serde` as its only external dependency | Proposed | 2026-10-17 | — |
 
 **What ADR-011 supersedes in part** (its "Supersession" section is authoritative):
 

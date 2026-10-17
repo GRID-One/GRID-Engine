@@ -18,11 +18,10 @@ mk() { [[ -d "$1" ]] || { mkdir -p "$1"; echo "  + $1"; created=$((created+1)); 
 keep() { mk "$(dirname "$1")"; [[ -e "$1" ]] || { : > "$1"; echo "  + $1"; created=$((created+1)); }; }
 
 CRATES=(domain persistence ingestion identity features models simulation scoring
-        evaluation governance application)
+        evaluation governance pipeline grid-cli synth)
 
 echo "[bootstrap-repo] crates"
 for c in "${CRATES[@]}"; do mk "crates/$c/src"; done
-mk crates/application/src/bin
 
 # data/ is gitignored (raw and derived provider data is never committed), so a fresh clone
 # and a bootstrapped tree differ by this one empty directory. That is intended: ingestion in

@@ -7,3 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+# The one external dependency of the domain crate: serde derives for the public contract types
+# (ADR-014, docs/02-adr/014-domain-serialization-boundary.md). First use of an already-declared
+# workspace dependency; it adds no package to Cargo.lock. Nothing else may be added here without a
+# superseding ADR; crates/pipeline/tests/crate_boundaries.rs fails if anything is.
+serde.workspace = true

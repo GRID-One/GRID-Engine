@@ -1,0 +1,20 @@
+[package]
+name = "grid-pipeline"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+grid-domain.workspace = true
+# First use of already-declared workspace dependencies; not new dependencies. serde_json is the
+# JSON format crate for records and sidecars (engine-output-contract §10; ADR-014 decision 3).
+serde.workspace = true
+# `float_roundtrip` makes the JSON reader parse an f64 back to the exact bits its shortest
+# decimal form was written from (engine-spec §12.6 "JSON exports preserve bits"); without it
+# `serde_json` reads a 16- or 17-digit significand one ULP off. It is a feature of the already
+# resolved package, not a new dependency: `Cargo.lock` does not change.
+# `tests/output_round_trip.rs::json_round_trip_preserves_computed_f64_bit_for_bit` fails if it
+# is dropped.
+serde_json = { workspace = true, features = ["float_roundtrip"] }

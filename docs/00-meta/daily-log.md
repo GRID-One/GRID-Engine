@@ -208,3 +208,91 @@ whose tree it equals). The record, with the owner's three answers verbatim, is
   P1-11; the KI-NEW-Z79 decision request, still to raise; the P1-12 pre-registrations (DR-D14,
   DR-D17, DR-D19 with DR-C5 and DR-C9); every open B, C and D part; `ai-toolchain.lock` provenance
   for P0-01, unrecorded.
+
+## 2026-10-17 — P1-01
+
+P1-01 (domain types, engine API skeleton, oracle-fixture harness and crate restructure) started on
+branch `claude/pensive-fermat-fgaweh`, from `main` at the P0-02 merge (`73a8e3b`, PR #5). The work
+package is `docs/01-work-packages/p1-01-engine-skeleton.md`; the session log is
+`docs/06-sessions/2026-10-17-P1-01.md`.
+
+- **Readiness check.** Every decision the package depends on is settled (DR-A2, DR-A8, DR-A11, DR-B1,
+  DR-B2, DR-B3 as overridden, DR-C4, DR-D7, DR-D8's interim rule, DR-D29), P0-01 and P0-02 are merged,
+  and the three contracts it implements exist as Drafts. The package was Ready when it started.
+- **What was built.** The DR-A8 crate set: `crates/application/` renamed to `crates/pipeline/`
+  (package `grid-pipeline`), new `crates/grid-cli/` (binary `grid`) and `crates/synth/`
+  (`grid-synth`), 13 workspace members. `grid-domain`: the canonical IDs and version IDs, `Week`
+  that cannot be 0 (KI-A4), `PlayerKey` ordered by its string form and `TeamKey` in native order,
+  `UtcInstant`, the `AsOf` type with its publication-lag axis and typed `LeakageError`, the sixteen
+  plays-contract `ContractError` variants, `OutputInvariantError`, `EngineErrorCode` (17 codes),
+  `TerminalState` (14) with the exit codes, `JobStatus`, `StageId` (20), `TrainingStatus` as
+  engine-spec §8.4, the `grid.plays` v1 frames with `PlaysFrame::validate` (core rules 1–7; real-data
+  rules 1–2 under `RealData`), and every `grid.output` 1.0 record with `validate()` for the §3.9
+  invariants. `grid-pipeline`: 13 typed command requests and `EngineCommands`, 14 typed queries with
+  `Page<T>` / `Versioned<T>` responses and `EngineQueries`, `EngineEvent` (21) with `EventBus`, the
+  `RecordEnvelope` JSON writer and MAJOR-rejecting reader, `ExportSidecar`; the structural
+  crate-boundary test and the output-record round trips. `grid-synth`: the DR-D29 `fixture` reader
+  with typed `FixtureError`, the exact, A, A′ and B tolerance helpers, `SyntheticTruth`, and
+  `legacy_v0` (`load_world`, `from_legacy_v0`, `to_v0_columns`). `grid-cli`: hand-rolled arguments,
+  `--version`, `--help` listing every §8.2 and §8.3 spelling with its delivering package,
+  `exit-codes`, exit 2 for an unknown or unavailable subcommand. `.claude/agents/` (seven role
+  definitions) and `.claude/skills/work-package/`; `.claude/settings.json` unchanged.
+- **ADR-014 proposed.** `grid-domain` takes `serde` with `derive` as its only external dependency;
+  format crates stay in `grid-pipeline` and `grid-synth`; errors are hand-written; no feature flag.
+  The owner accepts or rejects it at the merge. The three contracts and `docs/CLAUDE.md` rule 4 now
+  cite it.
+- **Fixture-timing reading.** Engine-spec §9.5's P1-01 parity column and §7.12.3 read differently on
+  when the committed canonical synthetic fixture exists. The package follows §7.12.3, §8.1 and §9.2.1
+  item 7: the loader and a hand-built round-trip test now, the committed `synthetic-world/
+  canonical-legacy` case and the S-1 assertion in P1-05. Recorded in the work package for the owner.
+- **Exit-code table fixed** (engine-output-contract §13): Success 0; NoNewData 10; PartialSuccess 11;
+  NetworkFailure 20; Timeout 21; RateLimited 22; AuthenticationFailure 23; InvalidResponse 24;
+  SchemaFailure 25; DataValidationFailure 26; DatabaseFailure 30; LearningFailure 40; NotRun and
+  Running none; usage error 2; internal error 70.
+- **No new dependency.** `serde` and `serde_json` were already in `[workspace.dependencies]` and in
+  `Cargo.lock`; `grid-pipeline` enables `serde_json`'s `float_roundtrip` feature so a JSON round trip
+  returns the exact `f64` bits (engine-spec §12.6). `Cargo.lock` changes only for the renamed and
+  added members.
+- **Open owner actions.** Accept or reject ADR-014 and approve the fixed type names and exit codes at
+  the merge; Security/Release review of `.claude/agents/` and `.claude/skills/`; approval of the
+  manifest key `provenance.synth_config_sha256` (parity-fixture-contract §5.1, Amendments row 9; the
+  P1-05 exporter writes it); the §9.5 / §7.12.3 wording on fixture timing (a spec erratum); whether a numerical crate's parity
+  tests may take `grid-synth` as a dev-dependency (engine-spec §8.1 rule 3 and `synthetic-world.md`
+  §10.1 say `models` MUST NOT depend on `synth`, unqualified; a spec erratum or ADR before P1-06 or
+  P1-12 needs it); the MINOR contract edits made under the authority order (engine-output-contract
+  §4.2 `regime_flags` gains `observation_noise_inflation` per engine-spec §5.5, §3.9 gains the sd ≥ 0
+  bullet per engine-spec §5, parity-fixture-contract gains §5.1). Carried unchanged: DR-D30, DR-A3's
+  follow-up ADR before P1-11, the KI-NEW-Z79 decision request, the P1-12 pre-registrations.
+- **Review remediation.** The fresh-context review of the documents found: the engine-spec §8.1 crate
+  table still had an `application` row and no `pipeline`, `grid-cli` or `synth` rows while claiming
+  to quote `docs/CLAUDE.md` (fixed under the "§8.1 Current workspace" factual-status allowance, the
+  `domain` cell marked "ADR-014, Proposed in P1-01"); rule 5 presented the Proposed ADR-014 as having
+  decided the question (reworded); the §8.14 "Not yet present" table listed present paths (moved
+  below it); `docs/CLAUDE.md` rule 3 and parity-fixture-contract §11 attributed the dev-dependency
+  qualifier to the spec (restated as the spec writes it; open item above); engine-output-contract §13
+  omitted the `-V`, `-h` and `help` aliases the binary accepts (added); the P0-02 merge was dated
+  2026-10-17 in six status lines, but `git show 73a8e3b` and PR #5 date it 2026-10-15 (corrected).
+- **Second review of the documents.** The work package had been amended in place (Scope, "Contracts
+  changed", the numerical-crates constraint, the Follow-up), which ADR-001 ("On amending a work
+  package mid-implementation") forbids: the `e3b2b75` wording is restored, the date correction kept,
+  and the changes sit in a dated "Amendments" section at the end of the file as proposed items for
+  the owner's ruling at the merge. Engine-output-contract §13 overstated the skeleton CLI (the binary
+  ignores tokens after `--version`, `--help` and `exit-codes`, and no test asserts `-V` or `-h`):
+  reworded to what the code and `tests/cli.rs` do. The §2 `lock` cell wrote `lock_at` while §10
+  fixed `Lock { kind, at }` and said serialized names are the contract's names: the cell now writes
+  `at` (Amendments row 3). The session log now carries its own `typos` path list and names the work
+  package file among the edited documents. Two findings fall outside the document set (a manifest
+  comment in `crates/synth/Cargo.toml` stating the open dev-dependency rule; `crates/domain/src/lib.rs`
+  calling ADR-014 decided) and go to the crate owners.
+- **CLI labels ruled.** The CLI implementer had named five Phase 2 outputs by their content owner
+  (P2-01, P2-02, P2-06, P2-07) and raised a decision request. Ruled under the authority order: the CLI
+  adapter for every §8.2 command and §8.3 query is P1-10's (engine-spec §8.1 target table, §8.2), and
+  §10.2.6 assigns content, not the adapter; the usage labels every entry P1-10 and one footer line
+  notes the content owners (work-package Amendments row 10).
+- **Fresh-context review of the whole change.** A security/dependency review (no blocker; the fixture
+  reader hardened, the CLI's non-UTF-8 panic fixed, the reviewer agents' read-only claim corrected,
+  fabricated test identifiers) and an adversarial PR review (CONDITIONAL: 2 blockers, 11 major, 12
+  minor; all applied or raised in the work package's Amendments rows 13 to 24). Decision requests for
+  the merge: ADR-014; the synchronous façade; the CLI content-ownership labels (§8.1 against §10.2.6);
+  the A′ norm (engine-spec §7.12.5 against `rapm-attribution.md` P-3); the reviewer-permission
+  residual risk; whether numerical crates' parity tests may take `grid-synth` as a dev-dependency.
