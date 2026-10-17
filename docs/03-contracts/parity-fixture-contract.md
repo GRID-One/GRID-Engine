@@ -250,6 +250,60 @@ Rules:
   teams (`layers.py:255`). Fixtures carry the explicit index maps. Rust compares by key, and
   adopts the fixture's column order where Class A/A′ summation order matters.
 
+### 5.1 `synthetic-world` case: array names the loader expects
+
+`grid-synth::legacy_v0::load_world` (P1-01) reads a `synthetic-world` case by these array names,
+which the P1-05 exporter MUST write. The dtypes are the v0 dtypes of
+[plays-contract.md](plays-contract.md) §2.1, §4, §6 and §6.1, encoded per §2.1 above.
+
+| Array name | dtype | Notes |
+|---|---|---|
+| `plays.play_id`, `plays.drive_id`, `plays.week`, `plays.off_team`, `plays.def_team`, `plays.down`, `plays.ydstogo`, `plays.yardline_100`, `plays.n_down`, `plays.n_ydstogo`, `plays.n_yardline_100` | `i64le` | one element per play; `n_*` carry the −1 sentinel on terminal rows |
+| `plays.yards`, `plays.points`, `plays.terminal_value`, `plays.drive_points` | `f64le` | `terminal_value` is NaN on every non-terminal row, kept bit-for-bit |
+| `plays.terminal` | `u8` | 0 or 1 |
+| `plays.off_players`, `plays.def_players` | ragged: `<name>.offsets.i64le` + `<name>.values.i64le` | order and duplicates preserved (D-8) |
+| `players.player_id`, `players.team` | `i64le` | |
+| `players.position` | `json` | |
+| `players.is_starter` | `u8` | |
+| `players.ability` | `f64le` | planted truth; goes to `SyntheticTruth`, never to an estimator |
+| `gt.team_strength` | `f64le` | indexed by `gt.team_strength.team` (`i64le`) |
+| `gt.focus_qb` | `i64le` | shape `[1]` |
+| `gt.focus_tau` | `f64le` | NaN = missed game, read as `None` |
+| `gt.league_factor` | `f64le` | shape `[1]` |
+| `college.player_id` | `i64le` | |
+| `college.position` | `json` | |
+| `college.feeder_sv` | `f64le` | |
+| `college.feeder_snaps` | `i64le` | |
+| `college.is_rookie` | `u8` | |
+
+The loader also requires `component = "synthetic-world"`, `contracts.plays = "grid.plays/0"`,
+`oracle.level = "legacy"` with an empty `corrections_applied` (the corrected world is another world
+and gets its own loader with its fixture, P1-05 and P1-12), `provenance.data = "synthetic"` (§8) and,
+when present, `provenance.profile = "synthetic-legacy"`. It takes the generator seeds from `seeds`.
+
+**`provenance.synth_config_sha256`** (required for `synthetic-world` cases only; every other
+component's manifest is unchanged) is the content hash of the generator configuration that the
+plays-contract producer carries as `FrameProducer::Synthetic::config_hash`
+([plays-contract.md](plays-contract.md) §9): the sha256, written as 64 lowercase hexadecimal
+characters, of the canonical JSON serialization of `params.synth_config`. `params.synth_config` is
+therefore also required for this component: a JSON object holding the `SynthConfig` field values the
+exporter used (`synth.py:41-54`; `load_synthetic()` overrides `yards_noise_sd=3.2` and
+`drives_per_team_per_game=12`, `data_adapters.py:32`), each under its Python field name, numbers as
+JSON numbers (never strings), booleans as JSON booleans. The canonical serialization is Python's
+`json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`: sorted keys, no
+whitespace, ASCII only; the hash is taken over the UTF-8 bytes of that text. The exporter writes
+both keys. The Rust reader (`grid-synth::legacy_v0::load_world`) carries the value into the
+producer's `config_hash` **without recomputing it**: DR-D29 puts hash verification in the shell
+guard of §10, which may recompute it from `params.synth_config`. The reader refuses, with a typed
+`FixtureError`, a value that is not exactly 64 lowercase hexadecimal characters, and a
+`synthetic-world` case whose `params.synth_config` is absent or not an object; a world loaded from a
+case that omits `provenance.synth_config_sha256` carries `config_hash = None`, and `from_legacy_v0`
+refuses it with `ContractError::MissingField` naming `provenance.synth_config_sha256` rather than
+write a non-hash into the producer's hash field. `provenance.synth_config` (the configuration
+**label**, `CANONICAL_SYNTH`) stays as it is and is distinct from the hash: the label names a
+configuration, the hash identifies its values, and the loader reads neither the label nor
+`params.synth_config` into the world (both stay readable on the parsed manifest).
+
 ## 6. Tolerance classes (DR-B3)
 
 The owner adopted the merged table of critic.md §3.2 (decision B-3) with the post-critic
@@ -416,13 +470,35 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
   - Checks that `byte length = product(shape) × itemsize` and that the dtype is the declared
     one.
   - Exposes typed views: `Vec<f64>`, `Vec<i64>`, `Vec<bool>`, `Vec<String>`, and a ragged view.
-- **Location.** `grid-domain` may not depend on `serde_json` (it has no external dependencies).
-  The reader therefore lives in test-support code: integration tests of the crate under test,
-  or the future `synth` crate (DR-A8). The plays-frame loader is `from_legacy_v0`
-  ([plays-contract.md](plays-contract.md) §11).
+- **Location.** The reader lives in `grid-synth::fixture` (`crates/synth/src/fixture.rs`, P1-01):
+  `FixtureCase::open` reads `manifest.json` into a typed `Manifest` (`ArrayEntry`, `DType`,
+  `ToleranceClass`, `OracleInfo`, `Provenance`) and `read_f64`, `read_i64`, `read_i32`, `read_bool`,
+  `read_strings`, `read_scalar_f64`, `read_scalar_i64`, `read_ragged_i64` and `read_ragged_f64`
+  decode the arrays into `Array<T> { shape, data }` and `Ragged<T> { offsets, values }`. Every
+  failure is a typed `FixtureError` (`Io`, `Manifest`, `MissingKey`, `UnknownArray`,
+  `DtypeMismatch`, `LengthMismatch`, `ShapeMismatch`, `BadOffsets`, `NotSynthetic`,
+  `UnsupportedContract`). `grid-domain` may not depend on `serde_json`: its only external dependency
+  is `serde` (ADR-014, Proposed in P1-01; decision 3 puts the format crates in `grid-pipeline` and
+  `grid-synth`), so the reader cannot live there. `grid-models` MUST NOT depend on `grid-synth`
+  (engine-spec §8.1 rule 3; `synthetic-world.md` §10.1); the structural test
+  `crates/pipeline/tests/crate_boundaries.rs` fails on a normal or build dependency. Whether a
+  numerical crate's parity tests may take `grid-synth` as a dev-dependency is stated by no document
+  above the P1-01 work package: it is an open owner item recorded by P1-01, to be settled by a spec
+  erratum or an ADR before the first parity test needs it (P1-06, P1-12). The plays-frame loader is
+  `grid-synth::legacy_v0::load_world` plus `from_legacy_v0`
+  ([plays-contract.md](plays-contract.md) §11; §5.1 below).
 - **Assertions.**
-  - A tolerance helper per class reports the failing index and both values.
-  - A Class D runner computes recovery statistics against the truth bundle.
+  - A tolerance helper per class reports the failing index and both values: `compare_exact<T>`,
+    `compare_bitwise` (bit equality: NaN payload and the sign of zero), `compare_class_a`
+    (`CLASS_A_ABS_TOL = 1e-12`), `compare_class_a_prime` (`CLASS_A_PRIME_REL_TOL = 1e-9`; `‖p‖∞ = 0`
+    is the declared degenerate case and then requires `‖r‖∞ = 0`) and `compare_class_b` over
+    `ClassBInputs { converged, relative_residual, tol_cg, beta_cg, beta_dense }` (all three parts;
+    `CLASS_B_DENSE_REL_TOL = 1e-9`), each returning `Result<ClassReport { n, max_abs_error,
+    max_rel_error }, Mismatch { index, rust, oracle, observed, limit }>`. NaN positions must coincide
+    and every criterion fails closed on NaN. Classes C-V, C-L1 and D are stage-specific and have no
+    helper here (P1-12).
+  - A Class D runner computes recovery statistics against the truth bundle
+    (`grid-synth::truth::SyntheticTruth`; P1-12).
 - **Typed-failure tests (DR-B6).** Each oracle failure path listed in `PARITY.md` has a Rust
   test asserting the typed error, not a fixture.
 

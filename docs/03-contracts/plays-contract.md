@@ -555,10 +555,10 @@ of `from_legacy_v0` on its image (the round-trip tests prove it on a hand-built 
   numbers, and `drive_seq` is the v0 global `drive_id`. It validates the upgraded frame under the
   legacy profile before returning it, and it never guesses: a `Gsis` or `Nfl` key has no v0 encoding
   and is a typed `ContractError`, and a world whose `config_hash` is `None` is refused with
-  `MissingField { field: "provenance.config_hash" }` rather than given an invented hash. Every world
-  `load_world` reads today has `None` there, because no manifest key records a configuration hash
-  (`provenance.synth_config` is a label): an open item of P1-01 for the P1-05 exporter
-  ([parity-fixture-contract.md](parity-fixture-contract.md) §5.1).
+  `MissingField { field: "provenance.synth_config_sha256" }` rather than given an invented hash.
+  `load_world` fills `config_hash` from the manifest key `provenance.synth_config_sha256`, the sha256
+  of the canonical JSON of `params.synth_config` that the exporter writes; a case that omits the key
+  loads with `None` ([parity-fixture-contract.md](parity-fixture-contract.md) §5.1).
 
 ---
 
