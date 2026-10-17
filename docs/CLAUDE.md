@@ -43,12 +43,13 @@ The reference oracle never overrides the specification. The superseded specifica
 
 ## Crate Boundaries
 
-Current workspace: 11 crates, each package named `grid-<crate>` (engine-spec §8.1). The boundary
-text is quoted by engine-spec §8.1; the engine role is what each crate owns for GRID.
+Current workspace: 13 crates, each package named `grid-<crate>` (engine-spec §8.1; the DR-A8 set
+since P1-01). The boundary text is quoted by engine-spec §8.1; the engine role is what each crate
+owns for GRID.
 
 | Crate | Boundary | Engine role |
 |---|---|---|
-| `domain` | IDs, types, errors, DTOs. No external deps. | Canonical IDs, every version ID, the `AsOf` type, typed error codes, output-contract DTOs, plays/players/market/college contract types |
+| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, Proposed in P1-01). | Canonical IDs, every version ID, the `AsOf` type, typed error codes, output-contract DTOs, plays/players/market/college contract types and their validators |
 | `persistence` | SQLx, migrations, SQLite. No business logic. | Schema groups, artifact manifest, atomic artifact writes, production-pointer transaction |
 | `ingestion` | nflverse, CFBD adapters. Raw data retention. | Provider adapters, hashed raw retention, normalization and quarantine, once-per-day fetch cap, offline replay, plays-contract builder |
 | `identity` | Player registry, cross-source linking, review queue. | Canonical registry, NCAA linking tiers, identity review queue |
@@ -58,16 +59,23 @@ text is quoted by engine-spec §8.1; the engine role is what each crate owns for
 | `scoring` | Fantasy profile transforms, versioned affine mapping. | Versioned Standard, Half-PPR, PPR and custom profiles over stat vectors and draw matrices |
 | `evaluation` | Rolling-origin backtests, PB-MAE, benchmark comparison. | Walk-forward backtest, player pool, metrics, week-clustered bootstrap, leakage harness, scorecards, lineup simulation, synthetic recovery harness |
 | `governance` | Model promotion, rollback, snapshot, job queue. | Model states and the promotion gate, threshold registry, production pointers and snapshot records, durable job queue. The oracle verdict is rendered, never acted on |
-| `application` | Commands, queries, events, app services. Orchestrates crates. | The engine facade: library API (§8.2–§8.4) and orchestration of the daily pipeline DAG (§8.6). "App services" means application services behind the library API, not a user interface |
+| `pipeline` | Commands, queries, events, orchestration. Orchestrates crates; `serde_json` for records and sidecars. | The engine facade: library API (§8.2–§8.4) as typed requests, queries, response shapes and the `EngineCommands`, `EngineQueries` and `EventSubscriber` traits; the `grid.output` JSON envelope, reader and export sidecar; orchestration of the daily pipeline DAG (§8.6) and durable-job execution (§8.10) from P1-02 on. The renamed `application` crate (P1-01) |
+| `grid-cli` | Thin adapter over `pipeline` and `domain` only. No business logic, no runtime, no parser crate. | Binary `grid`: argument parsing, output formatting (table / JSON / CSV from P1-10), exit codes (§8.6.4; engine-output-contract §13). P1-01: `--version`, `--help`, `exit-codes` |
+| `synth` | Synthetic world and parity harness. Synchronous; `grid-domain` and `serde_json` only. | The DR-D29 fixture reader and tolerance helpers (`fixture`), the planted truth that estimators cannot reach (`truth::SyntheticTruth`), the v0 world loader and upgrade (`legacy_v0`); P1-12 adds the Rust-native generator of the corrected world |
 
-**Target crates (DR-A8, ratified 2026-10-08).** P0-01 only drops `ffi`. Later packages change the
-rest:
+**Target crates (DR-A8, ratified 2026-10-08).** P0-01 only dropped `ffi`. P1-01 made the rest of
+the crate set; later packages fill it:
 
-- `application` → `pipeline` (P1-01): library facade, DAG orchestration, durable-job execution.
-- new `grid-cli` crate, binary `grid` (skeleton P1-01; subcommands, reports and export P1-10): argument
-  parsing, output formatting, exit codes. It depends only on the orchestration crate and `domain`.
-- new `synth` crate (P1-01 loader for the committed oracle synthetic fixtures; P1-12 Rust-native
-  generator of the corrected synthetic world, validated by recovery gates, not by RNG-stream parity).
+- `application` → `pipeline`: renamed by P1-01, which delivered the library facade as types and
+  traits with no implementor. DAG orchestration and durable-job execution follow from P1-02.
+- `grid-cli`, binary `grid`: created by P1-01 as a skeleton (`--version`, `--help`, `exit-codes`; the
+  usage lists every §8.2 and §8.3 spelling and the package that delivers it). Subcommands, reports
+  and export are P1-10's. It depends only on the orchestration crate and `domain`, and the structural
+  test in `crates/pipeline/tests/crate_boundaries.rs` enforces it.
+- `synth`: created by P1-01 with the fixture reader, the tolerance helpers, `SyntheticTruth` and the
+  `from_legacy_v0` loader for the exported oracle worlds. P1-05 commits the first synthetic-world
+  case; P1-12 adds the Rust-native generator of the corrected synthetic world, validated by recovery
+  gates, not by RNG-stream parity.
 - `persistence` and SQLite stay.
 
 **Rules.**
@@ -78,9 +86,14 @@ rest:
 2. Business logic stays out of the CLI, presentation and generated code.
 3. Numerical crates (`models`, `simulation`, `scoring`, `synth`) SHOULD be synchronous, with no Tokio
    or SQLx dependency. Tokio and SQLx belong in `persistence`, `ingestion` and the orchestration and
-   CLI crates.
-4. If public DTOs need serialization derives, P1-01 decides by ADR where they live; `domain` keeps
-   "no external deps" until then.
+   CLI crates. `models` MUST NOT depend on `synth` (engine-spec §8.1 rule 3; `synthetic-world.md`
+   §10.1); the structural test checks normal and build dependencies. Whether a numerical crate's
+   parity tests may take `synth` as a dev-dependency is an open owner item recorded by P1-01.
+4. `domain` takes `serde` with `derive` as its only external dependency, and public contract types
+   derive `Serialize` and `Deserialize` there (ADR-014, Proposed in P1-01; the owner rules on it at
+   the P1-01 merge). Format crates stay outside `domain`: `serde_json` in `pipeline` and `synth`.
+   `Display` and `std::error::Error` are hand-written; no `thiserror` in `domain`. No second external
+   dependency without a superseding ADR; the structural test fails if one appears.
 5. P1-12 owns `models::{value, rapm, credit, statespace, priors}` and the `synth` crate; P1-07 does
    not edit them. An overlap is a stop condition.
 6. Not ported: `grid/cache.py`, `scoring/format_registry.py`,

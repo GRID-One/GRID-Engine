@@ -62,6 +62,7 @@ Date is the record's own `date:` front matter where it has one.
 | 2026-10-08 to 2026-10-09 | P0-01 owner decision interview (62 questions; DR-D9 and DR-D10 not asked) | — | [`2026-10-09-P0-01-decision-interview.md`](2026-10-09-P0-01-decision-interview.md) | `claude/grid-engine-consolidation-e7kmh9` |
 | 2026-10-14 | P0-01 owner decisions on DR-D14, DR-D17 and DR-D19 (11 questions; new DR-D32; ADR-013 proposed) | — | [`2026-10-14-P0-01.md`](2026-10-14-P0-01.md) | `claude/grid-engine-consolidation-e7kmh9` |
 | 2026-10-15 | P0-02: the owner's P0-01 merge review, DR-A10 ruling and ADR acceptance (3 questions) | — | [`2026-10-15-P0-02.md`](2026-10-15-P0-02.md) | `claude/grid-engine-consolidation-e7kmh9` |
+| 2026-10-17 | P1-01 implementation: domain types, engine API skeleton, oracle-fixture harness, crate restructure; ADR-014 proposed | — | [`2026-10-17-P1-01.md`](2026-10-17-P1-01.md) | `claude/pensive-fermat-fgaweh` |
 
 ¹ Round 3's front matter says 2026-08-20. The commit that wrote it, `c220a69`, is dated
 2026-08-29.

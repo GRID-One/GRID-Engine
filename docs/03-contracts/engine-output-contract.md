@@ -1,6 +1,6 @@
 ---
 contract: grid.output
-contract-version: 1 (Draft; no producer exists yet)
+contract-version: 1.0 (Draft; skeleton types in grid-domain since P1-01, no producer yet)
 status: Draft            # Draft | Approved | Superseded
 authority-level: 3       # engine-spec.md §1.5
 semantics-owner: Statistical owner (distributions, explanations); Product/Architecture owner (records, reports, exports)
@@ -79,7 +79,7 @@ Requirements tagged *(proposed — DR-xx)* depend on an open owner decision in
 | `position` | enum `QB, RB, WR, TE` | The primary accuracy population. K and DST, if added in Phase 2, are separate record types and are excluded from the primary claim. IDP is out of scope |
 | `team`, `opponent`, `game_id`, `is_home` | keys | From the schedule snapshot in force at the lock |
 | `prediction_version_id` | id | Unique per emitted projection set. A post-lock re-projection is a **new** version and never an overwrite (superseded alpha-spec §10.3) |
-| `lock` | `{ kind: Thursday \| Sunday \| Operational, lock_at: UtcInstant }` | The benchmark locks of engine-spec §7 (superseded alpha-spec §7.2). An operational projection is a separate version and cannot replace a locked snapshot |
+| `lock` | `{ kind: Thursday \| Sunday \| Operational, at: UtcInstant }` | The benchmark locks of engine-spec §7 (superseded alpha-spec §7.2). An operational projection is a separate version and cannot replace a locked snapshot |
 | `data_snapshot_id`, `feature_schema_version`, `model_version_id`, `engine_version` | ids | Lineage. Every projection traces to its data, feature, model, scoring and engine versions (engine-spec §9.4) |
 | `scoring_profile` | `{ id, version }` | §3.6 |
 | `seed`, `n_draws` | `u64`, `u32` | The Layer-F simulation seed and draw count. Randomness is seeded and recorded (superseded alpha-spec §6.6 rule 5) |
@@ -214,6 +214,8 @@ prior production projection stays in force:
 - per draw, `completions ≤ pass_attempts` and `receptions ≤ targets`;
 - an inactive draw yields the zero vector;
 - team-role shares sum to at most 1 (share overflow);
+- the standard deviation is non-negative (engine-spec §5, "Invariants"; added by P1-01 so that this
+  section states every invariant `OutputInvariant` checks);
 - no NaN or infinity anywhere.
 
 ## 4. Explanation record (alpha-spec §6.5, superseded)
@@ -250,8 +252,8 @@ explanation and diagnostic fields, never fantasy points.
 | `role_talent { dropback \| carry \| target }` | `{ filtered_mean, filtered_var, predictive_var }` from the state-space layer. **Filtered or one-step predictive only** |
 | `form`, `scheme_fit` | Filtered state components |
 | `offseason_rapm` | `{ rating, season, n_plays }`, or null. Fitted only once that season's participation is published *(DR-C1)* |
-| `prior` | `{ mean, var, q, n0, weight_now }`, or null. The season-boundary prior behind this record's GRID values, and its current weight (engine-spec §6.5). It is labelled with its source (window, feeder or population; DR-D17) and its build (DR-D32): `prior_pre`, built on S−3..S−1 for the preseason and week-1 forecast, or `prior_in`, built on S−2..S−1, from which the season-S filter restarts (`state-space-kalman.md` §6.5). The keys of the two labels are not yet named (§12) |
-| `regime_flags` | `{ intervention, scheme_reset, changepoint_z }` |
+| `prior` | `{ mean, var, q, n0, weight_now }`, or null. The season-boundary prior behind this record's GRID values, and its current weight (engine-spec §6.5). It is labelled with its source (window, feeder or population; DR-D17) and its build (DR-D32): `prior_pre`, built on S−3..S−1 for the preseason and week-1 forecast, or `prior_in`, built on S−2..S−1, from which the season-S filter restarts (`state-space-kalman.md` §6.5). The keys of the two labels are not yet named (§12): the P1-01 type `PriorBlock` carries the five numeric fields and no label field; the contract version that names the keys adds them as a MINOR change (§9) |
+| `regime_flags` | `{ intervention, observation_noise_inflation, scheme_reset, changepoint_z }`. The four flags of engine-spec §5.5 ("regime flags (intervention, observation-noise inflation, scheme reset, changepoint z-score)"), which outranks this contract (§1.5): an earlier draft of this row omitted `observation_noise_inflation`, and P1-01 fixed the type `RegimeFlags` to the spec's four. `changepoint_z` is null when no changepoint statistic was computed for the slot |
 
 Hard rule, not conditional on the DRs. **RTS-smoothed values MUST NOT appear in any live or
 locked projection record.** Smoothing uses future weeks. Aliasing filtered and smoothed values is
@@ -346,22 +348,94 @@ The engine emits **no VOR, tier or draft-ranking output** *(DR-C11)*.
 - Historical exports and locked snapshots are immutable. They are never rewritten into a newer
   version; a newer version is a new artifact.
 
-## 10. Rust types
+## 10. Rust types (fixed by P1-01)
 
-- `grid-domain` (`crates/domain`, P1-01) holds the record types: `PlayerWeekProjection`,
-  `AvailabilityBlock`, `StatDistribution`, `FantasyDistribution`, `ExplanationRecord`,
-  `GridSignalBlock`, `TeamGameEnvironment`, `ProjectionChange`, the report records and the typed
-  errors. The domain crate has no external dependencies.
-- **Serialization.**
-  - The JSON sidecar uses `serde_json`, already declared in `[workspace.dependencies]`.
-  - The CSV writer is either hand-written on `std` or uses a crate that needs approval.
-  - Parquet follows §8 rule 2.
-  - Serialization lives in the orchestration crate: `application` today, `pipeline` and
-    `grid-cli` after DR-A8.
-- Query names follow engine-spec §8 (`get_week_projections`,
-  `get_player_projection_detail`, `get_projection_distribution`, `get_projection_change_log`,
-  `get_model_scorecard`, `get_benchmark_results`, `get_data_quality_report`, …), exposed through
-  the CLI and the library API.
+The names below are the ones `grid-domain` (`crates/domain`, package `grid-domain`) defines since
+P1-01. Every record and enum derives `Serialize` and `Deserialize` (ADR-014, Proposed in P1-01);
+the serialized field names are the contract's field names, so a rename is a contract change (§9).
+No record carries `#[serde(deny_unknown_fields)]`: a reader tolerates a MINOR addition. A missing
+value is `Option::None` with a documented reason, never 0 or NaN (KI-P1). The crate root re-exports
+every item, so `grid_domain::PlayerWeekProjection` and `grid_domain::output::PlayerWeekProjection`
+both resolve.
+
+**Contract identity** (`grid_domain::output`): `GRID_OUTPUT_CONTRACT_ID = "grid.output"`,
+`GRID_OUTPUT_CONTRACT_VERSION = ContractVersion { major: 1, minor: 0 }`, `grid_output_contract_id()`.
+`Horizon { Week, RestOfSeason, Preseason }` (closed; §3.1) and `Position { Qb, Rb, Wr, Te }` (closed;
+serialized `QB`, `RB`, `WR`, `TE`; §2) live at the module root.
+
+**Keys, versions and time** (`grid_domain::ids`, `grid_domain::time`, `grid_domain::asof`):
+`Season`, `Week` (never 0, KI-A4; `Week::new` is fallible), `Slot`, `PlayerKey { Gsis, Synthetic }`,
+`TeamKey { Nfl, Synthetic }`, `GameId`, `DataVersion`, `FeatureSchemaVersion`, `ModelVersionId`,
+`PredictionVersionId`, `ScoringProfileId`, `ScoringProfileVersion`, `ScoringProfileRef { id, version }`
+(§3.6), `IngestionRunId`, `JobId`, `EvaluationRunId`, `ReviewId`, `ModelFamily` (open),
+`EngineVersion { crate_version, git_sha }`, `ContractId`, `ContractVersion { major, minor }`;
+`UtcInstant` (whole seconds since the Unix epoch, UTC); `LockKind { Thursday, Sunday, Operational }`
+and `Lock { kind, at }` (the `lock` object of §2: the serialized key of the lock timestamp is `at`).
+
+**Player-week projection** (`grid_domain::output::projection`): `ProjectionKey` (§2 keys, with
+`horizon`, `is_week_18` and `synthetic_ids`), `ProjectionLineage` (§2 lineage, with `lock`, `seed`,
+`n_draws`, `computed_at`), `SourceLineageRecord { prediction_version_id, sources }`,
+`AvailabilitySource { Override, Provider, Model, Missing }` (closed) and `AvailabilityBlock` (§3.3),
+`StatUnit { Probability, Share, Count, Yards }`, `StatComponent` (closed; the 18 rows of §3.2, with
+`applies_to(Position)` encoding the DR-D7 asymmetries, `unit()` and `contract_name()`),
+`StatDistribution { mean, sd, q10, q25, q50, q75, q90 }` (§3.5), `ComponentSummary { component,
+distribution }`, `StatVectorSummary { components }`, `SettingVersion` (a DR-D8 versioned-setting
+identifier), `LabelledQuantile { value, percentile_definition }`, `ExceedanceProbability
+{ threshold_points, probability }`, `DrawsRef { matrix_id, n_draws }` (§3.7), `FantasyDistribution`
+(§3.6; the DR-D8 items are `SettingVersion` fields with no value fixed), `Freshness { Fresh, Stale,
+Missing }` (closed) and `FreshnessFlags` (§3.8), `ClaimLabel` (open; engine-spec §3.2 wording) and
+`PlayerWeekProjection { contract, key, lineage, availability, conditional, unconditional, fantasy,
+explanation, flags, claim_label, attribution }` with `validate()`.
+
+**Explanation** (`grid_domain::output::explanation`): `TeamGameRef`, `DriverUnits
+{ ExpectedFantasyPoints, DvPerPlay }`, `Driver { name, contribution, units }`, `PriorVersionDelta`,
+`RoleTalent { filtered_mean, filtered_var, predictive_var }`, `RoleTalentBlock { dropback, carry,
+target }`, `OffseasonRapm { rating, season, n_plays }`, `PriorBlock { mean, var, q, n0, weight_now }`,
+`RegimeFlags { intervention, observation_noise_inflation, scheme_reset, changepoint_z }`,
+`GridSignalBlock` (§4.2; filtered and one-step predictive only, **no smoothed field**, by design) and
+`ExplanationRecord` (the nine §4.1 items as ten fields, item 7 being two driver lists, plus
+`grid: Option<GridSignalBlock>`).
+
+**Environment, change log and reports** (`grid_domain::output::{environment, change, reports}`):
+`EnvironmentSummary { mean, sd, q10, q50, q90 }`, `TouchdownType` (open) and `TeamGameEnvironment`
+(§5); `ChangeAttribution` (exactly the five §6 categories) and `ProjectionChange` (§6);
+`DataQualityReport` with `QuarantinedRowRef` and `SourceChange`, `SourceFreshness`, `StatusReport`
+with `JobSummary`, `AvailabilityReportRow`, `IdentityReviewItem`, `ScorecardSlice { All,
+RookieLowEvidence }` (closed), `ScorecardRow`, `ModelScorecard`, `ConfidenceInterval`,
+`BenchmarkResultRow` and `BenchmarkResults` (§7).
+
+**Typed errors and status** (`grid_domain::error`, `grid_domain::status`): `OutputInvariant` (eight
+variants, one per §3.9 bullet, with the two per-draw rules as two variants; `NegativeSd` is the
+sd ≥ 0 rule that §3.9 carries from engine-spec §5) and `OutputInvariantError { invariant, field, detail }`, returned by the
+`validate()` methods; `EngineErrorCode` (closed, 17 codes) and `EngineError { code, message }`;
+`TerminalState` (14 values) with `exit_code()` (§13), `JobStatus`, `StageId`, `RunOutcome` and
+`TrainingStatus` (engine-spec §8.4). The `validate()` methods check the §3.9 invariants that a
+summary record can carry: probabilities and shares in [0, 1], quantiles monotone in every
+`StatDistribution` and `FantasyDistribution`, `sd ≥ 0`, no NaN or infinity, and the summary-level
+consequences of the per-draw rules (completions ≤ attempts and receptions ≤ targets in mean and every
+quantile; a `p_active = 0` record with non-zero unconditional summaries). The per-draw forms are
+checked on draw matrices by `grid-simulation` (P1-08).
+
+**Serialization and formats** (`grid-pipeline`, `crates/pipeline`; ADR-014 decision 3).
+- `grid-domain` depends on `serde` with `derive` and on nothing else outside `std`
+  (ADR-014, Proposed in P1-01; the structural test `crates/pipeline/tests/crate_boundaries.rs`
+  fails if a second external dependency appears). `Display` and `std::error::Error` are hand-written.
+- JSON lives in `grid-pipeline::serialization`: `RecordEnvelope<T> { contract, version, record }`
+  stamps the contract id and version on every record (§9), `to_json` refuses a non-finite number,
+  and `from_json` rejects a foreign contract id and an unknown MAJOR with a typed
+  `EngineError` (§9 "A consumer-facing reader MUST reject an unknown MAJOR"). `serde_json` is an
+  already-declared workspace dependency; its `float_roundtrip` feature is enabled so that a parsed
+  `f64` returns the exact bits of its shortest decimal form (engine-spec §12.6).
+- The sidecar of §8 rule 3 is `ExportSidecar { contract, columns: Vec<ColumnSpec { name, unit,
+  nullable }>, prediction_version_id, scoring_profile, row_count, data_sha256, attribution }`.
+- The CSV writer (§8 rules 2 and 4) is P1-10's and is either hand-written on `std` or uses a crate
+  that needs approval; Parquet follows §8 rule 2.
+- Query and command names follow engine-spec §8.2 and §8.3 (`grid_pipeline::commands::COMMAND_NAMES`,
+  `grid_pipeline::queries::QUERY_NAMES`): `get_week_projections`, `get_player_projection_detail`,
+  `get_projection_distribution`, `get_projection_change_log`, `get_model_scorecard`,
+  `get_benchmark_results`, `get_data_quality_report`, …, exposed through the `grid-pipeline`
+  library façade (`EngineQueries`, `EngineCommands`; traits with no implementor in P1-01) and,
+  from P1-10, the CLI.
 
 ## 11. Tests (required before a producer ships)
 
@@ -399,3 +473,45 @@ signal block (DR-C2, DR-C3), the derived horizons (DR-C4), the rejection of non-
 rules (DR-D6) and the absence of VOR and tier outputs (DR-C11). Specified on 2026-10-14 to follow
 DR-D17 and DR-D32 (not separately put to the owner): the NCAA prior contribution (§4.1 item 5) and
 what the `prior` field's source and build labels mean, though not their keys (§4.2).
+
+## 13. Exit codes (engine-spec §8.6.4)
+
+Engine-spec §8.6.4 requires every terminal state of `grid update` to map to a distinct, documented
+process exit code, and fixes the numeric mapping in this contract. P1-01 fixes the table below as the
+skeleton (engine-spec §8.2, §8.6.4: "skeleton in P1-01, completed in P1-10"). It is implemented by
+`grid_domain::status::TerminalState::exit_code()` (`Option<i32>`; `None` for the two non-terminal
+states), the constants `grid_domain::status::EXIT_USAGE` and `EXIT_INTERNAL`, and printed by
+`grid exit-codes`. A `grid-domain` test asserts that every terminal code is distinct and equal to
+this table.
+
+| Terminal state (engine-spec §8.6.4 spelling) | `TerminalState` variant | Exit code |
+|---|---|---|
+| `SUCCESS` | `Success` | 0 |
+| `NO_NEW_DATA` | `NoNewData` | 10 |
+| `PARTIAL_SUCCESS` | `PartialSuccess` | 11 |
+| `NETWORK_FAILURE` | `NetworkFailure` | 20 |
+| `TIMEOUT` | `Timeout` | 21 |
+| `RATE_LIMITED` | `RateLimited` | 22 |
+| `AUTHENTICATION_FAILURE` | `AuthenticationFailure` | 23 |
+| `INVALID_RESPONSE` | `InvalidResponse` | 24 |
+| `SCHEMA_FAILURE` | `SchemaFailure` | 25 |
+| `DATA_VALIDATION_FAILURE` | `DataValidationFailure` | 26 |
+| `DATABASE_FAILURE` | `DatabaseFailure` | 30 |
+| `LEARNING_FAILURE` | `LearningFailure` | 40 |
+| `NOT_RUN`, `RUNNING` | `NotRun`, `Running` | none: not terminal, never a process exit |
+
+Two process-level codes are not terminal states:
+
+| Condition | Constant | Exit code |
+|---|---|---|
+| Usage error: an unknown, malformed or not-yet-available subcommand (message on stderr) | `EXIT_USAGE` | 2 |
+| Internal error: a failure the engine cannot classify, including a closed output stream | `EXIT_INTERNAL` | 70 |
+
+The terminal-state enumeration is closed (engine-spec §8.6.4, "a binding enum"): a new state or a
+moved code is a change to the spec and a MAJOR change to this table. P1-10 completes the CLI spelling
+and arguments of every subcommand that returns these codes; until then the first argument selects
+the invocation: `--version` or `-V`, `--help`, `-h` or `help` (and no argument at all) and
+`exit-codes` exit 0 and ignore any further arguments until P1-10 fixes the argument grammar; every
+other first argument exits 2 with a message on stderr. `crates/grid-cli/tests/cli.rs` asserts
+`--version`, `--help`, `help`, no arguments, `exit-codes`, 13 recognised-but-unavailable argument
+lists and 5 unknown ones; `-V` and `-h` are accepted by the parser and asserted by no test.

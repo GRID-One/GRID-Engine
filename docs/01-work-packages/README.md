@@ -37,13 +37,14 @@ of one, that a package depends on gates Ready, wherever it is listed. "Spec refs
 |---|---|---|---|---|---|---|
 | P1-00 | Agent-ready repository, authority index, CI, verify scripts | Done. Implemented in PR #1, approved at review round 4 with 0 blockers; it landed with P0-01 (DR-A6), which merged on 2026-10-15 (`b819ae0`) | §9.2.1, §9.5 | — | — | [p1-00-work-package.md](p1-00-work-package.md) |
 | P0-01 | Engine-only consolidation: ADR-011, ADR-012, ADR-013 (Accepted 2026-10-15), `engine-spec.md`, registers, contracts, model specs, the `reference/python/` oracle, app removal, guard fixes | Done (merged 2026-10-15, `b819ae0`) | §1.1, §1.5, §1.7, §8.1, §8.19, §9.5 | DR-A1, DR-A2, DR-A4 to DR-A9, DR-A11, DR-A12, all adopted; ratified on 2026-10-08 in the decision interview and named again in the owner's merge review on 2026-10-15 (PR #4 comment 6185953773) | DR-A10: option 1 chosen on 2026-10-08 and ruled on 2026-10-15 (`MIT OR Apache-2.0`; PR #4 comment 6185953773, as edited by the owner on 2026-10-15). DR-A3: default kept, direction ratified on 2026-10-08; follow-up ADR before P1-11. DR-D30: P0-01 has merged, and the owner now makes `reference-oracle` a required check in branch protection. DR-D31 (raised here; ratified by the owner on 2026-10-08 and implemented here as correction-ledger entry L0, KI-NEW-Z78) | [p0-01-engine-consolidation.md](p0-01-engine-consolidation.md) |
-| P0-02 | Record the P0-01 merge review, the DR-A10 ruling and the acceptance of ADR-011, ADR-012 and ADR-013 | Review | §1.5, §1.7, §8.16, Appendix F | — (the rulings are given: PR #4 comment 6185953773, as edited by the owner) | — | [p0-02-record-p0-01-merge-rulings.md](p0-02-record-p0-01-merge-rulings.md) |
+| P0-02 | Record the P0-01 merge review, the DR-A10 ruling and the acceptance of ADR-011, ADR-012 and ADR-013 | Done (merged 2026-10-15, `73a8e3b`, PR #5) | §1.5, §1.7, §8.16, Appendix F | — (the rulings are given: PR #4 comment 6185953773, as edited by the owner) | — | [p0-02-record-p0-01-merge-rulings.md](p0-02-record-p0-01-merge-rulings.md) |
+| P1-01 | Domain IDs, the `AsOf` type with a publication-lag axis, typed errors; library API and output-contract skeleton; oracle-fixture format, synthetic-fixture loader and parity-harness skeleton; `application` → `pipeline`, plus `grid-cli` and `synth`; agent definitions | In Progress (branch `claude/pensive-fermat-fgaweh` from `73a8e3b`; ADR-014 Proposed, ruled on at the merge) | §4.5, §5.5, §7.12, §8.1, §8.2–§8.4, §8.18, §9.2.1 | DR-A2, DR-A8, DR-A11 (ratified 2026-10-08); DR-B1, DR-B2, DR-B3 (overridden 2026-10-09), DR-C4 (ratified 2026-10-08): all settled | — (settled 2026-10-08: DR-D7, DR-D29, and the DR-D8 interim rule as the skeleton's basis). Owner approvals at the merge: ADR-014; the fixed type names of plays-contract §11 and engine-output-contract §10; the exit-code table of §13; Security/Release review of `.claude/agents/` and `.claude/skills/` | [p1-01-engine-skeleton.md](p1-01-engine-skeleton.md) |
 
-### Phase 1: engine core and historical proof (planned; no file yet)
+### Phase 1: engine core and historical proof (planned; no file yet except P1-01)
 
 | WP | Scope (one line) | Spec refs | Must be ratified before Ready | Also open, or other preconditions |
 |---|---|---|---|---|
-| P1-01 | Domain IDs, the `AsOf` type with a publication-lag axis, typed errors; library API and output-contract skeleton; oracle-fixture format, synthetic-fixture loader and parity-harness skeleton; `application` → `pipeline`, plus `grid-cli` and `synth` skeletons; agent definitions | §4.5, §5.5, §7.12, §8.1, §8.2–§8.4, §8.18, §9.2.1 | DR-A2, DR-A8, DR-A11 (ratified 2026-10-08); DR-B1, DR-B2, DR-B3, DR-C4 | — (settled 2026-10-08: DR-D7, DR-D29, and the DR-D8 interim rule as the skeleton's basis) |
+| P1-01 | Moved to the Foundation table above: In Progress since 2026-10-17 with its own file | §4.5, §5.5, §7.12, §8.1, §8.2–§8.4, §8.18, §9.2.1 | — | — |
 | P1-02 | Schema groups including GRID state; migrations; durable jobs; raw-data, version and artifact-manifest primitives; atomic writes; production pointers | §8.5, §8.7, §8.10, §8.11, §9.2.2 | DR-B6, DR-C15 | — |
 | P1-03 | nflverse provider contracts and raw/normalized ingestion; plays-contract builder; official labels; fetch cap and offline replay; per-dataset publication rules | §4.1, §4.5, §4.7, §8.6.1, §9.2.2 | DR-A11, DR-C12, DR-C13, DR-C14 | DR-D15's involvement roles were decided on 2026-10-09. `docs/04-providers/nflverse/access-and-license.md`: a draft exists, and the per-dataset terms await Data/Licensing verification. A declared publication-lag rule for every dataset |
 | P1-04 | Canonical registry, NFL identity, CFBD adapter, NCAA linking tiers, identity review queue | §4.2, §4.4, §9.2.2 | DR-C9 | A `docs/04-providers/cfbd/` licence and terms record before the adapter is Ready |
@@ -58,7 +59,8 @@ of one, that a package depends on gates Ready, wherever it is listed. "Spec refs
 
 **Dependency order** (engine-spec §9.5):
 
-- P1-01 comes first. P1-02 to P1-05 then run in sequence, and P1-06 runs in parallel with them.
+- P1-01 comes first (In Progress). P1-02 to P1-05 then run in sequence, and P1-06 runs in parallel
+  with them.
 - P1-07 and P1-12 run in parallel once P1-05 and P1-06 have merged.
 - P1-08 follows both, then P1-09, P1-10 and P1-11. CLI and report work (P1-10) may start once the
   P1-01 output contract is frozen, but it computes nothing the engine services lack.
