@@ -1,0 +1,14 @@
+[package]
+name = "grid-pipeline"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+grid-domain.workspace = true
+# First use of already-declared workspace dependencies; not new dependencies. serde_json is the
+# JSON format crate for records and sidecars (engine-output-contract §10; ADR-014 decision 3).
+serde.workspace = true
+serde_json.workspace = true

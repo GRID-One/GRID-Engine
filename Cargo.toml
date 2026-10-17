@@ -11,7 +11,9 @@ members = [
     "crates/scoring",
     "crates/evaluation",
     "crates/governance",
-    "crates/application",
+    "crates/pipeline",
+    "crates/grid-cli",
+    "crates/synth",
 ]
 
 [workspace.package]
@@ -22,6 +24,11 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/GRID-One/GRID-Engine"
 
 [workspace.dependencies]
+# Intra-workspace crates. cargo-deny `wildcards = "deny"` treats a path dependency with no version
+# requirement as a wildcard, so the version is stated here once, in step with
+# [workspace.package] version, and members use `<crate>.workspace = true` (P1-01).
+grid-domain = { path = "crates/domain", version = "0.1.0-alpha.1" }
+grid-pipeline = { path = "crates/pipeline", version = "0.1.0-alpha.1" }
 tokio = { version = "1.40", features = ["full"] }
 sqlx = { version = "0.9", features = ["runtime-tokio", "sqlite", "migrate", "chrono"] }
 serde = { version = "1.0", features = ["derive"] }
