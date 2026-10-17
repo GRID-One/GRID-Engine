@@ -359,19 +359,22 @@ v1 adds the following *(DR-C1)*.
   - `Synthetic`.
 - Coverage statistics: off/def coverage per season, as written by `ingest_grid.py:29-39`.
 
-**As-of view.** `AsOf { season, week, lock_at }` replaces the week-index-only cutoff. A view
+**As-of view.** `AsOf { season, week, lock: Lock { kind, at }, mode }` (`grid_domain::asof`, P1-01)
+replaces the week-index-only cutoff. Engine-spec §4.5 makes a datum usable at a lock only if it was
+published **before** that lock, so every comparison with the lock below is strict
+(`evaluation-and-leakage.md` §4.1; an earlier draft of this section wrote `≤`, P1-01 erratum). A view
 exposes a row's outcome columns only if both hold:
 
 - `(season, week) < (AsOf.season, AsOf.week)` (the season-aware tuple rule of `asof.py`);
-- the row's partition was available at `lock_at`: `available_at ≤ lock_at`.
+- the row's partition was available before the lock: `available_at < lock.at`.
 
 The same view exposes participation for season *s* only if
-`participation_availability(s) = Published { at ≤ lock_at }`. In-season participation is
+`participation_availability(s) = Published { at < lock.at }`. In-season participation is
 therefore unavailable at every in-season lock. The live path uses the participation-free
 Layer-1′ signal *(DR-C1; engine-spec §6.3)*.
 
 Pre-game inputs (market quotes, interventions, availability) are admitted by their own
-`quoted_at`/`observed_at ≤ lock_at`. A record with no timestamp is a typed error, as the oracle
+`quoted_at`/`observed_at < lock.at`. A record with no timestamp is a typed error, as the oracle
 already raises for undated interventions.
 
 ---
