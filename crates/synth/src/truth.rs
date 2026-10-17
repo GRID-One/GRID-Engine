@@ -4,7 +4,8 @@
 //! The truth bundle is **not** part of the input contract: it exists only for validation and
 //! recovery gates. It is a separate type so that estimator code cannot reach `ability` or
 //! `is_starter` (plays-contract D-13; the v0 world carried them inside the `players` frame,
-//! KI-NEW-Z40). `grid-models` never depends on this crate except as a dev-dependency.
+//! KI-NEW-Z40). `grid-models` MUST NOT depend on this crate (engine-spec §8.1 rule 3); whether its
+//! parity tests may take it as a dev-dependency is an open owner item recorded by P1-01.
 
 use std::collections::BTreeMap;
 

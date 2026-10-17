@@ -477,7 +477,15 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
   decode the arrays into `Array<T> { shape, data }` and `Ragged<T> { offsets, values }`. Every
   failure is a typed `FixtureError` (`Io`, `Manifest`, `MissingKey`, `UnknownArray`,
   `DtypeMismatch`, `LengthMismatch`, `ShapeMismatch`, `BadOffsets`, `NotSynthetic`,
-  `UnsupportedContract`). `grid-domain` may not depend on `serde_json`: its only external dependency
+  `UnsupportedContract`, `NotRegularFile`, `FileTooLarge`). The reader stays inside the case
+  directory: a manifest `file` name is one plain component of `[A-Za-z0-9._-]` (not `.` or `..`),
+  every read re-checks it, links and other non-regular files are refused (`NotRegularFile`), a
+  binary array's length is checked against `product(shape) × itemsize` (computed with checked
+  arithmetic; an overflowing shape is a `Manifest` error) before any byte is read, and a manifest or
+  string array above `MAX_MANIFEST_BYTES` or `MAX_STRING_ARRAY_BYTES` (64 MiB each, a P1-01 reader
+  bound, far above the about 4 MB of §3's canonical world) is refused (`FileTooLarge`).
+  `FixtureCase::with_manifest` validates the manifest it is given (`Manifest::validate`), so no
+  constructible case carries a non-synthetic or malformed manifest. `grid-domain` may not depend on `serde_json`: its only external dependency
   is `serde` (ADR-014, Proposed in P1-01; decision 3 puts the format crates in `grid-pipeline` and
   `grid-synth`), so the reader cannot live there. `grid-models` MUST NOT depend on `grid-synth`
   (engine-spec §8.1 rule 3; `synthetic-world.md` §10.1); the structural test

@@ -219,6 +219,16 @@ fn inconsistent_v0_columns_are_rejected_not_coerced() {
     let mut w = toy_world();
     w.plays.terminal_value[0] = 0.0;
     expect_invalid(&w, "plays.terminal_value");
+
+    // A missing value that is a NaN with a non-canonical payload would not round-trip bit for bit
+    // (to_v0_columns writes the canonical quiet NaN), so it is refused, not normalised.
+    let mut w = toy_world();
+    w.plays.terminal_value[0] = f64::from_bits(0x7ff8_0000_0000_0001);
+    assert!(w.plays.terminal_value[0].is_nan());
+    expect_invalid(&w, "plays.terminal_value");
+    let mut w = toy_world();
+    w.truth.focus_tau[1] = f64::from_bits(0xfff8_0000_0000_0000);
+    expect_invalid(&w, "gt.focus_tau");
     // A terminal row whose n_* are not the −1 sentinel.
     let mut w = toy_world();
     w.plays.n_down[2] = 1;
@@ -307,7 +317,7 @@ fn to_v0_columns_fails_where_v0_has_no_encoding() {
         Err(ContractError::MissingField { field }) if field.contains("college.feeder_snaps")
     ));
     let mut real_key = up.clone();
-    real_key.players.players[0].player_id = PlayerKey::Gsis("00-0033873".into());
+    real_key.players.players[0].player_id = PlayerKey::Gsis("00-9900001".into());
     assert!(matches!(
         to_v0_columns(&real_key),
         Err(ContractError::InvalidValue { field, .. }) if field == "players.player_id"

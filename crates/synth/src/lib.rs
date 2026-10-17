@@ -7,9 +7,10 @@
 //! `docs/CLAUDE.md` "Crate Boundaries"). Its only dependencies are `grid-domain` and `serde_json`,
 //! the latter being the first use of an already-declared workspace dependency for the fixture
 //! manifest (`docs/03-contracts/parity-fixture-contract.md` §2, §11; DR-D29). The arrays are
-//! decoded with `std` alone. **`grid-models` never depends on this crate** except as a
-//! dev-dependency of its parity tests (`docs/05-model-specs/synthetic-world.md` §10.1;
-//! parity-fixture-contract §11); the structural test in `crates/pipeline/tests/` enforces it. The
+//! decoded with `std` alone. **`grid-models` MUST NOT depend on this crate** (engine-spec §8.1
+//! rule 3; `docs/05-model-specs/synthetic-world.md` §10.1); the structural test in
+//! `crates/pipeline/tests/` checks normal and build dependencies. Whether a numerical crate's parity
+//! tests may take it as a dev-dependency is an open owner item recorded by P1-01. The
 //! crate set itself is ADR-011 D11 (`docs/02-adr/011-engine-only-pivot.md`, DR-A8).
 //!
 //! Nothing here invokes Python, reads a network or a clock, or coerces malformed data to a default:

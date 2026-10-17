@@ -90,8 +90,9 @@ also apply `.claude/agents/reference-parity-reviewer.md` in full and answer item
   against the re-set floors (§7.13.3), never against legacy-generator values (item 16).
 - **Crate rules.** Numerical crates (`models`, `simulation`, `scoring`, `synth`) are synchronous with
   no `tokio` or `sqlx` (`docs/CLAUDE.md` rule 3); heavy math runs under Rayon or `spawn_blocking`,
-  never on the async runtime (engine-spec §1.1). `grid-models` never depends on `grid-synth` except
-  as a dev-dependency.
+  never on the async runtime (engine-spec §1.1). `grid-models` MUST NOT depend on `grid-synth`
+  (engine-spec §8.1 rule 3); whether a numerical crate's parity tests may take it as a dev-dependency
+  is an open owner item, so treat such a dev-dependency as a finding until the owner rules.
 - **Known oracle defects** named in the work package's "Oracle parity targets" are not reproduced
   (Appendix D item 14; `docs/00-meta/known-issues.md`).
 

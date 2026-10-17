@@ -12,6 +12,17 @@
 //! dtype, a shape that does not fit or a manifest with `provenance.data != "synthetic"` (DR-A11)
 //! is rejected, never repaired.
 //!
+//! Every read stays inside the case directory. An array's `file` is a single plain name
+//! (`[A-Za-z0-9._-]+`, never `.` or `..`, exactly one normal path component, so no separator,
+//! drive prefix or root), checked when the manifest is parsed, when a [`FixtureCase`] is built
+//! over a [`Manifest`] ([`Manifest::validate`]) and again on every read. Only regular files are
+//! read: a symbolic link, directory or device is refused with [`FixtureError::NotRegularFile`]
+//! (the link itself is inspected with `fs::symlink_metadata`, never followed). Sizes are checked
+//! before reading: a binary array whose file length is not `product(shape) × itemsize` is refused
+//! without reading it, and a manifest or string array is read through a reader bounded at
+//! [`MAX_MANIFEST_BYTES`] or [`MAX_STRING_ARRAY_BYTES`]. `product(shape)` and the byte length are
+//! computed with checked arithmetic; an overflow is a [`FixtureError::Manifest`] naming the array.
+//!
 //! The tolerance helpers encode the pre-registered classes of §6 that have an element-wise
 //! criterion: exact, A, A′ and B. Classes C-V, C-L1 and D are stage-specific and live with the
 //! stages that need them (`value-model.md` §10.3, `layer1-credit.md` §10.3, `evaluation::recovery`).
@@ -19,8 +30,8 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
-use std::io;
-use std::path::{Path, PathBuf};
+use std::io::{self, Read};
+use std::path::{Component, Path, PathBuf};
 use std::str::FromStr;
 
 use serde_json::{Map, Value};
@@ -45,6 +56,18 @@ pub const CLASS_A_PRIME_REL_TOL: f64 = 1e-9;
 /// (§6; `rapm-attribution.md` §10.3).
 pub const CLASS_B_DENSE_REL_TOL: f64 = 1e-9;
 
+/// The largest `manifest.json` the reader accepts, in bytes (64 MiB). A larger file is refused
+/// with [`FixtureError::FileTooLarge`] without reading past the cap. No contract states a size;
+/// the cap is a reader safety bound set by P1-01, far above any manifest §4 describes (a manifest
+/// lists array entries, not array data).
+pub const MAX_MANIFEST_BYTES: u64 = 64 * 1024 * 1024;
+
+/// The largest `json` string-array file the reader accepts, in bytes (64 MiB). A larger file is
+/// refused with [`FixtureError::FileTooLarge`] without reading past the cap. No contract states a
+/// size; the cap is a reader safety bound set by P1-01, well above the string columns of the
+/// canonical world (parity-fixture-contract §3 puts the whole legacy world near 4 MB).
+pub const MAX_STRING_ARRAY_BYTES: u64 = 64 * 1024 * 1024;
+
 /// A typed failure of the fixture reader. **Closed** enum; every variant names what failed.
 ///
 /// `Io` carries the `std::io::ErrorKind` and message rather than the `io::Error` itself so that the
@@ -61,8 +84,10 @@ pub enum FixtureError {
         message: String,
     },
     /// The manifest is not valid JSON, or a value has the wrong JSON type or an undeclared
-    /// vocabulary entry (an unknown dtype, class or oracle level, a file name with a path
-    /// separator, a dtype suffix that does not match the file name).
+    /// vocabulary entry (an unknown dtype, class or oracle level, a file name that is not a
+    /// single plain name of `[A-Za-z0-9._-]`, a dtype suffix that does not match the file name),
+    /// or an array's `product(shape)` or `product(shape) × itemsize` overflows (the detail names
+    /// the array).
     Manifest {
         /// What is wrong, naming the key.
         detail: String,
@@ -88,13 +113,35 @@ pub enum FixtureError {
         /// What the manifest declares or the file holds.
         found: String,
     },
-    /// The file's byte length is not `product(shape) × itemsize` (§11).
+    /// The file's byte length is not `product(shape) × itemsize` (§11). Checked against the
+    /// file's metadata before any byte is read.
     LengthMismatch {
         /// The array name.
         name: String,
         /// `product(shape) × itemsize` from the manifest.
         expected_bytes: u64,
-        /// The file's actual length.
+        /// The file's length from its metadata; when the file changed while it was read, the
+        /// number of bytes read before the reader stopped (at most `expected_bytes + 1`).
+        found_bytes: u64,
+    },
+    /// The path names something other than a regular file: a symbolic link (never followed), a
+    /// directory, a device, a socket or a pipe; or the file was replaced between the check and
+    /// the open. Reads never leave the case directory through a link.
+    NotRegularFile {
+        /// The path inside the case directory.
+        path: PathBuf,
+        /// What was found there, in words (`a symbolic link`, `a directory`, …).
+        found: String,
+    },
+    /// A manifest or string-array file is larger than the reader's declared cap
+    /// ([`MAX_MANIFEST_BYTES`], [`MAX_STRING_ARRAY_BYTES`]). The file is not read past the cap.
+    FileTooLarge {
+        /// The file.
+        path: PathBuf,
+        /// The cap, in bytes.
+        limit_bytes: u64,
+        /// The file's length from its metadata; when the file grew while it was read, the number
+        /// of bytes read before the reader stopped (`limit_bytes + 1`).
         found_bytes: u64,
     },
     /// The declared shape is not the one the caller requires, or a `.json` string array does not
@@ -161,6 +208,21 @@ impl fmt::Display for FixtureError {
                 f,
                 "array `{name}`: the manifest implies {expected_bytes} bytes, the file holds \
                  {found_bytes}"
+            ),
+            FixtureError::NotRegularFile { path, found } => write!(
+                f,
+                "`{}` is {found}, not a regular file; fixture reads stay inside the case \
+                 directory",
+                path.display()
+            ),
+            FixtureError::FileTooLarge {
+                path,
+                limit_bytes,
+                found_bytes,
+            } => write!(
+                f,
+                "`{}` holds {found_bytes} bytes, above the reader's cap of {limit_bytes}",
+                path.display()
             ),
             FixtureError::ShapeMismatch {
                 name,
@@ -347,8 +409,9 @@ impl fmt::Display for ToleranceClass {
 pub struct ArrayEntry {
     /// The array name consumers read it by (`y`, `plays.play_id`, `plays.off_players.offsets`).
     pub name: String,
-    /// The file name inside the case directory: a plain name, no path separator, carrying the
-    /// dtype as its suffix (`y.f64le`).
+    /// The file name inside the case directory: a single plain name of `[A-Za-z0-9._-]` (never
+    /// `.` or `..`; no separator, drive prefix or root), carrying the dtype as its suffix
+    /// (`y.f64le`). Checked at parse time, by [`Manifest::validate`] and on every read.
     pub file: String,
     /// The element encoding.
     pub dtype: DType,
@@ -363,10 +426,76 @@ pub struct ArrayEntry {
 }
 
 impl ArrayEntry {
-    /// `product(shape)`: the element count (1 for shape `[]`).
-    pub fn element_count(&self) -> usize {
-        self.shape.iter().product()
+    /// `product(shape)`: the element count (1 for shape `[]`), computed with checked
+    /// multiplication. `None` when the product overflows `usize`; a parsed or validated manifest
+    /// never holds such an entry (parsing refuses it with [`FixtureError::Manifest`]), but the
+    /// fields are public, so the overflow is reported rather than wrapped or panicked on.
+    ///
+    /// ```
+    /// use grid_synth::fixture::{ArrayEntry, DType};
+    /// let mut e = ArrayEntry {
+    ///     name: "y".into(),
+    ///     file: "y.f64le".into(),
+    ///     dtype: DType::F64le,
+    ///     shape: vec![2, 3],
+    ///     sha256: String::new(),
+    ///     class: None,
+    /// };
+    /// assert_eq!(e.element_count(), Some(6));
+    /// e.shape = vec![usize::MAX, 2];
+    /// assert_eq!(e.element_count(), None);
+    /// ```
+    pub fn element_count(&self) -> Option<usize> {
+        checked_product(&self.shape)
     }
+}
+
+/// `product(shape)` with checked multiplication; `None` on overflow.
+fn checked_product(shape: &[usize]) -> Option<usize> {
+    shape.iter().try_fold(1usize, |acc, &d| acc.checked_mul(d))
+}
+
+/// The checked sizes of an entry: its element count and, for a binary dtype, its byte length.
+struct EntrySize {
+    /// `product(shape)`.
+    elements: usize,
+    /// `product(shape) × itemsize`; `None` for `json`, whose byte length is not a function of
+    /// the shape.
+    bytes: Option<u64>,
+}
+
+/// Checks an entry's file name ([`check_file_name`]) and computes `product(shape)` and
+/// `product(shape) × itemsize` with checked arithmetic. Every failure is a
+/// [`FixtureError::Manifest`] whose detail starts with `whose` and names the array. Run at parse
+/// time, by [`Manifest::validate`] and before every read, so that no constructible entry reads
+/// outside the case directory or trusts a wrapped size.
+fn check_entry(entry: &ArrayEntry, whose: &str) -> Result<EntrySize, FixtureError> {
+    check_file_name(&entry.file, entry.dtype, whose)?;
+    let elements = entry
+        .element_count()
+        .ok_or_else(|| FixtureError::Manifest {
+            detail: format!(
+                "{whose}: array `{}` has shape {:?}, whose element count product(shape) \
+                 overflows",
+                entry.name, entry.shape
+            ),
+        })?;
+    let bytes = match entry.dtype.itemsize() {
+        None => None,
+        Some(itemsize) => Some(
+            elements
+                .checked_mul(itemsize)
+                .and_then(|n| u64::try_from(n).ok())
+                .ok_or_else(|| FixtureError::Manifest {
+                    detail: format!(
+                        "{whose}: array `{}` has shape {:?}, whose byte length product(shape) \
+                         × {itemsize} overflows",
+                        entry.name, entry.shape
+                    ),
+                })?,
+        ),
+    };
+    Ok(EntrySize { elements, bytes })
 }
 
 /// The oracle correction level a case was exported at (§7; DR-B1). **Closed** enum.
@@ -575,7 +704,7 @@ impl Manifest {
         };
         let params = root.get("params").cloned();
 
-        Ok(Manifest {
+        let manifest = Manifest {
             manifest_version,
             component,
             case,
@@ -590,7 +719,68 @@ impl Manifest {
             outputs,
             inputs_from,
             params,
-        })
+        };
+        // The parse above already enforces each invariant at the key that breaks it; this keeps
+        // a parsed manifest and `validate` from drifting apart.
+        manifest.validate()?;
+        Ok(manifest)
+    }
+
+    /// Re-checks the invariants a parsed manifest holds, for a value built or edited through the
+    /// public fields: `manifest_version` is [`MANIFEST_VERSION`] and `contracts.parity_fixture`
+    /// is [`PARITY_FIXTURE_CONTRACT_VERSION`] ([`FixtureError::UnsupportedContract`];
+    /// [`FixtureError::MissingKey`] when the latter is absent); `provenance.data` is `synthetic`
+    /// ([`FixtureError::NotSynthetic`], DR-A11); every entry's file name is a single plain name
+    /// with its dtype suffix and its `product(shape)` and byte length do not overflow
+    /// ([`FixtureError::Manifest`]); every output carries its class
+    /// ([`FixtureError::MissingKey`]); no array name is listed twice
+    /// ([`FixtureError::Manifest`]).
+    ///
+    /// [`FixtureCase::with_manifest`] runs it, so no [`FixtureCase`] carries a manifest that
+    /// fails it.
+    pub fn validate(&self) -> Result<(), FixtureError> {
+        if self.manifest_version != MANIFEST_VERSION {
+            return Err(FixtureError::UnsupportedContract {
+                field: "manifest_version".to_owned(),
+                found: self.manifest_version.to_string(),
+                supported: MANIFEST_VERSION.to_string(),
+            });
+        }
+        let parity_version =
+            self.contracts
+                .get("parity_fixture")
+                .ok_or_else(|| FixtureError::MissingKey {
+                    key: "contracts.parity_fixture".to_owned(),
+                })?;
+        if parity_version != PARITY_FIXTURE_CONTRACT_VERSION {
+            return Err(FixtureError::UnsupportedContract {
+                field: "contracts.parity_fixture".to_owned(),
+                found: parity_version.clone(),
+                supported: PARITY_FIXTURE_CONTRACT_VERSION.to_owned(),
+            });
+        }
+        if self.provenance.data != "synthetic" {
+            return Err(FixtureError::NotSynthetic {
+                found: self.provenance.data.clone(),
+            });
+        }
+        let mut names: std::collections::HashSet<&str> = std::collections::HashSet::new();
+        for (list, entries) in [("inputs", &self.inputs), ("outputs", &self.outputs)] {
+            for (i, entry) in entries.iter().enumerate() {
+                check_entry(entry, &format!("`{list}[{i}]`"))?;
+                if list == "outputs" && entry.class.is_none() {
+                    return Err(FixtureError::MissingKey {
+                        key: format!("outputs[{i}].class"),
+                    });
+                }
+                if !names.insert(entry.name.as_str()) {
+                    return Err(FixtureError::Manifest {
+                        detail: format!("array name `{}` is listed twice", entry.name),
+                    });
+                }
+            }
+        }
+        Ok(())
     }
 
     /// Every input and output entry, inputs first, in manifest order.
@@ -753,30 +943,53 @@ fn parse_entry(
         }
         None => None,
     };
-    check_file_name(&file, dtype, path)?;
-    Ok(ArrayEntry {
+    let entry = ArrayEntry {
         name,
         file,
         dtype,
         shape,
         sha256,
         class,
-    })
+    };
+    // The file name, and `product(shape)` and the byte length with checked arithmetic.
+    check_entry(&entry, &format!("`{path}`"))?;
+    Ok(entry)
 }
 
-/// A file name is a plain name inside the case directory (no separator, no `..`) and carries the
-/// dtype as its suffix (§2.1 `<name>.f64le`).
-fn check_file_name(file: &str, dtype: DType, path: &str) -> Result<(), FixtureError> {
-    if file.is_empty() || file == "." || file == ".." || file.contains('/') || file.contains('\\') {
+/// Whether `c` may appear in an array file name: ASCII letters and digits, `.`, `_` and `-`.
+fn is_file_name_char(c: char) -> bool {
+    c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-')
+}
+
+/// A file name is a single plain name inside the case directory and carries the dtype as its
+/// suffix (§2.1 `<name>.f64le`). Plain means: non-empty, only `[A-Za-z0-9._-]`, not `.` or `..`,
+/// and exactly one [`Component::Normal`] equal to the name, so no separator, drive prefix
+/// (`C:y.f64le` on Windows), root or parent reference can take a read outside the case directory
+/// on any platform. `whose` names the manifest key or array in the error detail.
+fn check_file_name(file: &str, dtype: DType, whose: &str) -> Result<(), FixtureError> {
+    let mut components = Path::new(file).components();
+    let single_normal = matches!(
+        (components.next(), components.next()),
+        (Some(Component::Normal(only)), None) if only == std::ffi::OsStr::new(file)
+    );
+    if file.is_empty()
+        || file == "."
+        || file == ".."
+        || !file.chars().all(is_file_name_char)
+        || !single_normal
+    {
         return Err(FixtureError::Manifest {
-            detail: format!("`{path}.file` (`{file}`) must be a plain file name inside the case"),
+            detail: format!(
+                "{whose}: file `{file}` must be a plain file name inside the case directory \
+                 ([A-Za-z0-9._-]+, not `.` or `..`)"
+            ),
         });
     }
     let suffix = format!(".{}", dtype.as_str());
     if !file.ends_with(&suffix) || file.len() == suffix.len() {
         return Err(FixtureError::Manifest {
             detail: format!(
-                "`{path}.file` (`{file}`) must end in `{suffix}`, the suffix of dtype {dtype}"
+                "{whose}: file `{file}` must end in `{suffix}`, the suffix of dtype {dtype}"
             ),
         });
     }
@@ -954,22 +1167,35 @@ pub struct FixtureCase {
 }
 
 impl FixtureCase {
-    /// Opens `<dir>/manifest.json` and validates it. Reads no array yet.
+    /// Opens `<dir>/manifest.json` and validates it. Reads no array yet. The manifest must be a
+    /// regular file ([`FixtureError::NotRegularFile`]; a symbolic link is not followed) of at most
+    /// [`MAX_MANIFEST_BYTES`] ([`FixtureError::FileTooLarge`], refused without reading past the
+    /// cap).
     pub fn open(dir: impl AsRef<Path>) -> Result<Self, FixtureError> {
         let dir = dir.as_ref().to_path_buf();
         let manifest_path = dir.join(MANIFEST_FILE);
-        let text = fs::read_to_string(&manifest_path).map_err(|e| io_error(&manifest_path, &e))?;
+        let bytes = read_bounded(&manifest_path, MAX_MANIFEST_BYTES)?;
+        let text = String::from_utf8(bytes).map_err(|e| FixtureError::Manifest {
+            detail: format!("`{MANIFEST_FILE}` is not UTF-8: {e}"),
+        })?;
         let manifest = Manifest::from_json_str(&text)?;
         Ok(Self { dir, manifest })
     }
 
     /// Builds a case over an already-parsed manifest and a directory; the arrays are read from
     /// `dir` on demand.
-    pub fn with_manifest(dir: impl AsRef<Path>, manifest: Manifest) -> Self {
-        Self {
+    ///
+    /// The manifest is re-validated with [`Manifest::validate`], because its fields are public
+    /// and may have been built or edited by hand: a manifest whose `provenance.data` is not
+    /// `synthetic` is [`FixtureError::NotSynthetic`] (DR-A11), an unsafe file name or an
+    /// overflowing shape is [`FixtureError::Manifest`], and so on. No [`FixtureCase`] carries a
+    /// manifest that fails validation.
+    pub fn with_manifest(dir: impl AsRef<Path>, manifest: Manifest) -> Result<Self, FixtureError> {
+        manifest.validate()?;
+        Ok(Self {
             dir: dir.as_ref().to_path_buf(),
             manifest,
-        }
+        })
     }
 
     /// The case directory.
@@ -1040,7 +1266,9 @@ impl FixtureCase {
 
     /// Reads a `json` string array. The element count must equal `product(shape)`
     /// ([`FixtureError::ShapeMismatch`] otherwise); a file that is not a JSON array of strings is
-    /// [`FixtureError::DtypeMismatch`].
+    /// [`FixtureError::DtypeMismatch`]. The file name is re-checked, the file must be a regular
+    /// file ([`FixtureError::NotRegularFile`]) and it is read through a reader bounded at
+    /// [`MAX_STRING_ARRAY_BYTES`] ([`FixtureError::FileTooLarge`]).
     pub fn read_strings(&self, name: &str) -> Result<Array<String>, FixtureError> {
         let entry = self.entry(name)?;
         if entry.dtype != DType::Json {
@@ -1050,15 +1278,16 @@ impl FixtureCase {
                 found: entry.dtype.to_string(),
             });
         }
+        let size = check_entry(entry, &format!("array `{name}`"))?;
         let path = self.dir.join(&entry.file);
-        let bytes = fs::read(&path).map_err(|e| io_error(&path, &e))?;
+        let bytes = read_bounded(&path, MAX_STRING_ARRAY_BYTES)?;
         let data: Vec<String> =
             serde_json::from_slice(&bytes).map_err(|e| FixtureError::DtypeMismatch {
                 name: name.to_owned(),
                 expected: "json array of strings".to_owned(),
                 found: format!("not a JSON array of strings (`{}`): {e}", entry.file),
             })?;
-        if data.len() != entry.element_count() {
+        if data.len() != size.elements {
             return Err(FixtureError::ShapeMismatch {
                 name: name.to_owned(),
                 declared: entry.shape.clone(),
@@ -1096,8 +1325,11 @@ impl FixtureCase {
         Ragged::new(name, offsets, values)
     }
 
-    /// Looks the entry up, checks the dtype, reads the file and checks
-    /// `byte length = product(shape) × itemsize`.
+    /// Looks the entry up, checks the dtype, re-checks the file name and the size arithmetic
+    /// ([`check_entry`]), opens the file only if it is a regular file, compares its metadata
+    /// length with `product(shape) × itemsize` **before reading** ([`FixtureError::LengthMismatch`]
+    /// without reading a byte), then reads at most one byte past the expected length so a file
+    /// that grew in between is refused too.
     fn read_binary(
         &self,
         name: &str,
@@ -1111,17 +1343,16 @@ impl FixtureCase {
                 found: entry.dtype.to_string(),
             });
         }
-        let itemsize = dtype.itemsize().expect("binary dtypes have an itemsize");
-        let expected_bytes = entry
-            .element_count()
-            .checked_mul(itemsize)
-            .and_then(|n| u64::try_from(n).ok())
-            .ok_or_else(|| FixtureError::Manifest {
-                detail: format!("array `{name}`: product(shape) × itemsize overflows"),
-            })?;
+        let size = check_entry(entry, &format!("array `{name}`"))?;
+        let Some(expected_bytes) = size.bytes else {
+            return Err(FixtureError::DtypeMismatch {
+                name: name.to_owned(),
+                expected: "a binary dtype (f64le, i64le, i32le, u8)".to_owned(),
+                found: entry.dtype.to_string(),
+            });
+        };
         let path = self.dir.join(&entry.file);
-        let bytes = fs::read(&path).map_err(|e| io_error(&path, &e))?;
-        let found_bytes = bytes.len() as u64;
+        let (file, found_bytes) = open_regular_file(&path)?;
         if found_bytes != expected_bytes {
             return Err(FixtureError::LengthMismatch {
                 name: name.to_owned(),
@@ -1129,8 +1360,94 @@ impl FixtureCase {
                 found_bytes,
             });
         }
+        // `expected_bytes` came from a `usize` product in `check_entry`, so it fits.
+        let mut bytes =
+            usize::try_from(expected_bytes).map_or_else(|_| Vec::new(), Vec::with_capacity);
+        file.take(expected_bytes.saturating_add(1))
+            .read_to_end(&mut bytes)
+            .map_err(|e| io_error(&path, &e))?;
+        let read_bytes = bytes.len() as u64;
+        if read_bytes != expected_bytes {
+            return Err(FixtureError::LengthMismatch {
+                name: name.to_owned(),
+                expected_bytes,
+                found_bytes: read_bytes,
+            });
+        }
         Ok((entry, bytes))
     }
+}
+
+/// Describes a file type that is not a regular file, for [`FixtureError::NotRegularFile`].
+fn describe_file_type(file_type: fs::FileType) -> &'static str {
+    if file_type.is_symlink() {
+        "a symbolic link"
+    } else if file_type.is_dir() {
+        "a directory"
+    } else {
+        "neither a regular file nor a directory (a device, socket or pipe)"
+    }
+}
+
+/// Opens `path` for reading only if it is a regular file, and returns the handle with its length
+/// in bytes from the opened handle's metadata.
+///
+/// The path itself is inspected with `fs::symlink_metadata`, which does not follow a symbolic
+/// link, so a link (even one pointing at a regular file outside the case directory) is
+/// [`FixtureError::NotRegularFile`], as is a directory, device, socket or pipe. After the open,
+/// the handle's own metadata must still be a regular file; on Unix it must also be the same file
+/// (device and inode) the path named at the check, so a path swapped for a link between the
+/// check and the open is refused. Other platforms get the regular-file checks without the
+/// identity comparison (`std` exposes no stable file identity there).
+fn open_regular_file(path: &Path) -> Result<(fs::File, u64), FixtureError> {
+    let not_regular = |found: &str| FixtureError::NotRegularFile {
+        path: path.to_path_buf(),
+        found: found.to_owned(),
+    };
+    let checked = fs::symlink_metadata(path).map_err(|e| io_error(path, &e))?;
+    if !checked.file_type().is_file() {
+        return Err(not_regular(describe_file_type(checked.file_type())));
+    }
+    let file = fs::File::open(path).map_err(|e| io_error(path, &e))?;
+    let opened = file.metadata().map_err(|e| io_error(path, &e))?;
+    if !opened.file_type().is_file() {
+        return Err(not_regular(describe_file_type(opened.file_type())));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if (checked.dev(), checked.ino()) != (opened.dev(), opened.ino()) {
+            return Err(not_regular(
+                "a different file from the one checked (the path changed while it was opened)",
+            ));
+        }
+    }
+    Ok((file, opened.len()))
+}
+
+/// Reads a whole text or JSON file of at most `limit` bytes: a regular file only
+/// ([`open_regular_file`]); a metadata length above `limit` is [`FixtureError::FileTooLarge`]
+/// without reading, and the read itself stops one byte past `limit`, so a file that grew in
+/// between is refused the same way.
+fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>, FixtureError> {
+    let too_large = |found_bytes: u64| FixtureError::FileTooLarge {
+        path: path.to_path_buf(),
+        limit_bytes: limit,
+        found_bytes,
+    };
+    let (file, len) = open_regular_file(path)?;
+    if len > limit {
+        return Err(too_large(len));
+    }
+    let mut bytes = usize::try_from(len).map_or_else(|_| Vec::new(), Vec::with_capacity);
+    file.take(limit.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .map_err(|e| io_error(path, &e))?;
+    let read_bytes = bytes.len() as u64;
+    if read_bytes > limit {
+        return Err(too_large(read_bytes));
+    }
+    Ok(bytes)
 }
 
 fn io_error(path: &Path, error: &io::Error) -> FixtureError {
@@ -1721,6 +2038,185 @@ mod tests {
     }
 
     #[test]
+    fn file_names_are_single_plain_components() {
+        for good in ["y.f64le", "plays.off_players.offsets.f64le", "a-b_C9.f64le"] {
+            assert_eq!(check_file_name(good, DType::F64le, "t"), Ok(()), "{good}");
+        }
+        for bad in [
+            "",
+            ".",
+            "..",
+            "C:x.f64le",
+            "a/b.f64le",
+            "a\\b.f64le",
+            "/y.f64le",
+            "../y.f64le",
+            "x y.f64le",
+            "y.f64le\0",
+            "\u{e9}.f64le",
+        ] {
+            assert!(
+                matches!(
+                    check_file_name(bad, DType::F64le, "t"),
+                    Err(FixtureError::Manifest { ref detail }) if detail.contains("plain file name")
+                ),
+                "{bad:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn overflowing_shapes_are_manifest_errors() {
+        let mut v = minimal_manifest();
+        v["inputs"] = serde_json::json!([
+            { "dtype": "f64le", "file": "y.f64le", "name": "y", "sha256": "0",
+              "shape": [4_294_967_296u64, 4_294_967_296u64] }
+        ]);
+        assert!(matches!(
+            Manifest::from_value(&v),
+            Err(FixtureError::Manifest { detail })
+                if detail.contains("inputs[0]") && detail.contains("array `y`")
+                    && detail.contains("overflows")
+        ));
+        // The element count fits but `× itemsize` does not.
+        let mut v = minimal_manifest();
+        v["outputs"] = serde_json::json!([
+            { "dtype": "f64le", "file": "y.f64le", "name": "y", "sha256": "0",
+              "shape": [usize::MAX / 4], "class": "A" }
+        ]);
+        assert!(matches!(
+            Manifest::from_value(&v),
+            Err(FixtureError::Manifest { detail })
+                if detail.contains("outputs[0]") && detail.contains("byte length")
+        ));
+        // `json` arrays have no itemsize, but their element count is still checked.
+        let mut v = minimal_manifest();
+        v["inputs"] = serde_json::json!([
+            { "dtype": "json", "file": "s.json", "name": "s", "sha256": "0",
+              "shape": [usize::MAX, 2] }
+        ]);
+        assert!(matches!(
+            Manifest::from_value(&v),
+            Err(FixtureError::Manifest { detail }) if detail.contains("array `s`")
+        ));
+    }
+
+    #[test]
+    fn validate_rechecks_a_hand_edited_manifest() {
+        let good = Manifest::from_value(&minimal_manifest()).expect("valid");
+        assert_eq!(good.validate(), Ok(()));
+        let entry = ArrayEntry {
+            name: "y".into(),
+            file: "y.f64le".into(),
+            dtype: DType::F64le,
+            shape: vec![1],
+            sha256: "0".into(),
+            class: None,
+        };
+        let edit = |f: &dyn Fn(&mut Manifest)| {
+            let mut m = good.clone();
+            m.inputs.push(entry.clone());
+            f(&mut m);
+            m.validate()
+        };
+        assert_eq!(edit(&|_| {}), Ok(()));
+        assert!(matches!(
+            edit(&|m| m.inputs[0].file = "C:y.f64le".into()),
+            Err(FixtureError::Manifest { detail }) if detail.contains("plain file name")
+        ));
+        assert!(matches!(
+            edit(&|m| m.inputs[0].shape = vec![usize::MAX, 2]),
+            Err(FixtureError::Manifest { detail }) if detail.contains("overflows")
+        ));
+        assert_eq!(
+            edit(&|m| m.provenance.data = "nflverse".into()),
+            Err(FixtureError::NotSynthetic {
+                found: "nflverse".into()
+            })
+        );
+        assert!(matches!(
+            edit(&|m| m.manifest_version = 2),
+            Err(FixtureError::UnsupportedContract { field, .. }) if field == "manifest_version"
+        ));
+        assert!(matches!(
+            edit(&|m| {
+                m.contracts.insert("parity_fixture".into(), "2".into());
+            }),
+            Err(FixtureError::UnsupportedContract { field, .. })
+                if field == "contracts.parity_fixture"
+        ));
+        assert_eq!(
+            edit(&|m| {
+                m.contracts.remove("parity_fixture");
+            }),
+            Err(FixtureError::MissingKey {
+                key: "contracts.parity_fixture".into()
+            })
+        );
+        assert_eq!(
+            edit(&|m| m.outputs.push(entry.clone())),
+            Err(FixtureError::MissingKey {
+                key: "outputs[0].class".into()
+            })
+        );
+        assert!(matches!(
+            edit(&|m| m.inputs.push(entry.clone())),
+            Err(FixtureError::Manifest { detail }) if detail.contains("listed twice")
+        ));
+    }
+
+    /// The read paths re-run the file-name and size checks themselves: a case built around
+    /// validation (only possible inside this module) still never reads outside its directory or
+    /// trusts a wrapped size.
+    #[test]
+    fn reads_recheck_the_entry() {
+        let mut manifest = Manifest::from_value(&minimal_manifest()).expect("valid");
+        for (name, file, dtype, shape) in [
+            ("up", "../y.f64le", DType::F64le, vec![1]),
+            ("drive", "C:y.f64le", DType::F64le, vec![1]),
+            ("abs", "/etc/passwd.json", DType::Json, vec![1]),
+            (
+                "wrap",
+                "w.f64le",
+                DType::F64le,
+                vec![1 << 31, 1 << 31, 1 << 31, 4],
+            ),
+        ] {
+            manifest.inputs.push(ArrayEntry {
+                name: name.into(),
+                file: file.into(),
+                dtype,
+                shape,
+                sha256: "0".into(),
+                class: None,
+            });
+        }
+        let case = FixtureCase {
+            dir: std::env::temp_dir(),
+            manifest,
+        };
+        for name in ["up", "drive"] {
+            assert!(
+                matches!(
+                    case.read_f64(name),
+                    Err(FixtureError::Manifest { ref detail })
+                        if detail.contains(&format!("array `{name}`"))
+                            && detail.contains("plain file name")
+                ),
+                "{name}"
+            );
+        }
+        assert!(matches!(
+            case.read_strings("abs"),
+            Err(FixtureError::Manifest { detail }) if detail.contains("plain file name")
+        ));
+        assert!(matches!(
+            case.read_f64("wrap"),
+            Err(FixtureError::Manifest { detail }) if detail.contains("overflows")
+        ));
+    }
+
+    #[test]
     fn ragged_offsets_are_validated() {
         let ok = Ragged::new("r", vec![0, 2, 2, 5], vec![1, 2, 3, 4, 5]).expect("valid");
         assert_eq!(ok.len(), 3);
@@ -1949,5 +2445,18 @@ mod tests {
             found: "real".into(),
         });
         assert!(boxed.to_string().contains("DR-A11"));
+        let shown = FixtureError::NotRegularFile {
+            path: PathBuf::from("y.f64le"),
+            found: "a symbolic link".into(),
+        }
+        .to_string();
+        assert!(shown.contains("`y.f64le` is a symbolic link, not a regular file"));
+        let shown = FixtureError::FileTooLarge {
+            path: PathBuf::from("manifest.json"),
+            limit_bytes: MAX_MANIFEST_BYTES,
+            found_bytes: MAX_MANIFEST_BYTES + 1,
+        }
+        .to_string();
+        assert!(shown.contains("67108865 bytes") && shown.contains("cap of 67108864"));
     }
 }

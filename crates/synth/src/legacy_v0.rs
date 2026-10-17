@@ -40,6 +40,13 @@ use crate::truth::SyntheticTruth;
 /// (`FrameProducer::Synthetic`; plays-contract §9; oracle `59bce1d`, ADR-012).
 pub const LEGACY_GENERATOR_VERSION: &str = "legacy-59bce1d";
 
+/// The bit pattern of the canonical quiet NaN, `f64::NAN` (0x7ff8000000000000), which is also
+/// NumPy's `np.nan`. `to_v0_columns` writes exactly this pattern for a missing value, so
+/// `from_legacy_v0` accepts only this pattern where v0 means "missing" (`plays.terminal_value` on a
+/// non-terminal row; `gt.focus_tau` for a missed game): any other NaN payload would not round-trip
+/// bit for bit (parity-fixture-contract §2.1: NaN is kept bit for bit) and is a typed `InvalidValue`.
+pub const CANONICAL_NAN_BITS: u64 = 0x7ff8_0000_0000_0000;
+
 /// The v0 sentinel of `n_down`, `n_ydstogo` and `n_yardline_100` on a terminal row
 /// (plays-contract §2.1; parity-fixture-contract §2.1 keeps it verbatim).
 pub const V0_NEXT_SENTINEL: i64 = -1;
@@ -559,12 +566,14 @@ fn upgrade_plays(
             }
             NextState::Terminal
         } else {
-            if !v0.terminal_value[row].is_nan() {
+            if v0.terminal_value[row].to_bits() != CANONICAL_NAN_BITS {
                 return Err(invalid(
                     "plays.terminal_value",
                     format!(
-                        "non-terminal row {row} carries {:?}, not NaN",
-                        v0.terminal_value[row]
+                        "non-terminal row {row} carries {:?} (bits {:#018x}), not the canonical \
+                         quiet NaN {CANONICAL_NAN_BITS:#018x}",
+                        v0.terminal_value[row],
+                        v0.terminal_value[row].to_bits()
                     ),
                 ));
             }
@@ -685,16 +694,29 @@ fn upgrade_truth(
             });
         }
     }
+    let mut focus_tau = Vec::with_capacity(v0.focus_tau.len());
+    for (week, t) in v0.focus_tau.iter().enumerate() {
+        if t.to_bits() == CANONICAL_NAN_BITS {
+            focus_tau.push(None);
+        } else if t.is_nan() {
+            return Err(invalid(
+                "gt.focus_tau",
+                format!(
+                    "entry {week} is a NaN with payload bits {:#018x}, not the canonical quiet NaN \
+                     {CANONICAL_NAN_BITS:#018x}",
+                    t.to_bits()
+                ),
+            ));
+        } else {
+            focus_tau.push(Some(*t));
+        }
+    }
     Ok(SyntheticTruth {
         ability,
         is_starter,
         team_strength_legacy,
         focus_qb: player_key("gt.focus_qb", v0.focus_qb, 0)?,
-        focus_tau: v0
-            .focus_tau
-            .iter()
-            .map(|t| if t.is_nan() { None } else { Some(*t) })
-            .collect(),
+        focus_tau,
         league_factor: v0.league_factor,
         net_strength: None,
     })
@@ -1187,7 +1209,7 @@ mod tests {
 
     #[test]
     fn keys_outside_the_synthetic_encoding_are_rejected() {
-        assert!(synthetic_player("p", &PlayerKey::Gsis("00-0033873".into())).is_err());
+        assert!(synthetic_player("p", &PlayerKey::Gsis("00-9900001".into())).is_err());
         assert_eq!(synthetic_player("p", &PlayerKey::Synthetic(7)), Ok(7));
         assert!(synthetic_team("t", &TeamKey::Nfl("KC".into())).is_err());
         assert_eq!(synthetic_team("t", &TeamKey::Synthetic(3)), Ok(3));
