@@ -336,8 +336,12 @@ pub struct PlaysFrame {
 ///
 /// **Open** vocabulary: the known labels are variants and anything else is `Other(raw)`.
 /// Serialized as the raw string (`QB`, `RB`, `WR`, `TE`, `FB`, `DEF`, `CB`, or the raw label),
-/// and parsed back case-sensitively, so `Other("QB")` cannot exist: the conversion normalizes it.
-/// The synthetic↔real mapping is owned by `rapm-attribution.md` (open). Never null.
+/// and parsed back case-sensitively.
+///
+/// A reader never produces `Other` with a known label: deserialization (`From<String>`) maps a
+/// known label to its variant. `Other("QB")` can still be built by hand; it serializes to the same
+/// text `"QB"` as `Qb`, and therefore deserializes to `Qb`. Equality after a serialization round
+/// trip holds only for values a reader produced. The synthetic↔real mapping is owned by `rapm-attribution.md` (open). Never null.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "String", into = "String")]
 pub enum ParticipantPosition {
@@ -429,13 +433,26 @@ pub struct PlayersFrame {
     pub players: Vec<PlayerRecord>,
 }
 
-/// The units of a market quote's `strength` (plays-contract §5 v1). **Closed** enum; the mapping
-/// of a spread or total onto this scale is open (DR-D10) and no second unit exists until it is
-/// decided.
+/// The units of a market quote's `strength` (plays-contract §5 v1 "`strength` (with declared
+/// units)"; `docs/05-model-specs/synthetic-world.md` §4.10 G-5). **Closed** enum: a new unit is a
+/// MAJOR change of `grid.plays`. Serialized as the variant name (`DvPerPlay`,
+/// `SyntheticAbility`).
+///
+/// DR-D10 (the spread → EP-per-play conversion of a real market line) is **open, with no
+/// default**. P1-01 therefore fixes **no real-data market unit**: no real-data market reader
+/// exists, and none may label a converted line until DR-D10 is decided. The two variants are
+/// the units the contract and the synthetic harness name today; the plays-contract §9 sketch
+/// lists only `DvPerPlay`, and `SyntheticAbility` is added here from synthetic-world.md G-5.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MarketUnits {
-    /// Expected drive points per play, the `dV` scale.
+    /// Expected drive points per play, the `dV` scale the Layer-3 estimand is stated in
+    /// (rapm-attribution.md). No real-data line is converted onto it until DR-D10 is decided.
     DvPerPlay,
+    /// The synthetic harness's ability units: `market_t = κ·N*(t) + N(0, σ_m²)` with `κ = 1` and
+    /// `σ_m = 0.01`, kept until DR-D10 fixes the spread → EP-per-play conversion
+    /// (`docs/05-model-specs/synthetic-world.md` §4.10 G-5; KI-NEW-Z12). No Layer-3 recovery
+    /// claim is made from a quote in these units. Synthetic frames only.
+    SyntheticAbility,
 }
 
 /// A market-implied net team strength quote as published at or before a lock (plays-contract §5
@@ -1133,6 +1150,23 @@ mod tests {
         assert_eq!(String::from(ParticipantPosition::Cb), "CB");
         assert_eq!(String::from(ParticipantPosition::Other("S".into())), "S");
         assert_eq!(ParticipantPosition::Te.to_string(), "TE");
+    }
+
+    #[test]
+    fn a_hand_built_other_with_a_known_label_reads_back_as_the_known_variant() {
+        // The serde form goes through `Into<String>` then `From<String>`, so this is the round
+        // trip a writer and a reader perform.
+        let hand_built = ParticipantPosition::Other("QB".into());
+        let text = String::from(hand_built.clone());
+        assert_eq!(text, String::from(ParticipantPosition::Qb));
+        let read_back = ParticipantPosition::from(text);
+        assert_eq!(read_back, ParticipantPosition::Qb);
+        assert_ne!(read_back, hand_built);
+        // A value a reader produced survives the round trip unchanged.
+        for label in ["QB", "RB", "WR", "TE", "FB", "DEF", "CB", "OLB"] {
+            let read = ParticipantPosition::from(label);
+            assert_eq!(ParticipantPosition::from(String::from(read.clone())), read);
+        }
     }
 
     #[test]

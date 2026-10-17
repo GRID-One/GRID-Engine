@@ -12,8 +12,11 @@
 //! The engine rule is stricter than the oracle's (`asof.py`): lock-timestamp granularity instead
 //! of week granularity, plus the publication-lag axis. Where they differ the engine rule governs
 //! and the oracle case is a recorded divergence (engine-spec §4.5). The oracle's week-only
-//! fallback for a frame without a season is **not** implemented: a record without a season is a
-//! `ContractError::MissingField` upstream, never a week comparison.
+//! fallback for a frame without a season is **not** implemented: a `Season` is required by every
+//! record type here, so a season-less frame cannot be built, and the frame reader that meets a
+//! source without a season column raises `ContractError::MissingSeasonKey`
+//! (`evaluation-and-leakage.md` §5.4; the variant is added by P1-05). It is never a week
+//! comparison.
 
 use std::fmt;
 

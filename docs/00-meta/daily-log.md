@@ -289,3 +289,10 @@ package is `docs/01-work-packages/p1-01-engine-skeleton.md`; the session log is
   adapter for every §8.2 command and §8.3 query is P1-10's (engine-spec §8.1 target table, §8.2), and
   §10.2.6 assigns content, not the adapter; the usage labels every entry P1-10 and one footer line
   notes the content owners (work-package Amendments row 10).
+- **Fresh-context review of the whole change.** A security/dependency review (no blocker; the fixture
+  reader hardened, the CLI's non-UTF-8 panic fixed, the reviewer agents' read-only claim corrected,
+  fabricated test identifiers) and an adversarial PR review (CONDITIONAL: 2 blockers, 11 major, 12
+  minor; all applied or raised in the work package's Amendments rows 13 to 24). Decision requests for
+  the merge: ADR-014; the synchronous façade; the CLI content-ownership labels (§8.1 against §10.2.6);
+  the A′ norm (engine-spec §7.12.5 against `rapm-attribution.md` P-3); the reviewer-permission
+  residual risk; whether numerical crates' parity tests may take `grid-synth` as a dev-dependency.

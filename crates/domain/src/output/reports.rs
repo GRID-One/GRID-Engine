@@ -5,6 +5,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
+use crate::asof::ResearchFlag;
 use crate::error::EngineError;
 use crate::ids::{
     EvaluationRunId, IngestionRunId, JobId, ModelFamily, ModelVersionId, PlayerKey, ReviewId,
@@ -202,6 +203,11 @@ pub struct ModelScorecard {
     pub evaluation_run_id: EvaluationRunId,
     /// The rows.
     pub rows: Vec<ScorecardRow>,
+    /// The research-only marker of the evaluation run (engine-output-contract §2 `research`;
+    /// `evaluation-and-leakage.md` §4.1). `research_only = true`, naming the relaxed rule, for a
+    /// `Research`-mode run: such a scorecard MUST NOT feed a gate, a promotion or a published
+    /// claim. `research_only = false` with no relaxed rule otherwise. Never null.
+    pub research: ResearchFlag,
 }
 
 /// A confidence interval with its level (engine-output-contract §7 benchmark results). Units of
@@ -241,6 +247,12 @@ pub struct BenchmarkResultRow {
 pub struct BenchmarkResults {
     /// The rows.
     pub rows: Vec<BenchmarkResultRow>,
+    /// The research-only marker of the evaluation run that produced the rows
+    /// (engine-output-contract §2 `research`; `evaluation-and-leakage.md` §4.1).
+    /// `research_only = true`, naming the relaxed rule, for a `Research`-mode run: such results
+    /// MUST NOT feed a gate, a promotion or a published claim. `research_only = false` with no
+    /// relaxed rule otherwise. Never null.
+    pub research: ResearchFlag,
 }
 
 #[cfg(test)]

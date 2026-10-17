@@ -6,54 +6,121 @@ use std::process::{Command, Output};
 
 use grid_domain::{TerminalState, EXIT_INTERNAL, EXIT_USAGE};
 
-/// One expected usage line: the §8.2 or §8.3 CLI spelling, its library function, and the work
-/// package engine-spec names as delivering it: P1-10 for every entry (§8.1 target table and
-/// §8.2; the P1-01 orchestrator's ruling on the five Phase 2 outputs, whose content §10.2.6
-/// assigns to P2-01, P2-02, P2-06 and P2-07 while the adapter stays P1-10's).
-type Expected = (&'static str, &'static str, &'static str);
+/// One expected usage line: the §8.2 or §8.3 CLI spelling, its library function, the work
+/// package that delivers it (P1-10 for every entry: §8.1 target table and §8.2), and, for the
+/// five Phase 2 outputs, the package §10.2.6 names for their content (P2-01, P2-02, P2-06,
+/// P2-07). Which of the two owns those five subcommands is an open owner decision, so the usage
+/// shows both with the label "decision request".
+type Expected = (
+    &'static str,
+    &'static str,
+    &'static str,
+    Option<&'static str>,
+);
 
 /// Every §8.2 CLI spelling the usage must list (engine-spec §8.2, "CLI (indicative)").
 const COMMANDS: [Expected; 13] = [
-    ("update", "trigger_daily_update", "P1-10"),
-    ("project", "request_projection_run", "P1-10"),
-    ("rebuild", "request_model_rebuild", "P1-10"),
-    ("scoring add|set-default", "set_scoring_profile", "P1-10"),
+    ("update", "trigger_daily_update", "P1-10", None),
+    ("project", "request_projection_run", "P1-10", None),
+    ("rebuild", "request_model_rebuild", "P1-10", None),
+    (
+        "scoring add|set-default",
+        "set_scoring_profile",
+        "P1-10",
+        None,
+    ),
     (
         "availability import",
         "import_availability_overrides",
         "P1-10",
+        Some("P2-02"),
     ),
-    ("identity approve", "approve_identity_link", "P1-10"),
-    ("identity reject", "reject_identity_link", "P1-10"),
-    ("benchmark import", "import_benchmark_snapshot", "P1-10"),
-    ("model promote", "promote_candidate", "P1-10"),
-    ("model rollback", "rollback_to_snapshot", "P1-10"),
-    ("export", "export_projections", "P1-10"),
-    ("model configure", "set_model_config", "P1-10"),
-    ("backtest", "request_evaluation_run", "P1-10"),
+    ("identity approve", "approve_identity_link", "P1-10", None),
+    ("identity reject", "reject_identity_link", "P1-10", None),
+    (
+        "benchmark import",
+        "import_benchmark_snapshot",
+        "P1-10",
+        None,
+    ),
+    ("model promote", "promote_candidate", "P1-10", None),
+    ("model rollback", "rollback_to_snapshot", "P1-10", None),
+    ("export", "export_projections", "P1-10", None),
+    ("model configure", "set_model_config", "P1-10", None),
+    ("backtest", "request_evaluation_run", "P1-10", None),
 ];
 
 /// Every §8.3 CLI spelling the usage must list (engine-spec §8.3, "CLI (indicative)").
 const QUERIES: [Expected; 14] = [
-    ("query projections", "get_week_projections", "P1-10"),
-    ("query player", "get_player_projection_detail", "P1-10"),
-    ("query distribution", "get_projection_distribution", "P1-10"),
-    ("report changes", "get_projection_change_log", "P1-10"),
-    ("status --freshness", "get_data_freshness", "P1-10"),
-    ("status", "get_ingestion_status", "P1-10"),
-    ("status", "get_training_status", "P1-10"),
-    ("identity queue", "get_identity_review_queue", "P1-10"),
-    ("report scorecard", "get_model_scorecard", "P1-10"),
-    ("report benchmark", "get_benchmark_results", "P1-10"),
-    ("report data-quality", "get_data_quality_report", "P1-10"),
-    ("query ratings", "get_player_ratings", "P1-10"),
-    ("query bands", "get_confidence_bands", "P1-10"),
-    ("model status", "get_model_status", "P1-10"),
+    ("query projections", "get_week_projections", "P1-10", None),
+    (
+        "query player",
+        "get_player_projection_detail",
+        "P1-10",
+        None,
+    ),
+    (
+        "query distribution",
+        "get_projection_distribution",
+        "P1-10",
+        None,
+    ),
+    (
+        "report changes",
+        "get_projection_change_log",
+        "P1-10",
+        Some("P2-07"),
+    ),
+    ("status --freshness", "get_data_freshness", "P1-10", None),
+    ("status", "get_ingestion_status", "P1-10", None),
+    ("status", "get_training_status", "P1-10", None),
+    ("identity queue", "get_identity_review_queue", "P1-10", None),
+    (
+        "report scorecard",
+        "get_model_scorecard",
+        "P1-10",
+        Some("P2-06"),
+    ),
+    (
+        "report benchmark",
+        "get_benchmark_results",
+        "P1-10",
+        Some("P2-06"),
+    ),
+    (
+        "report data-quality",
+        "get_data_quality_report",
+        "P1-10",
+        Some("P2-01"),
+    ),
+    ("query ratings", "get_player_ratings", "P1-10", None),
+    ("query bands", "get_confidence_bands", "P1-10", None),
+    ("model status", "get_model_status", "P1-10", None),
 ];
 
 /// The usage tag of one entry, as `args::availability_tag` renders it.
-fn tag(delivered_by: &str) -> String {
-    format!("available from {delivered_by}")
+fn tag(delivered_by: &str, content_by: Option<&str>) -> String {
+    match content_by {
+        None => format!("available from {delivered_by}"),
+        Some(content) => {
+            format!("available from {delivered_by}; content {content} (decision request)")
+        }
+    }
+}
+
+/// The unavailable message of one entry, as `args::unavailable_message` renders it.
+fn unavailable(spelling: &str, delivered_by: &str, content_by: Option<&str>) -> String {
+    let mut message = format!(
+        "grid {spelling}: not available in this engine version: delivered by work package \
+         {delivered_by}"
+    );
+    if let Some(content) = content_by {
+        message.push_str(&format!(
+            "; content by work package {content} (decision request)"
+        ));
+    }
+    message.push('\n');
+    message
 }
 
 fn grid(args: &[&str]) -> Output {
@@ -72,12 +139,20 @@ fn stderr(output: &Output) -> String {
 }
 
 #[test]
-fn version_prints_grid_and_the_package_version() {
+fn version_prints_grid_the_package_version_and_the_git_sha() {
+    // engine-spec §8.9 build version: crate version plus git SHA. The SHA comes from the
+    // compile-time `GRID_GIT_SHA`, which the release build (P1-11) sets; a build without it says
+    // so. Both forms are accepted here.
     let output = grid(&["--version"]);
     assert_eq!(output.status.code(), Some(0));
-    assert_eq!(
-        stdout(&output),
-        format!("grid {}\n", env!("CARGO_PKG_VERSION"))
+    let out = stdout(&output);
+    let recorded = out
+        .strip_prefix(&format!("grid {} (", env!("CARGO_PKG_VERSION")))
+        .and_then(|rest| rest.strip_suffix(")\n"))
+        .unwrap_or_else(|| panic!("unexpected version line {out:?}"));
+    assert!(
+        recorded == "git sha unrecorded" || (!recorded.is_empty() && !recorded.contains(' ')),
+        "{out:?}"
     );
     assert!(stderr(&output).is_empty());
 }
@@ -87,8 +162,8 @@ fn help_lists_every_command_and_query_spelling() {
     let help = grid(&["--help"]);
     assert_eq!(help.status.code(), Some(0));
     let text = stdout(&help);
-    for (spelling, library, delivered_by) in COMMANDS.iter().chain(QUERIES.iter()) {
-        let expected_tag = format!("[{library}; {}]", tag(delivered_by));
+    for (spelling, library, delivered_by, content_by) in COMMANDS.iter().chain(QUERIES.iter()) {
+        let expected_tag = format!("[{library}; {}]", tag(delivered_by, *content_by));
         assert!(
             text.lines().any(|line| {
                 line.trim_start().starts_with(spelling) && line.contains(&expected_tag)
@@ -109,6 +184,14 @@ fn help_lists_every_command_and_query_spelling() {
     assert!(
         !text.contains("not available in this engine version]"),
         "no entry is left without a delivering package:\n{text}"
+    );
+    // The five Phase 2 outputs name their content package with the decision-request label.
+    assert_eq!(
+        text.lines()
+            .filter(|line| line.contains(" (decision request)]"))
+            .count(),
+        5,
+        "five entries carry the decision-request label:\n{text}"
     );
     // One footer line keeps the engine-spec §10.2.6 nuance: the content behind some outputs
     // arrives with the package that owns it. The usage is plain ASCII (no section sign).
@@ -173,51 +256,87 @@ fn exit_codes_prints_the_terminal_state_table() {
 
 #[test]
 fn a_recognised_but_unavailable_subcommand_exits_with_the_usage_code() {
-    // (arguments, the spelling reported, the delivering package named).
-    let cases: [(Vec<&str>, &str, &str); 13] = [
-        (vec!["update"], "update", "P1-10"),
-        (vec!["update", "--offline"], "update", "P1-10"),
+    // (arguments, the spelling reported, the delivering package named, the content package).
+    let cases: [(Vec<&str>, &str, &str, Option<&str>); 15] = [
+        (vec!["update"], "update", "P1-10", None),
+        (vec!["update", "--offline"], "update", "P1-10", None),
         (
             vec![
                 "project", "--season", "2023", "--week", "5", "--lock", "sun",
             ],
             "project",
             "P1-10",
+            None,
         ),
         (
             vec!["scoring", "set-default", "ppr"],
             "scoring add|set-default",
             "P1-10",
+            None,
         ),
-        (vec!["model", "promote", "42"], "model promote", "P1-10"),
-        (vec!["query", "projections"], "query projections", "P1-10"),
-        (vec!["status", "--freshness"], "status --freshness", "P1-10"),
+        (
+            vec!["model", "promote", "42"],
+            "model promote",
+            "P1-10",
+            None,
+        ),
+        (
+            vec!["query", "projections"],
+            "query projections",
+            "P1-10",
+            None,
+        ),
+        (
+            vec!["status", "--freshness"],
+            "status --freshness",
+            "P1-10",
+            None,
+        ),
         // A bare `status` is reported under its own spelling, not the `--freshness` entry.
-        (vec!["status"], "status", "P1-10"),
+        (vec!["status"], "status", "P1-10", None),
         (
             vec!["report", "data-quality"],
             "report data-quality",
             "P1-10",
+            Some("P2-01"),
         ),
-        (vec!["report", "changes"], "report changes", "P1-10"),
-        (vec!["identity", "queue"], "identity queue", "P1-10"),
+        (
+            vec!["report", "changes"],
+            "report changes",
+            "P1-10",
+            Some("P2-07"),
+        ),
+        (
+            vec!["report", "scorecard"],
+            "report scorecard",
+            "P1-10",
+            Some("P2-06"),
+        ),
+        (
+            vec!["report", "benchmark"],
+            "report benchmark",
+            "P1-10",
+            Some("P2-06"),
+        ),
+        (vec!["identity", "queue"], "identity queue", "P1-10", None),
         (
             vec!["availability", "import", "x.csv"],
             "availability import",
             "P1-10",
+            Some("P2-02"),
         ),
-        (vec!["backtest"], "backtest", "P1-10"),
+        (vec!["backtest"], "backtest", "P1-10", None),
     ];
-    for (args, spelling, delivered_by) in cases {
+    for (args, spelling, delivered_by, content_by) in cases {
         let output = grid(&args);
         assert_eq!(output.status.code(), Some(EXIT_USAGE), "{args:?}");
         assert!(stdout(&output).is_empty(), "{args:?}");
         let err = stderr(&output);
-        let expected = format!(
-            "grid {spelling}: not available in this engine version: delivered by work package \
-             {delivered_by}\n"
+        assert_eq!(
+            err,
+            unavailable(spelling, delivered_by, content_by),
+            "{args:?}"
         );
-        assert_eq!(err, expected, "{args:?}");
     }
 }
 

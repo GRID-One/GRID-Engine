@@ -1,6 +1,7 @@
 //! The player-week projection record and its groups (engine-output-contract §2, §3; engine-spec
 //! §5.1–§5.5).
 
+use std::collections::BTreeSet;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -21,7 +22,12 @@ use crate::time::UtcInstant;
 pub struct ProjectionKey {
     /// The target season.
     pub season: Season,
-    /// The target week (1–18 are produced; never 0).
+    /// The target week (1–18 are produced; never 0: KI-A4) when `horizon = Week`.
+    ///
+    /// For `horizon = RestOfSeason | Preseason` the meaning of `week` is **open**: no document
+    /// states it (engine-output-contract §12 "The key of a derived-horizon record"). P1-08, which
+    /// produces the derived sums, fixes it; P1-01 assigns it no meaning, and no producer of a
+    /// derived-horizon record exists before P1-08.
     pub week: Week,
     /// True for week 18, which is evaluated separately (engine-spec §2.2).
     pub is_week_18: bool,
@@ -427,7 +433,10 @@ pub struct StatVectorSummary {
 }
 
 impl StatVectorSummary {
-    /// The summary of one component, if present.
+    /// The summary of one component, if present. On a summary inside a record that passed
+    /// [`PlayerWeekProjection::validate`] a component appears at most once
+    /// (`DuplicateComponent`), so the answer is unambiguous; on an unvalidated summary that
+    /// repeats a component, the first entry in `components` is returned.
     pub fn get(&self, component: StatComponent) -> Option<&StatDistribution> {
         self.components
             .iter()
@@ -670,6 +679,11 @@ impl PlayerWeekProjection {
     ///
     /// Checked on the record:
     ///
+    /// - every component in the `conditional` and `unconditional` blocks, and in the
+    ///   explanation's `role_opportunity`, is part of the target vector of `key.position`
+    ///   ([`StatComponent::applies_to`]; engine-output-contract §3.2 table; DR-D7)
+    ///   (`ComponentNotForPosition`), and appears at most once in its block
+    ///   (`DuplicateComponent`; §3.5);
     /// - every probability and every share is in `[0, 1]` (`ProbabilityOutOfRange`; a share
     ///   above 1 is `ShareOverflow`, since the team sum then exceeds 1);
     /// - quantiles are monotone in every [`StatDistribution`] and [`FantasyDistribution`]
@@ -702,12 +716,18 @@ impl PlayerWeekProjection {
     /// `[0, 1]` ranges that engine-spec §5.5 names (probabilities and shares) are checked.
     pub fn validate(&self) -> Result<(), OutputInvariantError> {
         self.validate_availability()?;
+        let position = self.key.position;
         for (block_name, block) in [
             ("conditional", &self.conditional),
             ("unconditional", &self.unconditional),
         ] {
-            Self::validate_block(block_name, block)?;
+            Self::validate_block(block_name, block, position)?;
         }
+        check_component_set(
+            "explanation.role_opportunity",
+            &self.explanation.role_opportunity,
+            position,
+        )?;
         for (i, dist) in self.fantasy.iter().enumerate() {
             dist.validate(&format!("fantasy[{i}]"))?;
         }
@@ -744,7 +764,12 @@ impl PlayerWeekProjection {
         check_probability(a.p_limited_role, "availability.p_limited_role")
     }
 
-    fn validate_block(name: &str, block: &StatVectorSummary) -> Result<(), OutputInvariantError> {
+    fn validate_block(
+        name: &str,
+        block: &StatVectorSummary,
+        position: Position,
+    ) -> Result<(), OutputInvariantError> {
+        check_component_set(name, &block.components, position)?;
         for c in &block.components {
             c.validate(&format!("{name}.{}", c.component))?;
         }
@@ -789,6 +814,38 @@ impl PlayerWeekProjection {
         }
         Ok(())
     }
+}
+
+/// Fails with `ComponentNotForPosition` on the first entry of `components` that is not part of
+/// `position`'s target vector (engine-output-contract §3.2 table; DR-D7), and with
+/// `DuplicateComponent` on the first component that appears a second time (§3.5). The field is
+/// named `{path}.{component}`.
+fn check_component_set(
+    path: &str,
+    components: &[ComponentSummary],
+    position: Position,
+) -> Result<(), OutputInvariantError> {
+    let mut seen = BTreeSet::new();
+    for c in components {
+        if !c.component.applies_to(position) {
+            return Err(OutputInvariantError::new(
+                OutputInvariant::ComponentNotForPosition,
+                format!("{path}.{}", c.component),
+                format!(
+                    "{} is not part of the {position} target vector",
+                    c.component
+                ),
+            ));
+        }
+        if !seen.insert(c.component) {
+            return Err(OutputInvariantError::new(
+                OutputInvariant::DuplicateComponent,
+                format!("{path}.{}", c.component),
+                format!("{} appears more than once", c.component),
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Fails with `NonFinite` on the first NaN or infinity among `values`.
@@ -1134,8 +1191,9 @@ mod tests {
     /// by serde's rule: an underscore before every uppercase letter after the first, then
     /// lowercase. This mirrors that rule over the `Debug` name (which is the variant name for a
     /// fieldless enum) so the serialized spelling and [`StatComponent::contract_name`] are shown
-    /// to agree for every variant; the serialized form itself is checked where `serde_json` lives
-    /// (`grid-pipeline`).
+    /// to agree for every variant. The serialized text itself is asserted, with `serde_json`
+    /// literal values, by
+    /// `crates/pipeline/tests/serialized_spelling.rs::every_stat_component_serializes_to_its_contract_name`.
     #[test]
     fn stat_component_serde_name_equals_contract_name() {
         fn snake_case(variant: &str) -> String {
@@ -1266,10 +1324,100 @@ mod tests {
         assert_eq!(err.field, "explanation.grid.form");
     }
 
+    /// A WR record: the QB fixture with the WR target vector (engine-output-contract §3.2) and no
+    /// start probability.
+    fn wr_projection() -> PlayerWeekProjection {
+        let mut p = qb_projection();
+        p.key.position = Position::Wr;
+        p.availability.p_start = None;
+        for block in [&mut p.conditional, &mut p.unconditional] {
+            block
+                .components
+                .retain(|c| c.component.applies_to(Position::Wr));
+        }
+        p
+    }
+
+    fn snap_share(d: StatDistribution) -> ComponentSummary {
+        ComponentSummary {
+            component: StatComponent::OffensiveSnapShare,
+            distribution: d,
+        }
+    }
+
+    #[test]
+    fn component_not_for_position_is_rejected() {
+        // DR-D7: a QB has no offensive snap share. Even a well-formed share is rejected.
+        let mut p = qb_projection();
+        p.conditional.components.push(snap_share(StatDistribution {
+            mean: 0.9,
+            sd: 0.05,
+            q10: 0.8,
+            q25: 0.85,
+            q50: 0.9,
+            q75: 0.95,
+            q90: 1.0,
+        }));
+        let err = p.validate().unwrap_err();
+        assert_eq!(err.invariant, OutputInvariant::ComponentNotForPosition);
+        assert_eq!(err.field, "conditional.offensive_snap_share");
+        // DR-D7: a WR has no start probability, in either block.
+        let mut p = wr_projection();
+        p.unconditional.components.push(ComponentSummary {
+            component: StatComponent::StartProbability,
+            distribution: StatDistribution {
+                mean: 0.5,
+                sd: 0.0,
+                q10: 0.5,
+                q25: 0.5,
+                q50: 0.5,
+                q75: 0.5,
+                q90: 0.5,
+            },
+        });
+        let err = p.validate().unwrap_err();
+        assert_eq!(err.invariant, OutputInvariant::ComponentNotForPosition);
+        assert_eq!(err.field, "unconditional.start_probability");
+        // The explanation's role opportunity follows the same table.
+        let mut p = qb_projection();
+        p.explanation.role_opportunity.push(snap_share(dist(0.5)));
+        let err = p.validate().unwrap_err();
+        assert_eq!(err.invariant, OutputInvariant::ComponentNotForPosition);
+        assert_eq!(
+            err.field,
+            "explanation.role_opportunity.offensive_snap_share"
+        );
+        // The WR fixture itself is valid.
+        assert_eq!(wr_projection().validate(), Ok(()));
+    }
+
+    #[test]
+    fn duplicate_component_is_rejected() {
+        let mut p = qb_projection();
+        p.unconditional.components.push(ComponentSummary {
+            component: StatComponent::PassingYards,
+            distribution: dist(240.0),
+        });
+        let err = p.validate().unwrap_err();
+        assert_eq!(err.invariant, OutputInvariant::DuplicateComponent);
+        assert_eq!(err.field, "unconditional.passing_yards");
+        // The same component once per block is not a duplicate.
+        assert_eq!(qb_projection().validate(), Ok(()));
+        // A repeat in the role opportunity is a duplicate too.
+        let mut p = wr_projection();
+        p.explanation.role_opportunity = vec![snap_share(dist(0.5)), snap_share(dist(0.6))];
+        let err = p.validate().unwrap_err();
+        assert_eq!(err.invariant, OutputInvariant::DuplicateComponent);
+        assert_eq!(
+            err.field,
+            "explanation.role_opportunity.offensive_snap_share"
+        );
+    }
+
     #[test]
     fn share_overflow_is_rejected() {
-        let mut p = qb_projection();
-        // A share component on a record, with a value above 1.
+        let mut p = wr_projection();
+        // A share component on a WR record, with a value above 1.
         let mut d = dist(0.0);
         d.mean = 0.9;
         d.q10 = 0.8;
@@ -1277,10 +1425,7 @@ mod tests {
         d.q50 = 0.9;
         d.q75 = 1.0;
         d.q90 = 1.05;
-        p.conditional.components.push(ComponentSummary {
-            component: StatComponent::OffensiveSnapShare,
-            distribution: d,
-        });
+        p.conditional.components.push(snap_share(d));
         let err = p.validate().unwrap_err();
         assert_eq!(err.invariant, OutputInvariant::ShareOverflow);
         assert_eq!(err.field, "conditional.offensive_snap_share.q90");
@@ -1307,8 +1452,7 @@ mod tests {
 
     #[test]
     fn receptions_exceeding_targets_is_rejected() {
-        let mut p = qb_projection();
-        p.key.position = Position::Wr;
+        let mut p = wr_projection();
         p.conditional.components.push(ComponentSummary {
             component: StatComponent::Targets,
             distribution: dist(8.0),

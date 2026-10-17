@@ -15,9 +15,9 @@ use std::fmt;
 use std::path::PathBuf;
 
 use grid_domain::{
-    EngineError, EvaluationRunId, IngestionRunId, JobId, LockKind, ModelFamily, ModelVersionId,
-    PlayerKey, PredictionVersionId, ReviewId, ScoringProfileRef, Season, SettingVersion,
-    SnapshotId, StatComponent, Week,
+    AsOfMode, EngineError, EvaluationRunId, IngestionRunId, JobId, LockKind, ModelFamily,
+    ModelVersionId, PlayerKey, PredictionVersionId, ReviewId, ScoringProfileRef, Season,
+    SettingVersion, SnapshotId, StatComponent, Week,
 };
 use serde::{Deserialize, Serialize};
 
@@ -91,6 +91,13 @@ pub struct EvaluationSpec {
     /// The pre-registered metric definitions in force (engine-spec §7.7; a DR-D8 versioned
     /// setting).
     pub metrics_version: SettingVersion,
+    /// The as-of mode every origin runs in (`evaluation-and-leakage.md` §4.1; engine-spec §4.5).
+    /// `Backtest` for an evaluation that may feed a gate or a promotion. `Research` relaxes the
+    /// rule the run names, and every output of such a run (scorecard, benchmark results,
+    /// validation report reference) carries `research_only = true` and MUST NOT feed a gate, a
+    /// promotion or a published claim. `Production` is the live projection mode; whether an
+    /// evaluation run may request it is stated by no document (open; raised in the P1-01 report).
+    pub mode: AsOfMode,
 }
 
 /// Command 1: `trigger_daily_update()` — `grid update [--offline]`. Never null.

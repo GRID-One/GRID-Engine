@@ -84,6 +84,7 @@ Requirements tagged *(proposed — DR-xx)* depend on an open owner decision in
 | `scoring_profile` | `{ id, version }` | §3.6 |
 | `seed`, `n_draws` | `u64`, `u32` | The Layer-F simulation seed and draw count. Randomness is seeded and recorded (superseded alpha-spec §6.6 rule 5) |
 | `computed_at` | `UtcInstant` | Wall-clock time of computation. It is metadata, not an input |
+| `research` | `{ research_only: bool, relaxed_rule: string? }` | Set on every record a `Research`-mode run produces: `research_only = true` and the relaxed rule named (`docs/05-model-specs/evaluation-and-leakage.md` §4.1). Such a record MUST NOT feed a gate, a promotion or a published claim. `research_only = false` and `relaxed_rule` null on every other record. Carried by the lineage group, the team-game record (§5), the change-log record (§6) and the run-level scorecard and benchmark reports (§7). Added by P1-01 |
 
 A source lineage record is kept for every published projection: which source snapshots, with
 which publication timestamps, fed it (engine-spec §4.5; superseded alpha-spec §4.1.1). It is a
@@ -200,6 +201,8 @@ fantasy_points = scoring_weights · projected_stat_vector + scoring_offset
 | `stale_sources` | list of source names | Empty when `Fresh` |
 | `oldest_source_timestamp` | `UtcInstant` | Oldest publication timestamp among the critical sources |
 | `experimental` | bool | True until the Phase-1 exit gate passes (claim discipline, engine-spec §3; superseded alpha-spec §3.2) |
+| `manual_data` | bool | True when a timestamped manual availability override applied to this row: the manual-data flag of engine-spec §5.5 ("Freshness and flags") and §10.3. Added by P1-01 |
+| `missing_current_week_context` | bool | True when current-week context the row needed was missing: the third flag of engine-spec §5.5 ("Freshness and flags"). Added by P1-01 |
 
 A source that is unavailable MUST NOT silently inherit yesterday's healthy status
 (superseded alpha-spec §10.3).
@@ -216,6 +219,8 @@ prior production projection stays in force:
 - team-role shares sum to at most 1 (share overflow);
 - the standard deviation is non-negative (engine-spec §5, "Invariants"; added by P1-01 so that this
   section states every invariant `OutputInvariant` checks);
+- every stat-component summary is a component of the record position's §3.2 vector, and each
+  component appears at most once per block (DR-D7; added by P1-01, work-package Amendments row 18);
 - no NaN or infinity anywhere.
 
 ## 4. Explanation record (alpha-spec §6.5, superseded)
@@ -404,9 +409,10 @@ with `JobSummary`, `AvailabilityReportRow`, `IdentityReviewItem`, `ScorecardSlic
 RookieLowEvidence }` (closed), `ScorecardRow`, `ModelScorecard`, `ConfidenceInterval`,
 `BenchmarkResultRow` and `BenchmarkResults` (§7).
 
-**Typed errors and status** (`grid_domain::error`, `grid_domain::status`): `OutputInvariant` (eight
-variants, one per §3.9 bullet, with the two per-draw rules as two variants; `NegativeSd` is the
-sd ≥ 0 rule that §3.9 carries from engine-spec §5) and `OutputInvariantError { invariant, field, detail }`, returned by the
+**Typed errors and status** (`grid_domain::error`, `grid_domain::status`): `OutputInvariant` (ten
+variants, one per §3.9 rule, with the two per-draw rules as two variants; `NegativeSd` is the
+sd ≥ 0 rule that §3.9 carries from engine-spec §5; `ComponentNotForPosition` and
+`DuplicateComponent` are the component-set rule) and `OutputInvariantError { invariant, field, detail }`, returned by the
 `validate()` methods; `EngineErrorCode` (closed, 17 codes) and `EngineError { code, message }`;
 `TerminalState` (14 values) with `exit_code()` (§13), `JobStatus`, `StageId`, `RunOutcome` and
 `TrainingStatus` (engine-spec §8.4). The `validate()` methods check the §3.9 invariants that a
@@ -464,6 +470,10 @@ checked on draw matrices by `grid-simulation` (P1-08).
 - **DR-D14.** The name of the per-record substitution count. When this contract adds the
   `layer1_credit` record, the record carries, as an audit field, the number of its plays whose
   opponent feature used the counted substitute (`layer1-credit.md` §3.2, §4.3).
+- **`oldest_source_timestamp` with no source** (§3.8). The field is non-null, but a row whose `freshness` is `Missing` may have no critical source with a timestamp. Whether the field becomes nullable (a MAJOR change once a producer exists) or `Missing` rows always name the source whose timestamp is missing is open, raised by P1-01; no producer exists until P1-08.
+- **The key of a derived-horizon record** (§2, §3.1). For `horizon = RestOfSeason | Preseason`, the meaning of `week`, `opponent`, `game_id`, `is_home` and `is_week_18` is not stated; P1-08, which produces the derived sums, fixes the whole key.
+- **Serialized spellings not stated by any document** (raised by P1-01). The status enums serialize as their Rust variant names (`"NoNewData"`, `"Succeeded"`), while engine-spec §8.6.4 and §8.10 spell the states `NO_NEW_DATA` and `SUCCEEDED`; `PlayerKey` and `TeamKey` serialize externally tagged (`{"Gsis": "00-…"}`), while §2 describes `player_id` as the `gsis_id`. `crates/pipeline/tests/serialized_spelling.rs` pins the current forms, so a change shows as a reviewed contract change; the owner fixes the forms before the first producer (P1-08) or export (P1-10).
+- **Research runs and the benchmark query** (raised by P1-01). `BenchmarkResults` carries `research` (§2), but query 10 (`get_benchmark_results`) returns pages of `BenchmarkResultRow`, so a page can mix research and non-research runs. Whether the row gains `research`, the query returns one `BenchmarkResults` per evaluation run, or research rows are excluded by default is a decision request (evaluation-and-leakage §4.1), before P2-06 implements the query.
 - **DR-D17, DR-D32.** The keys of the `prior` field's source label (window, feeder or population)
   and build label (`prior_pre` or `prior_in`) (§4.2), fixed by the contract version that adds them
   (§9).

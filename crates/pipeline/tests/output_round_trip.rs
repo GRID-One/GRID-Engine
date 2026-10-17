@@ -17,7 +17,7 @@
 //! `json_round_trip_preserves_computed_f64_bit_for_bit` on computed values.
 
 use grid_domain::{
-    AvailabilityBlock, AvailabilityReportRow, AvailabilitySource, BenchmarkResultRow,
+    AsOfMode, AvailabilityBlock, AvailabilityReportRow, AvailabilitySource, BenchmarkResultRow,
     BenchmarkResults, ChangeAttribution, ClaimLabel, ComponentSummary, ConfidenceInterval,
     ContractVersion, DataQualityReport, DataVersion, DrawsRef, Driver, DriverUnits, EngineError,
     EngineErrorCode, EngineVersion, EnvironmentSummary, EvaluationRunId, ExceedanceProbability,
@@ -487,6 +487,7 @@ fn model_scorecard() -> ModelScorecard {
                 interval_coverage: Some(0.75),
             },
         ],
+        research: ResearchFlag::none(),
     }
 }
 
@@ -504,6 +505,7 @@ fn benchmark_results() -> BenchmarkResults {
             },
             n_player_weeks: 1_812,
         }],
+        research: ResearchFlag::relaxed("publication-lag: in-season participation admitted"),
     }
 }
 
@@ -1077,6 +1079,7 @@ fn model_status() -> ModelStatus {
                     evaluation_run_id: EvaluationRunId(4),
                     model_version_id: ModelVersionId(42),
                     completed_at: at(1_696_100_000),
+                    research: ResearchFlag::none(),
                 }),
             },
             ModelFamilyStatus {
@@ -1367,6 +1370,7 @@ fn command_requests_and_receipt_round_trip() {
                 lock_kind: LockKind::Operational,
                 scoring_profile: profile(),
                 metrics_version: SettingVersion(1),
+                mode: AsOfMode::Backtest,
             },
         },
     );

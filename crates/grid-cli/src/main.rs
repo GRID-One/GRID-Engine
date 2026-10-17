@@ -6,12 +6,15 @@
 //! ([`exit_code`]). It holds no business logic and depends on nothing but the orchestration crate
 //! and `grid-domain`.
 //!
-//! P1-01 delivers the skeleton: `--version`, `--help`, `exit-codes`, and the recognition of every
-//! §8.2 and §8.3 spelling, each of which exits with the usage code until the package that
-//! delivers it does: P1-10 for every entry (engine-spec §8.1 target table and §8.2; the
-//! `delivered_by` field in [`args`] records the ruling). The usage footer records that the
-//! content behind the Phase 2 outputs arrives with the package that owns it (§9.2.7, §10.2.6).
-//! No subcommand computes anything.
+//! P1-01 delivers the skeleton: `--version` (crate version plus the compile-time git SHA, or
+//! `(git sha unrecorded)`; engine-spec §8.9), `--help`, `exit-codes`, and the recognition of
+//! every §8.2 and §8.3 spelling, each of which exits with the usage code until the package that
+//! delivers it does: P1-10 for every entry (engine-spec §8.1 target table and §8.2). For the five
+//! entries that adapt a Phase 2 output, §10.2.6 names a different package for the content; that
+//! conflict is an open owner decision, and the usage and the unavailable message show both
+//! packages with the label "decision request" (the `content_by` field in [`args`]). The usage
+//! footer records that the content behind the Phase 2 outputs arrives with the package that owns
+//! it (§9.2.7, §10.2.6). No subcommand computes anything.
 
 #![forbid(unsafe_code)]
 
@@ -112,7 +115,16 @@ mod tests {
     fn version_help_and_errors_go_to_the_right_stream() {
         let (outcome, out, err) = invoke(&["--version"]);
         assert_eq!(outcome, Outcome::Success);
-        assert_eq!(out, format!("grid {}\n", env!("CARGO_PKG_VERSION")));
+        assert_eq!(out, format!("{}\n", args::version_line()));
+        let version = env!("CARGO_PKG_VERSION");
+        let recorded = out
+            .strip_prefix(&format!("grid {version} ("))
+            .and_then(|rest| rest.strip_suffix(")\n"))
+            .unwrap_or_else(|| panic!("unexpected version line {out:?}"));
+        assert!(
+            recorded == "git sha unrecorded" || (!recorded.is_empty() && !recorded.contains(' ')),
+            "{out:?}"
+        );
         assert!(err.is_empty());
 
         let (outcome, out, _) = invoke(&[]);

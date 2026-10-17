@@ -60,7 +60,11 @@ impl EnvironmentSummary {
 /// (`Passing`, `Rushing`, `Receiving`, or the label of any other kind) and parsed back
 /// case-sensitively, so a label this version does not name, such as a defensive or special-teams
 /// kind added later, is kept verbatim as `Other(label)` instead of being rejected.
-/// `Other("Passing")` cannot exist: the conversion normalizes it. Never null.
+///
+/// A reader never produces `Other` with a known label: deserialization (`From<String>`) maps a
+/// known label to its variant. `Other("Passing")` can still be built by hand; it serializes to the
+/// same text `"Passing"` as `Passing`, and therefore deserializes to `Passing`. Equality after a
+/// serialization round trip holds only for values a reader produced. Never null.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "String", into = "String")]
 pub enum TouchdownType {
@@ -269,6 +273,23 @@ mod tests {
             TouchdownType::from("passing"),
             TouchdownType::Other("passing".into())
         );
+    }
+
+    #[test]
+    fn a_hand_built_other_with_a_known_label_reads_back_as_the_known_variant() {
+        // The serde form goes through `Into<String>` then `From<String>`, so this is the round
+        // trip a writer and a reader perform.
+        let hand_built = TouchdownType::Other("Passing".into());
+        let text = String::from(hand_built.clone());
+        assert_eq!(text, String::from(TouchdownType::Passing));
+        let read_back = TouchdownType::from(text);
+        assert_eq!(read_back, TouchdownType::Passing);
+        assert_ne!(read_back, hand_built);
+        // A value a reader produced survives the round trip unchanged.
+        for label in ["Passing", "Rushing", "Receiving", "Defensive"] {
+            let read = TouchdownType::from(label);
+            assert_eq!(TouchdownType::from(String::from(read.clone())), read);
+        }
     }
 
     #[test]

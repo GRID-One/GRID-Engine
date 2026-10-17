@@ -142,10 +142,18 @@ impl std::error::Error for EngineError {}
 /// A violation of the `grid.plays` contract (plays-contract §7, §9, §11, §12), raised at frame
 /// construction or validation. Nothing is coerced to a default.
 ///
-/// Exactly the sixteen variants of plays-contract §11. Each payload names the offending key,
-/// field or drive so that ingestion can quarantine the row and the data-quality report can list
-/// it (DR-B6). **Closed** enum.
+/// P1-01 defines the sixteen variants plays-contract §11 lists. Each payload names the offending
+/// key, field or drive so that ingestion can quarantine the row and the data-quality report can
+/// list it (DR-B6).
+///
+/// **Open** enum (`#[non_exhaustive]`): plays-contract §11 never declares its list closed, and
+/// the model specifications name further variants that the packages implementing them add
+/// (`evaluation-and-leakage.md` §5.4 `MissingSeasonKey`, added by P1-05; `value-model.md` §4.6
+/// `InvalidLabel`, `NonFinite`, `DriveStructure`, `SentinelOnContinuingRow`;
+/// `rapm-attribution.md` §5.4 `NonFinitePrior`; `projection-stack.md` §5.3 `MissingColumn`,
+/// `UnknownPosition`). A `match` outside this crate therefore needs a wildcard arm.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum ContractError {
     /// The frame's contract MAJOR is not implemented by this reader (plays-contract §12). The
     /// parser is never "made flexible".
@@ -155,8 +163,10 @@ pub enum ContractError {
         /// The version this reader implements.
         supported: ContractVersion,
     },
-    /// A required field or column is absent. A plays frame without a season is this error, never
-    /// a week-only fallback (`evaluation-and-leakage.md` §4.1).
+    /// A required field or column is absent. A season-less plays frame cannot be built (every
+    /// [`PlayRecord`](crate::plays::PlayRecord) requires a `Season`); the frame reader that
+    /// meets a source without a season column raises `MissingSeasonKey`, which
+    /// `evaluation-and-leakage.md` §5.4 names and P1-05 adds, never a week-only fallback.
     MissingField {
         /// The missing field, by its contract name.
         field: String,
@@ -368,8 +378,10 @@ impl fmt::Display for LeakageError {
 
 impl std::error::Error for LeakageError {}
 
-/// The record invariants of engine-output-contract §3.9. A record that violates one is **not
-/// emitted**; the run fails and the prior production projection stays in force. **Closed** enum.
+/// The record invariants of engine-output-contract §3.9, plus the two shape invariants of the
+/// §3.2 component table and §3.5 (`ComponentNotForPosition`, `DuplicateComponent`). A record
+/// that violates one is **not emitted**; the run fails and the prior production projection stays
+/// in force. **Closed** enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum OutputInvariant {
     /// A probability (or a share, which lies in the same range) is outside `[0, 1]`.
@@ -389,6 +401,14 @@ pub enum OutputInvariant {
     /// An inactive draw is not the zero vector (per draw; at record level, a player with
     /// `p_active = 0` whose unconditional summaries are not all zero).
     InactiveDrawNotZero,
+    /// A stat-vector summary carries a component that is not part of the record's position's
+    /// target vector (engine-output-contract §3.2 table, §3.5 "for each §3.2 component";
+    /// DR-D7: QB has no snap share and no receiving components, RB/WR/TE have no start
+    /// probability).
+    ComponentNotForPosition,
+    /// A stat-vector summary carries the same component twice (engine-output-contract §3.5: one
+    /// summary per component and block).
+    DuplicateComponent,
 }
 
 impl fmt::Display for OutputInvariant {
@@ -402,6 +422,8 @@ impl fmt::Display for OutputInvariant {
             OutputInvariant::CompletionsExceedAttempts => "completions exceed attempts",
             OutputInvariant::ReceptionsExceedTargets => "receptions exceed targets",
             OutputInvariant::InactiveDrawNotZero => "inactive draw not zero",
+            OutputInvariant::ComponentNotForPosition => "component not for position",
+            OutputInvariant::DuplicateComponent => "duplicate component",
         })
     }
 }

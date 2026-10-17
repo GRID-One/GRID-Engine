@@ -42,9 +42,9 @@ use grid_domain::{
     EvaluationRunId, FantasyDistribution, FeatureSchemaVersion, FreshnessFlags, Horizon,
     IdentityReviewItem, IngestionRunId, JobSummary, ModelFamily, ModelScorecard, ModelVersionId,
     OffseasonRapm, PlayerKey, PlayerWeekProjection, Position, PredictionVersionId, PriorBlock,
-    ProjectionChange, ProjectionKey, RegimeFlags, ScoringProfileRef, Season, Slot, SourceFreshness,
-    StatComponent, StatDistribution, TeamKey, TerminalState, TrainingRunId, TrainingStatus,
-    UtcInstant, Week,
+    ProjectionChange, ProjectionKey, RegimeFlags, ResearchFlag, ScoringProfileRef, Season, Slot,
+    SourceFreshness, StatComponent, StatDistribution, TeamKey, TerminalState, TrainingRunId,
+    TrainingStatus, UtcInstant, Week,
 };
 use serde::{Deserialize, Serialize};
 
@@ -687,7 +687,12 @@ impl fmt::Display for ModelState {
 /// A reference to the validation report of one model version (engine-spec §8.3 query 14 "last
 /// validation report"; §8.8 "Validation metrics must be persisted with each model"). The report's
 /// rows are read through [`EngineQueries::get_model_scorecard`]. Never null when present.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+///
+/// The report is a run-level evaluation output, so the reference carries the run's research-only
+/// marker (`evaluation-and-leakage.md` §4.1; engine-output-contract §2 `research`): a reader that
+/// gates or promotes on "the last validation report" sees from the reference alone that a
+/// `Research`-mode report MUST NOT feed it.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ValidationReportRef {
     /// The evaluation run that produced the report.
     pub evaluation_run_id: EvaluationRunId,
@@ -695,6 +700,9 @@ pub struct ValidationReportRef {
     pub model_version_id: ModelVersionId,
     /// When the report was completed.
     pub completed_at: UtcInstant,
+    /// The research-only marker of the evaluation run: the same flag as the referenced
+    /// [`ModelScorecard`]'s `research`. Never null.
+    pub research: ResearchFlag,
 }
 
 /// One model version's summary (engine-spec §8.3 query 14). Never null.

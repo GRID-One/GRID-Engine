@@ -488,7 +488,9 @@ pub enum ParticipantPosition { Qb, Rb, Wr, Te, Fb, Def, Cb, Other(String) } // o
 pub struct PlayerRecord { pub player_id: PlayerKey, pub team: TeamKey, pub position: ParticipantPosition }
 pub struct PlayersFrame { pub players: Vec<PlayerRecord> }
 
-pub enum MarketUnits { DvPerPlay }                     // closed; the spread/total mapping is DR-D10 (open)
+pub enum MarketUnits { DvPerPlay, SyntheticAbility }   // closed; SyntheticAbility = the harness market in
+                                                        // ability units (synthetic-world.md §4.10 G-5); the
+                                                        // spread/total mapping is DR-D10 (open)
 pub struct MarketQuote {
     pub season: Season, pub week: Week, pub team: TeamKey,
     pub strength: f64, pub units: MarketUnits,
@@ -501,7 +503,9 @@ pub struct CollegeRecord {
 }
 pub struct CollegeFrame { pub rows: Vec<CollegeRecord> }
 
-// grid_domain::error::ContractError: exactly sixteen variants, each naming the offending key, field or drive.
+// grid_domain::error::ContractError: #[non_exhaustive], open. P1-01 defines these sixteen, each naming the
+// offending key, field or drive; the packages implementing evaluation-and-leakage §5.4, value-model §4.6,
+// rapm-attribution and projection-stack add the variants those model specs name (work-package Amendments row 17).
 pub enum ContractError {
     UnsupportedVersion { found: ContractVersion, supported: ContractVersion },
     MissingField { field: String },
@@ -531,7 +535,7 @@ cannot reach it.
 of a drive are contiguous in file order, every non-last row is `Continue(s′)` and `s′` equals the
 following row's `state` (`InvalidValue { field: "next" }` otherwise; non-contiguity is `InvalidValue
 { field: "drive_seq" }`). Rule 4's `off_team == def_team` and rule 5's domain violations are
-`InvalidValue` naming the field, because the sixteen variants have no dedicated one. Real-data rules 3
+`InvalidValue` naming the field, because the sixteen P1-01 variants have no dedicated one. Real-data rules 3
 (ids belong to their team on the as-of roster) and 4 (participation coverage ≥ 99 %) need the as-of
 roster and the coverage policy and are **not** validated here: they are P1-03's and P1-05's. The legacy
 synthetic profile is exempt from real-data rules 1 and 2 (duplicates kept as a multiset, D-8;
