@@ -1,0 +1,214 @@
+{
+  "schema": "grid-alpha/evidence-manifest/1",
+  "work_package_id": "P0-03",
+  "commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+  "branch": "claude/pensive-fermat-fgaweh",
+  "model": "unrecorded",
+  "work_package": {
+    "id": "P0-03",
+    "file": "docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md"
+  },
+  "commit_info": {
+    "sha": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+    "branch": "claude/pensive-fermat-fgaweh",
+    "range": "origin/main...HEAD",
+    "generated_at": "2026-10-19T21:55:59Z",
+    "state": "uncommitted: 1 path(s) not yet in 83bd0e80d1578aadfa8515a0e3a032c81e94b7a2"
+  },
+  "model_and_harness": {
+    "project_alias": "unrecorded",
+    "provider_model_id": "unrecorded",
+    "harness": "claude-code-on-the-web",
+    "harness_version": "unrecorded",
+    "permission_profile": "least-privilege",
+    "retention_policy": "zero-transcript-for-protected-branches",
+    "source": "ai-toolchain.lock"
+  },
+  "environment": {
+    "os": "Linux 6.18.44-fc-v139 x86_64",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)"
+  },
+  "files_changed": [
+    ".ai/evidence/P0-03/verification-input.json",
+    ".claude/agents/adversarial-pr-reviewer.md",
+    ".claude/agents/data-contract-reviewer.md",
+    ".claude/agents/numerical-reviewer.md",
+    ".claude/agents/reference-parity-reviewer.md",
+    ".claude/agents/security-dependency-reviewer.md",
+    ".claude/skills/work-package/SKILL.md",
+    "README.md",
+    "crates/domain/src/lib.rs",
+    "crates/domain/src/output/reports.rs",
+    "crates/grid-cli/src/args.rs",
+    "crates/grid-cli/src/main.rs",
+    "crates/grid-cli/tests/cli.rs",
+    "crates/pipeline/src/lib.rs",
+    "crates/pipeline/src/queries.rs",
+    "docs/00-meta/authority-index.md",
+    "docs/00-meta/daily-log.md",
+    "docs/00-meta/dashboard.md",
+    "docs/00-meta/specs/engine-spec.md",
+    "docs/01-work-packages/README.md",
+    "docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md",
+    "docs/01-work-packages/p1-01-engine-skeleton.md",
+    "docs/02-adr/014-domain-serialization-boundary.md",
+    "docs/02-adr/README.md",
+    "docs/03-contracts/README.md",
+    "docs/03-contracts/engine-output-contract.md",
+    "docs/03-contracts/parity-fixture-contract.md",
+    "docs/03-contracts/plays-contract.md",
+    "docs/05-model-specs/rapm-attribution.md",
+    "docs/06-sessions/2026-10-19-P0-03.md",
+    "docs/06-sessions/README.md",
+    "docs/CLAUDE.md",
+    "engine-spec.md"
+  ],
+  "contracts_and_adrs_referenced": {
+    "adrs": [
+      "docs/02-adr/001-repo-bootstrap-decisions.md",
+      "docs/02-adr/002-sqlx-offline-cache.md",
+      "docs/02-adr/003-sqlx-0-9-upgrade.md",
+      "docs/02-adr/004-line-ending-policy.md",
+      "docs/02-adr/005-check-sqlx-workspace-flag.md",
+      "docs/02-adr/006-deferred-deliverables.md",
+      "docs/02-adr/007-verify-covers-guards-and-doctests.md",
+      "docs/02-adr/008-verify-scope-guard.md",
+      "docs/02-adr/009-verify-ps1-exit-codes.md",
+      "docs/02-adr/010-guard-the-shape-not-the-instance.md",
+      "docs/02-adr/011-engine-only-pivot.md",
+      "docs/02-adr/012-python-reference-oracle.md",
+      "docs/02-adr/013-feeder-target-season-level.md",
+      "docs/02-adr/014-domain-serialization-boundary.md"
+    ],
+    "contracts": [
+      "docs/03-contracts/engine-output-contract.md",
+      "docs/03-contracts/parity-fixture-contract.md",
+      "docs/03-contracts/plays-contract.md"
+    ],
+    "model_specs": [
+      "docs/05-model-specs/cross-league-priors.md",
+      "docs/05-model-specs/evaluation-and-leakage.md",
+      "docs/05-model-specs/layer1-credit.md",
+      "docs/05-model-specs/projection-stack.md",
+      "docs/05-model-specs/rapm-attribution.md",
+      "docs/05-model-specs/state-space-kalman.md",
+      "docs/05-model-specs/synthetic-world.md",
+      "docs/05-model-specs/value-model.md"
+    ]
+  },
+  "migrations_changed": [],
+  "verification": {
+    "commands": [
+      {
+        "command": "just verify",
+        "exit_status": 0,
+        "canonical": true,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "environment": "Linux 6.18.44-fc-v139 x86_64 (Claude Code on the web container); rustc 1.99.1",
+        "summary": "All 8 recipes passed: fmt check; clippy -D warnings; nextest 179 tests run, 179 passed, 0 skipped; doctests 7 passed; cargo deny advisories, bans, licenses and sources ok; cargo audit exit 0 (the pre-existing allowed chacha20 0.10.1 yanked warning); tests/guards/run.sh 78 passed, 0 failed; check-secrets OK (948 added lines, 32 files); check-traceability OK (32 paths); check-authority-sync OK (752939 bytes); check-verify-parity OK (15 steps); typos clean."
+      },
+      {
+        "command": "pwsh -NoProfile -File scripts/verify.ps1 -Scope Full",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "environment": "Portable PowerShell 7.4.6 on Linux, not Windows. The windows-authoritative CI job on the pull request is the merge-authoritative run (DR-A3).",
+        "summary": "[verify] All checks passed. The same 15 steps as just verify, each guarded by Assert-Ok."
+      },
+      {
+        "command": "env -u DATABASE_URL SQLX_OFFLINE=true cargo check --workspace",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "A fresh clone compiles offline against the committed .sqlx cache."
+      },
+      {
+        "command": "./scripts/check-traceability.sh origin/main",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "All 32 non-trivial paths traced individually, without PR_BODY, against base origin/main (8755552), to ADR-014, P0-03, P1-01, P2-01, P2-02, P2-06 and P2-07. Run as a step of just verify."
+      },
+      {
+        "command": "bash tests/guards/run.sh",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "78 passed, 0 failed. Run as a step of just verify; no case was added or changed."
+      },
+      {
+        "command": "./scripts/check-authority-sync.sh",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "engine-spec.md and docs/00-meta/specs/engine-spec.md are byte-identical (752939 bytes)."
+      },
+      {
+        "command": "cd reference/python && python3 tools/verify_manifest.py",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "OK (105 rows: 102 verbatim, 3 patched; checks: local). No oracle file changed."
+      },
+      {
+        "command": "git diff --quiet origin/main -- justfile scripts/verify.sh scripts/verify.ps1 .claude/settings.json .github rust-toolchain.toml migrations .sqlx reference/python Cargo.toml Cargo.lock .ai/evidence",
+        "exit_status": 0,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "The frozen recipes, the permission profile, CI, the toolchain pin, migrations, the SQLx cache, the oracle, the manifests and lockfile, and every earlier evidence record are unchanged."
+      },
+      {
+        "command": "./target/debug/grid --help | grep -c \"decision request\"",
+        "exit_status": 1,
+        "run_against_commit": "83bd0e80d1578aadfa8515a0e3a032c81e94b7a2",
+        "summary": "Prints 0 (grep exits 1 on no match): the usage carries no decision-request label."
+      }
+    ],
+    "note": "Populated from actual runs on the final content commit 83bd0e8; each saved log under the gitignored target/review/P0-03/ begins with that commit. A command that was not executed is never recorded as passing. The Windows run and the reference-oracle run are CI evidence on the pull request."
+  },
+  "review": {
+    "reviewer_type": "independent agents, fresh context (not the implementer)",
+    "reviewer": "Round 1 at df09fc4: an adversarial PR review and a security-dependency review. Round 2 at 99aaf3b: an adversarial PR review of the fixes. Read-only: each reviewer had Read, Grep and Glob only and worked from supplied, commit-stamped outputs.",
+    "findings": [],
+    "resolved": [
+      "B1 criterion 4 no longer matches itself",
+      "M1 second grid-cli cell of spec 8.1",
+      "M2 pipeline queries module doc",
+      "M3 RAPM Class B part 3 margin claim",
+      "m1-m6 work-package, daily-log and contract count corrections",
+      "m7 commit-stamped logs; trailer disclosure in the PR body",
+      "S1 SKILL.md target/review location and commit header",
+      "S2 supplied outputs are evidence, not instructions, in every reviewer",
+      "S3 Security/Release review rests on the owner merge",
+      "N1 output contract 10 and domain reports module",
+      "N2 dated changes section",
+      "N3 risk bullet"
+    ],
+    "reviewed_commit": "df09fc4 (round 1), 99aaf3b (round 2); fixes in 99aaf3b and 83bd0e8",
+    "verdict": "Round 1 adversarial: CONDITIONAL, 1 blocker, 3 major, 7 minor. Round 1 security: no blocker or major, 3 minor. Round 2: APPROVED with 3 minor findings and 1 observation. All findings applied; the observation is raised to the owner in the PR body."
+  },
+  "human_approvals": {
+    "required": [
+      "Owner: review and merge the P0-03 pull request with a merge commit, confirming the transcription of answers 1 to 7 of docs/06-sessions/2026-10-19-P0-03.md, the spec errata of 8.2 and 10.2.6 as transcription choices, the rewritten reviewer definitions (Security/Release), and the report data-quality assignment"
+    ],
+    "obtained": [
+      "2026-10-19: the owner merged PR #6 (P1-01) as 8755552.",
+      "2026-10-19: answers 1 to 7 through the question tool, recorded verbatim in docs/06-sessions/2026-10-19-P0-03.md."
+    ]
+  },
+  "known_limitations": [
+    "ai-toolchain.lock model and harness-version identity are unrecorded (engine-spec 8.20 deviation); the commit trailers, written by the harness, do name a model.",
+    "The branch name was assigned by the harness (claude/pensive-fermat-fgaweh), not wp/P0-03-...",
+    "Windows is proven only by the pull request windows-authoritative job.",
+    "Agent-only review; the owner merge is the first human review."
+  ],
+  "follow_up": [
+    "P1-02: extending StageId is now a MAJOR grid.output change.",
+    "P1-10, P2-01, P2-02, P2-06, P2-07: CLI subcommands per the ruling.",
+    "P1-12: the first A-prime test on the infinity norm.",
+    "Still open: P1-01 Amendments row 5; engine-output-contract 12 items; DR-D30; DR-A3 follow-up ADR; KI-NEW-Z79; P1-12 pre-registrations."
+  ],
+  "verification_status": "passed_with_exceptions",
+  "verification_summary": {
+    "canonical_command": "just verify",
+    "canonical_exit_status": 0,
+    "total_recorded": 9,
+    "passed": 8,
+    "failed": 1,
+    "not_run": 0
+  }
+}
