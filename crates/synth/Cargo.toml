@@ -1,0 +1,16 @@
+[package]
+name = "grid-synth"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+grid-domain.workspace = true
+# First use of an already-declared workspace dependency; not a new dependency. It reads the parity
+# fixture manifests (docs/03-contracts/parity-fixture-contract.md §2, §11; DR-D29). The arrays are
+# decoded with std alone. A numerical crate: no Tokio or SQLx (engine-spec §8.1 rule 3). grid-models
+# never depends on this crate (engine-spec §8.1 rule 3; synthetic-world.md §10.1); whether a numerical
+# crate's parity tests may take it as a dev-dependency is an open owner item recorded by P1-01.
+serde_json.workspace = true

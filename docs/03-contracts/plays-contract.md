@@ -359,19 +359,22 @@ v1 adds the following *(DR-C1)*.
   - `Synthetic`.
 - Coverage statistics: off/def coverage per season, as written by `ingest_grid.py:29-39`.
 
-**As-of view.** `AsOf { season, week, lock_at }` replaces the week-index-only cutoff. A view
+**As-of view.** `AsOf { season, week, lock: Lock { kind, at }, mode }` (`grid_domain::asof`, P1-01)
+replaces the week-index-only cutoff. Engine-spec §4.5 makes a datum usable at a lock only if it was
+published **before** that lock, so every comparison with the lock below is strict
+(`evaluation-and-leakage.md` §4.1; an earlier draft of this section wrote `≤`, P1-01 erratum). A view
 exposes a row's outcome columns only if both hold:
 
 - `(season, week) < (AsOf.season, AsOf.week)` (the season-aware tuple rule of `asof.py`);
-- the row's partition was available at `lock_at`: `available_at ≤ lock_at`.
+- the row's partition was available before the lock: `available_at < lock.at`.
 
 The same view exposes participation for season *s* only if
-`participation_availability(s) = Published { at ≤ lock_at }`. In-season participation is
+`participation_availability(s) = Published { at < lock.at }`. In-season participation is
 therefore unavailable at every in-season lock. The live path uses the participation-free
 Layer-1′ signal *(DR-C1; engine-spec §6.3)*.
 
 Pre-game inputs (market quotes, interventions, availability) are admitted by their own
-`quoted_at`/`observed_at ≤ lock_at`. A record with no timestamp is a typed error, as the oracle
+`quoted_at`/`observed_at < lock.at`. A record with no timestamp is a typed error, as the oracle
 already raises for undated interventions.
 
 ---
@@ -406,23 +409,34 @@ They never extend `grid.plays`.
 
 ## 11. Rust implementation (v1)
 
-The types below are illustrative; P1-01 fixes the names. `grid-domain` (`crates/domain`) has
-**no external dependencies** (docs/CLAUDE.md), so timestamps are a domain newtype and
-serialization lives outside the domain crate.
+The names below are the ones `grid-domain` (`crates/domain`, module `grid_domain::plays`, with the
+keys in `grid_domain::ids`, the time type in `grid_domain::time` and the errors in
+`grid_domain::error`) defines since P1-01, which fixed them. `grid-domain` depends on `serde` with
+`derive` and on nothing else outside `std` (ADR-014, Proposed in P1-01): every type below derives
+`Serialize` and `Deserialize`, with the serialized field names equal to the contract's names, and the
+*format* crates stay outside the domain crate (`serde_json` in `grid-pipeline` for records and
+sidecars and in `grid-synth` for fixture manifests; ADR-014 decision 3). `Display` and
+`std::error::Error` are hand-written. Nothing below reads the oracle or a file.
 
 ```rust
-// grid-domain (P1-01)
-pub struct ContractVersion { pub major: u16, pub minor: u16 }
+// grid-domain (P1-01). Doc comments, derives and Display impls omitted; every item has them.
+pub const GRID_PLAYS_CONTRACT_ID: &str = "grid.plays";
+pub const GRID_PLAYS_CONTRACT_VERSION: ContractVersion = ContractVersion::new(1, 0);
 
-pub enum PlayerKey { Gsis(String), Synthetic(u32) }   // Ord = by string form (layers.py:252)
-pub enum TeamKey { Nfl(String), Synthetic(u16) }      // Ord = native: numeric / lexicographic (layers.py:255)
+pub struct ContractVersion { pub major: u16, pub minor: u16 }
+pub struct Season(pub u16);
+pub struct Week(u8);                                   // Week::new(0) is Err (KI-A4); serde try_from u8
+pub enum PlayerKey { Gsis(String), Synthetic(u32) }    // Ord = by string form (layers.py:252), then variant
+pub enum TeamKey { Nfl(String), Synthetic(u16) }       // Ord = native: numeric / lexicographic; Synthetic first (layers.py:255)
 pub struct GameId(pub String);
-pub struct UtcInstant(pub i64);                       // seconds since the Unix epoch, UTC
+pub struct PlayKey { pub game_id: GameId, pub play_id: u32 }
+pub struct DriveKey { pub game_id: GameId, pub drive_seq: u16 }
+pub struct UtcInstant(pub i64);                        // whole seconds since the Unix epoch, UTC
 pub enum SeasonType { Regular, Post }
 
 pub struct PlayState { pub down: u8, pub ydstogo: u8, pub yardline_100: u8 }
-pub enum DrivePoints { Zero, FieldGoal, Touchdown }   // 0 / 3 / 7 (DR-C13)
-pub enum NextState { Continue(PlayState), Terminal }  // replaces terminal, n_*, the -1 sentinels
+pub enum DrivePoints { Zero, FieldGoal, Touchdown }    // points(): 0 / 3 / 7 (DR-C13)
+pub enum NextState { Continue(PlayState), Terminal }   // replaces terminal, n_*, the -1 sentinels
 pub struct GameClock { pub qtr: u8, pub half_seconds_remaining: u16 }
 pub enum Participation {
     Listed { offense: Vec<PlayerKey>, defense: Vec<PlayerKey> }, // order kept; multiset for legacy synth
@@ -431,33 +445,127 @@ pub enum Participation {
 }
 pub struct PlayRecord {
     pub game_id: GameId, pub play_id: u32, pub drive_seq: u16,
-    pub season: u16, pub season_type: SeasonType, pub week: u8,
+    pub season: Season, pub season_type: SeasonType, pub week: Week,
     pub off_team: TeamKey, pub def_team: TeamKey,
     pub state: PlayState, pub clock: Option<GameClock>,
     pub yards: i16, pub next: NextState, pub drive_points: DrivePoints,
     pub participation: Participation,
+}                                                      // play_key(), drive_key()
+
+pub enum FrameProfile { SyntheticLegacy, RealData }    // serialized "synthetic-legacy" / "real-data"
+pub enum FrameProducer {
+    Synthetic { generator_version: String, config_hash: String, seeds: Vec<(String, u64)>, profile: FrameProfile },
+    Nflverse { adapter_version: String, normalization_map_version: String },
+}                                                      // profile(): Nflverse is RealData
+pub struct SourceSnapshot {
+    pub source_name: String, pub source_version: String,
+    pub source_timestamp: UtcInstant, pub retrieved_at: UtcInstant, pub available_at: UtcInstant,
+    pub ingestion_run_id: Option<IngestionRunId>, pub sha256: String, pub row_count: u64,
+    pub schema_version: String, pub validation_status: String,
+}
+pub enum ParticipationProvenance { Ngs, Ftn }
+pub enum ParticipationStatus {
+    Published { at: UtcInstant, provenance: ParticipationProvenance },
+    NotPublished,
+    Synthetic,
+}
+pub struct ParticipationCoverage { pub season: Season, pub offense_share: f64, pub defense_share: f64 }
+pub struct PlaysFrameMeta {
+    pub contract: ContractVersion,
+    pub producer: FrameProducer,
+    pub sources: Vec<SourceSnapshot>,
+    pub participation_availability: Vec<(Season, ParticipationStatus)>,
+    pub coverage: Vec<ParticipationCoverage>,
 }
 pub struct PlaysFrame { pub meta: PlaysFrameMeta, pub plays: Vec<PlayRecord> }
-// PlayersFrame, MarketQuote, CollegeFrame and SyntheticTruth follow §§4-6.
-// ContractError: UnsupportedVersion, MissingField, InvalidValue, NonTerminalLastRow,
-//   MultipleTerminals, DrivePointsNotConstant, PossessionChangeWithinDrive, UnknownTeam,
-//   UnknownParticipant, DuplicateParticipant, DuplicateKey, SchemaDrift,
-//   ParticipationUnavailable, ClockUnavailable, MissingTimestamp, SourceUnavailable.
+impl PlaysFrame {
+    pub fn validate(&self, players: &PlayersFrame) -> Result<(), ContractError>;
+    pub fn drives(&self) -> Vec<(DriveKey, std::ops::Range<usize>)>;  // drive groups, file order
+    pub fn plays_per_offense(&self) -> HashMap<&TeamKey, usize>;      // row counts by off_team
+}
+
+pub enum ParticipantPosition { Qb, Rb, Wr, Te, Fb, Def, Cb, Other(String) } // open (D-12); serde from/into the raw string
+pub struct PlayerRecord { pub player_id: PlayerKey, pub team: TeamKey, pub position: ParticipantPosition }
+pub struct PlayersFrame { pub players: Vec<PlayerRecord> }
+
+pub enum MarketUnits { DvPerPlay, SyntheticAbility }   // closed; SyntheticAbility = the harness market in
+                                                        // ability units (synthetic-world.md §4.10 G-5); the
+                                                        // spread/total mapping is DR-D10 (open)
+pub struct MarketQuote {
+    pub season: Season, pub week: Week, pub team: TeamKey,
+    pub strength: f64, pub units: MarketUnits,
+    pub quoted_at: UtcInstant, pub source: String,     // required: no 0.0 default, no undated quote (§5)
+}
+
+pub struct CollegeRecord {
+    pub player_id: PlayerKey, pub position: ParticipantPosition,
+    pub feeder_sv: f64, pub feeder_snaps: Option<u32>, pub is_rookie: bool,
+}
+pub struct CollegeFrame { pub rows: Vec<CollegeRecord> }
+
+// grid_domain::error::ContractError: #[non_exhaustive], open. P1-01 defines these sixteen, each naming the
+// offending key, field or drive; the packages implementing evaluation-and-leakage §5.4, value-model §4.6,
+// rapm-attribution and projection-stack add the variants those model specs name (work-package Amendments row 17).
+pub enum ContractError {
+    UnsupportedVersion { found: ContractVersion, supported: ContractVersion },
+    MissingField { field: String },
+    InvalidValue { field: String, detail: String },
+    NonTerminalLastRow { drive: DriveKey },
+    MultipleTerminals { drive: DriveKey },
+    DrivePointsNotConstant { drive: DriveKey },
+    PossessionChangeWithinDrive { drive: DriveKey },
+    UnknownTeam { team: TeamKey, play: PlayKey },
+    UnknownParticipant { count: u64 },
+    DuplicateParticipant { play: PlayKey, player_id: PlayerKey },
+    DuplicateKey { frame: String, key: String },
+    SchemaDrift { field: String, detail: String },
+    ParticipationUnavailable { season: Season },
+    ClockUnavailable { play: PlayKey },
+    MissingTimestamp { record: String },
+    SourceUnavailable { source: String },
+}
 ```
 
+`SyntheticTruth` is not a domain type: it lives in `grid-synth::truth` (D-13), where estimator code
+cannot reach it.
+
+**What P1-01 validates.** `PlaysFrame::validate` first rejects a frame whose contract MAJOR is not 1
+(`UnsupportedVersion`, §12), then applies the §7 core rules 1–7 to every producer and, when
+`meta.producer.profile()` is `RealData`, real-data rules 1 and 2. Rule 1 is read strictly: the rows
+of a drive are contiguous in file order, every non-last row is `Continue(s′)` and `s′` equals the
+following row's `state` (`InvalidValue { field: "next" }` otherwise; non-contiguity is `InvalidValue
+{ field: "drive_seq" }`). Rule 4's `off_team == def_team` and rule 5's domain violations are
+`InvalidValue` naming the field, because the sixteen P1-01 variants have no dedicated one. Real-data rules 3
+(ids belong to their team on the as-of roster) and 4 (participation coverage ≥ 99 %) need the as-of
+roster and the coverage policy and are **not** validated here: they are P1-03's and P1-05's. The legacy
+synthetic profile is exempt from real-data rules 1 and 2 (duplicates kept as a multiset, D-8;
+`yardline_100` up to 104, D-9).
+
 The v0 columns `terminal`, `terminal_value`, `points` and `n_*` are **derived** from
-`next` + `drive_points`. A columnar v0 view, used by the parity harness and exports, reproduces
-them exactly, NaN and −1 sentinels included.
+`next` + `drive_points`. The columnar v0 view, used by the parity harness and exports, reproduces
+them exactly, NaN and −1 sentinels included: `grid_synth::legacy_v0::to_v0_columns`, the exact inverse
+of `from_legacy_v0` on its image (the round-trip tests prove it on a hand-built frame).
 
 - **P1-03** implements the nflverse producer in `grid-ingestion`. It follows §3.2 with the D-2,
   D-3, D-4 and D-6 fixes, from retained raw partitions (superseded alpha-spec §4.1.1;
   engine-spec §4.5).
-- The synthetic producer moves to the `synth` crate once DR-A8 adds it. Until then, the parity
-  harness reads oracle-exported v0 frames
-  ([parity-fixture-contract.md](parity-fixture-contract.md)).
-- A `from_legacy_v0` upgrade maps a v0 synthetic frame to v1. It sets `season` (declared by the
-  fixture manifest), `season_type = Regular`, `clock = None`, participation `Listed`, and
-  `producer = Synthetic { profile: synthetic-legacy }`. It never guesses for real data.
+- The synthetic producer belongs to the `synth` crate (`grid-synth`, created by P1-01 under DR-A8;
+  the Rust-native generator is P1-12's). Until it exists, the parity harness reads oracle-exported v0
+  frames through `grid_synth::legacy_v0::load_world`
+  ([parity-fixture-contract.md](parity-fixture-contract.md) §5.1).
+- `grid_synth::legacy_v0::from_legacy_v0(world, season)` upgrades a v0 synthetic frame set to v1
+  (P1-01). It sets `season` (declared by the fixture manifest), `season_type = Regular`,
+  `clock = None`, participation `Listed` keeping order and duplicates, and `producer = Synthetic
+  { generator_version: "legacy-59bce1d", config_hash, seeds, profile: SyntheticLegacy }` from the
+  world's provenance block (`LegacyV0Provenance { config_hash: Option<String>, seeds }`); synthetic
+  `GameId`s are `synth-<season>-<ww>-<a>-<b>` (`ww` the two-digit week) with `a ≤ b` the two team
+  numbers, and `drive_seq` is the v0 global `drive_id`. It validates the upgraded frame under the
+  legacy profile before returning it, and it never guesses: a `Gsis` or `Nfl` key has no v0 encoding
+  and is a typed `ContractError`, and a world whose `config_hash` is `None` is refused with
+  `MissingField { field: "provenance.synth_config_sha256" }` rather than given an invented hash.
+  `load_world` fills `config_hash` from the manifest key `provenance.synth_config_sha256`, the sha256
+  of the canonical JSON of `params.synth_config` that the exporter writes; a case that omits the key
+  loads with `None` ([parity-fixture-contract.md](parity-fixture-contract.md) §5.1).
 
 ---
 

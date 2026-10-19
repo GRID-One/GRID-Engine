@@ -1,0 +1,18 @@
+[package]
+name = "grid-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "grid"
+path = "src/main.rs"
+
+[dependencies]
+# The CLI depends only on the orchestration crate and on domain for DTOs (engine-spec §8.1 rule 4).
+# No argument-parser crate: one needs approval in the package that first requires it (P1-10).
+# crates/pipeline/tests/crate_boundaries.rs fails if anything else is added here.
+grid-pipeline.workspace = true
+grid-domain.workspace = true

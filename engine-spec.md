@@ -5592,16 +5592,18 @@ that can be reconstructed from SQLite (§1.1 items 3 and 4; final-build-spec §4
 
 _Source: alpha-spec §8.1 (superseded) — amended (`ffi/` dropped, GRID ownership added); final-build-spec §2 (superseded) — converted; new (GRID)._
 
-**Current workspace.** P0-01 removes `crates/ffi` and the `flutter_rust_bridge` workspace
-dependency (ADR-011), so the workspace has 11 member crates (`Cargo.toml` `[workspace] members`).
-Each package is named `grid-<crate>`. `persistence` is the only crate with code and tests today;
-the other ten are skeletons. The boundary column
+**Current workspace.** P0-01 removed `crates/ffi` and the `flutter_rust_bridge` workspace
+dependency (ADR-011), and P1-01 renamed `application` to `pipeline` and added `grid-cli` and `synth`
+(DR-A8), so the workspace has 13 member crates (`Cargo.toml` `[workspace] members`). Each package is
+named `grid-<crate>`. `domain`, `pipeline`, `synth` and `grid-cli` hold the P1-01 skeleton (types,
+traits, the fixture reader and the thin CLI; no engine computation); `persistence` holds the SQLx
+scaffold, unchanged by P1-01; the other eight are skeletons. The boundary column
 below is quoted from `docs/CLAUDE.md`. The ownership column states what each crate owns for the
 engine and GRID.
 
 | Crate | Boundary (`docs/CLAUDE.md`) | Owns for the engine and GRID | Oracle counterpart (`reference/python/backend/…`) |
 |---|---|---|---|
-| `domain` | IDs, types, errors, DTOs. No external deps. | Canonical IDs: `gsis_id`, game, season and week, and every version ID in §8.9. The `AsOf` type with its temporal, scope, state and publication-lag axes (§4.5). Typed error codes. The `TrainingStatus` and terminal-state enums (§8.4, §8.6.4). Public DTOs of the engine output contract (§5.5). The plays, players, market and college contract types and their validators (`docs/03-contracts/plays-contract.md`). | `grid/data_adapters.py` (contract); `validation/asof.py` (`AsOf`) |
+| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, Proposed in P1-01). | Canonical IDs: `gsis_id`, game, season and week, and every version ID in §8.9. The `AsOf` type with its temporal, scope, state and publication-lag axes (§4.5). Typed error codes. The `TrainingStatus` and terminal-state enums (§8.4, §8.6.4). Public DTOs of the engine output contract (§5.5). The plays, players, market and college contract types and their validators (`docs/03-contracts/plays-contract.md`). | `grid/data_adapters.py` (contract); `validation/asof.py` (`AsOf`) |
 | `persistence` | SQLx, migrations, SQLite. No business logic. | The schema groups (§8.5), the artifact manifest, the atomic artifact-write protocol (§8.11), and the production-pointer transaction (§8.13). | None. The oracle's mutable `.npz`, joblib and parquet caches are not ported (DR-C15). |
 | `ingestion` | nflverse, CFBD adapters. Raw data retention. | Provider adapters per `docs/04-providers/`. Raw retention with content hashes and the §4.1.1 metadata. Normalization, validation and quarantine. The once-per-day-per-source fetch cap and offline replay (§8.6.1). The plays-contract builder. | `grid/nflverse_loader.py`, `grid/nflverse_adapter.py`. Required behaviour differs from the oracle for KI-NEW-V0a and KI-NEW-I1..KI-NEW-I5 (§4.7). |
 | `identity` | Player registry, cross-source linking, review queue. | The canonical registry, the NCAA linking tiers (§4.4.3) and the identity review queue. | None |
@@ -5611,7 +5613,9 @@ engine and GRID.
 | `scoring` | Fantasy profile transforms, versioned affine mapping. | Versioned affine profiles (Standard, Half-PPR, PPR, custom) applied to stat vectors and draw matrices (§5.4). | `scoring/{engine,columns,formats}.py` |
 | `evaluation` | Rolling-origin backtests, PB-MAE, benchmark comparison. | The walk-forward backtest over the three-season window (§2.4, §7.1). The player pool, PB-MAE and the §7.5 metrics. The week-clustered bootstrap and the naive baselines. The leakage harness: poisoning, tripwire, a watermark that also checks across season seams, and two-path equivalence. Scorecards and benchmark comparison. The lineup-simulation decision metric, with VOR internal to it (DR-C11). The synthetic recovery harness (§7.13). | `validation/{asof,backtest,baselines,metrics,tier1,tier2,lineup_sim,sniff}.py` |
 | `governance` | Model promotion, rollback, snapshot, job queue. | Model states and the promotion gate (§8.8). The pre-registered threshold registry. Production pointers and snapshot records (§8.7.4). The durable job queue (§8.10). | `validation/{thresholds,verdict,report}.py`. The oracle verdict is rendered, never acted on. |
-| `application` | Commands, queries, events, app services. Orchestrates crates. | The engine façade: the library API (§8.2–§8.4) and orchestration of the §8.6 DAG. In the target state it becomes `pipeline`. | `pipeline/weekly_update.py`, `pipeline/ingest_grid.py`. Neither is a usable oracle for the incremental path (§8.6.6). |
+| `pipeline` | Commands, queries, events, orchestration. Orchestrates crates; `serde_json` for records and sidecars. | The engine façade: the library API (§8.2–§8.4), §8.6 DAG orchestration and durable-job execution (§8.10). Renamed from `application` by P1-01 (DR-A8), which delivered the façade as types and traits with no implementor; orchestration follows from P1-02. | `pipeline/weekly_update.py`, `pipeline/ingest_grid.py`. Neither is a usable oracle for the incremental path (§8.6.6). |
+| `grid-cli` | Thin adapter over the orchestration crate and `domain` (rule 4). No business logic. | Thin adapter: argument parsing, output formatting (table / JSON / CSV), exit codes (§8.6.4). P1-01 skeleton (`--version`, `--help`, `exit-codes`); subcommands, reports and export in P1-10. | None |
+| `synth` | Synthetic world and parity harness. Synchronous (rule 3). | Planted-truth generator per `docs/05-model-specs/synthetic-world.md` (module homes in its §10.1). P1-01 skeleton: the DR-D29 fixture reader and tolerance helpers, `SyntheticTruth` and the `from_legacy_v0` loader for the exported oracle worlds; P1-12 adds the Rust-native generator of the **corrected** world. | `grid/synth.py`, `grid/data_adapters.py` (`load_synthetic`). The corrected world (DR-B4) diverges from the legacy generator by design. |
 
 **Rules.**
 
@@ -5625,15 +5629,17 @@ engine and GRID.
 2. Business logic MUST remain outside the CLI and presentation layer and outside generated code
    (§1.1 item 2). The CLI crate is a thin adapter over the application-service API. Argument parsing and output
    formatting contain no business logic.
-3. The numerical crates (`models`, `simulation`, `scoring`, and `synth` when it exists) SHOULD be
+3. The numerical crates (`models`, `simulation`, `scoring` and `synth`) SHOULD be
    synchronous, with no Tokio or SQLx dependency, so they can be benchmarked and parity-tested
    directly (§1.1 item 6). Tokio and SQLx belong in `persistence`, `ingestion` and the
    orchestration and CLI crates. `models` MUST NOT depend on `synth`
    (`docs/05-model-specs/synthetic-world.md` §10.1).
 4. The CLI crate MUST depend only on the orchestration crate (and `domain` for DTOs). A structural
    guard SHOULD enforce this.
-5. `domain` currently declares "no external deps". If public DTOs need serialization derives, P1-01
-   decides by ADR whether `domain` takes the dependency or serialization lives in another crate.
+5. `domain` declared "no external deps" until P1-01, which was to decide by ADR whether public DTOs
+   with serialization derives take the dependency or serialization lives in another crate. P1-01
+   proposes ADR-014 (`domain` takes `serde` as its only external dependency); the Product/Architecture
+   owner accepts or rejects it at the P1-01 merge.
 6. The following oracle modules are not ported:
    - `grid/cache.py` (`ParquetCache`), which is replaced by raw retention with content hashes;
    - the app-side modules (`scoring/format_registry.py`, `pipeline/{data_pipeline,compute_valuations,sync_*,health_check}.py`).
@@ -6574,11 +6580,13 @@ contracts and verification paths without relying on earlier chat history. The tr
   LICENSE-MIT  LICENSE-APACHE
   .sqlx/                            # generated offline query cache (ADR-002) — never hand-edited
   .claude/settings.json             # agent permission boundary (§14.1)
+  .claude/agents/  .claude/skills/  # §8.18 role definitions and the work-package skill (ADR-006; since P1-01)
   .github/workflows/alpha-ci.yml    # guards, linux-smoke, windows-authoritative, reference-oracle (§8.19)
-  .ai/evidence/<WP-ID>/             # committed, sanitized evidence manifests (§8.20): P1-00, P0-01
+  .ai/evidence/<WP-ID>/             # committed, sanitized evidence manifests (§8.20); one directory per package
   migrations/                       # append-only SQLx migrations
   crates/                           # domain, persistence, ingestion, identity, features, models,
-                                    #   simulation, scoring, evaluation, governance, application
+                                    #   simulation, scoring, evaluation, governance, pipeline,
+                                    #   grid-cli, synth (13; the DR-A8 set since P1-01)
   reference/python/                 # Python reference oracle (§1.7); status legacy-59bce1d
     README.md  PARITY.md  MANIFEST.tsv
     requirements.txt  requirements-demo.txt  requirements.lock  pytest.ini  .gitignore
@@ -6626,11 +6634,14 @@ contracts and verification paths without relying on earlier chat history. The tr
 | `scripts/check-parity-fixtures.sh` | Fixture-hash guard in the `guards` CI job (proposed; parity-fixture-contract §10). The workflow step is a Security/Release owner decision | with the first committed fixture set |
 | `schemas/` | — | P1-03, P1-04 (ADR-006) |
 | `benches/` | — | P1-07 (ADR-006) |
-| `.claude/agents/`, `.claude/skills/` | Agent definitions, including the reference-parity reviewer (§8.18) | P1-01 (ADR-006) |
 | `docs/runbooks/`, `docs/model-cards/` | — | P1-11 (ADR-006); live-operation runbooks P2-00 |
 | `artifacts/` | Ignored build and test output | as needed |
 | `toolchains/native-dependencies.lock` | Only if a native booster backend is adopted (DR-C8) | that WP |
-| `crates/pipeline/`, `crates/grid-cli/`, `crates/synth/` | §8.1 target state (DR-A8, ratified 2026-10-08) | P1-01 onward |
+
+Present since P1-01, and listed in the tree above: `.claude/agents/` and `.claude/skills/` (the §8.18
+role definitions and the work-package skill; ADR-006), and `crates/pipeline/`, `crates/grid-cli/` and
+`crates/synth/` (the §8.1 target state, DR-A8, as skeletons; filled by P1-02 onward, P1-10 and
+P1-05/P1-12 respectively).
 
 `docs/traceability/` is superseded in substance by `scripts/check-traceability.sh` (ADR-006 item 5).
 The runtime data directory (default `data/`) is gitignored and never committed.
@@ -7078,7 +7089,7 @@ consolidation.
 | 1 | Root and module-level `CLAUDE.md` files with concise, versioned rules. | Delivered by P1-00. Rewritten for the engine by P0-01 (§8.15). |
 | 2 | Authority index, ADR process, work-package template, and traceability matrix. | Delivered by P1-00 as `docs/00-meta/authority-index.md` (the superseded `docs/authority.md`), `docs/02-adr/` and `docs/99-templates/template-work-package.md`. The traceability matrix is superseded in substance by `scripts/check-traceability.sh` (ADR-006 item 5). |
 | 3 | Claude Code/harness settings with least-privilege permissions and sandbox policy. | Delivered by P1-00 (`.claude/settings.json`; §14.1). |
-| 4 | Specialized explorer, implementer, numerical-review, data-contract, security-review, and adversarial-review agent definitions when supported, plus the reference-parity reviewer (§8.18). | Deferred to P1-01 (ADR-006 item 1). |
+| 4 | Specialized explorer, implementer, numerical-review, data-contract, security-review, and adversarial-review agent definitions when supported, plus the reference-parity reviewer (§8.18). | Delivered by P1-01 (`.claude/agents/`, `.claude/skills/`; ADR-006 item 1). |
 | 5 | Canonical bootstrap and verification scripts: `scripts/verify.ps1`, merge-authoritative until a superseding ADR (DR-A3), and `just verify` / `scripts/verify.sh` as the Linux smoke check. | Delivered by P1-00. P0-01 re-scopes the frozen chain: `test-ffi` is removed (§8.19). |
 | 6 | Protected-branch CI with deterministic merge gates and a merge-authoritative Windows job (`windows-authoritative`, DR-A3), plus the Linux-only `reference-oracle` job outside the frozen verify chain (§1.7, §8.19). | Gates: P1-00. Oracle job: P0-01. |
 | 7 | Sanitized provider fixtures, synthetic football fixtures, and numerical reference fixtures before dependent implementation begins. The fixtures have these sources: synthetic football fixtures are exported from the corrected oracle generator (DR-B4); numerical reference fixtures include the committed oracle parity fixtures (DR-B2). Every parity fixture is synthetic-only (DR-A11). | Format: P1-01 (`docs/03-contracts/parity-fixture-contract.md`; DR-D29). Provider fixtures: P1-03 and P1-04 (ADR-006 item 2). Synthetic fixtures: the loader in P1-01, the committed corrected fixtures in P1-05. Parity fixtures: the first package that ports each component (P1-06, P1-12). |
