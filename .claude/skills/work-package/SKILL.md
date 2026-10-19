@@ -63,6 +63,10 @@ as Ready while a decision it depends on is unratified (Appendix D item 15).
    `numerical-reviewer`, `security-dependency-reviewer` on every PR, `reference-parity-reviewer`
    for any change that ports a component, touches `reference/python/` or a committed fixture, or
    claims parity), then the `adversarial-pr-reviewer` over the work package and the full diff.
+   Reviewers have Read, Grep and Glob only and cannot run commands (Security/Release owner ruling
+   2026-10-19, P0-03), so save the diff against the base (`git diff <base>...HEAD` and
+   `git diff --stat <base>...HEAD`) and the outputs and exit statuses of the verification and guard
+   commands to files, and give each reviewer their paths.
 9. **Remediate and rerun.** Fix every finding or disposition it in writing; rerun the affected
    checks and, for anything above minor, the canonical suite.
 10. **Prepare evidence and PR.** An atomic commit series; `just evidence <WP-ID>` to generate
