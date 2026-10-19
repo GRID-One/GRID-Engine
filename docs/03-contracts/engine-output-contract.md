@@ -440,8 +440,9 @@ checked on draw matrices by `grid-simulation` (P1-08).
   `grid_pipeline::queries::QUERY_NAMES`): `get_week_projections`, `get_player_projection_detail`,
   `get_projection_distribution`, `get_projection_change_log`, `get_model_scorecard`,
   `get_benchmark_results`, `get_data_quality_report`, …, exposed through the `grid-pipeline`
-  library façade (`EngineQueries`, `EngineCommands`; traits with no implementor in P1-01) and,
-  from P1-10, the CLI.
+  library façade (`EngineQueries`, `EngineCommands`; traits with no implementor in P1-01) and the
+  CLI: from P1-10 for the Phase 1 surfaces, and with the package that owns the content for the
+  Phase 2 surfaces of engine-spec §10.2.6 (owner ruling 2026-10-19, P0-03).
 
 ## 11. Tests (required before a producer ships)
 

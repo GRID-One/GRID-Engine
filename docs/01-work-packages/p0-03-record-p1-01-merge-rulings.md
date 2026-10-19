@@ -27,8 +27,9 @@ the final content commit are recorded in `.ai/evidence/P0-03/`.
 - **Reviewer.** Pending: a fresh-context reviewer who is not the implementer, then the owner.
 - **Risk class: Medium.** It records rulings the owner has already given and decides nothing, but two
   rulings change files beyond documents: the reviewer agents' tool lists (`.claude/agents/`, a
-  permission-relevant change that only removes a tool) and the `grid --help` usage text with its
-  tests (`crates/grid-cli/`).
+  permission-relevant change that only removes a tool) and the `grid` CLI's static data and text
+  with their tests (`crates/grid-cli/`: the delivering package of five entries, the usage, the
+  unavailable message).
 - **Required human approvals.** The owner's merge of this package's pull request, which confirms the
   transcription. The rulings themselves are given: answers 1 to 7 of
   `docs/06-sessions/2026-10-19-P0-03.md`. The same merge is the Security/Release owner's review of
@@ -82,9 +83,10 @@ entries are history and stay as written.
 
 ## Scope
 - **Contracts consumed.** None.
-- **Contracts changed.** Status only: `grid.plays` v1, `grid.output` 1.0 and `grid.parity-fixture` 1
-  move from Draft to Approved, and their mentions of ADR-014 as Proposed now read "accepted". No field, rule
-  or version changes.
+- **Contracts changed.** Status and wording only: `grid.plays` v1, `grid.output` 1.0 and
+  `grid.parity-fixture` 1 move from Draft to Approved, and their mentions of ADR-014 as Proposed now
+  read "accepted". In `grid.output`, §10 states the ruled CLI split and §13's count of tested
+  unavailable argument lists is corrected from 13 to 15. No field, rule or version changes.
 - **Model specs changed.** `rapm-attribution.md` §10.3: P-3's norm becomes the ∞-norm, and Class B
   part 3 names the same norm (version 0.1.1).
 - **Specification.** Errata carrying rulings, in `engine-spec.md` and its mirror: §8.1 (the `domain`
@@ -103,6 +105,7 @@ entries are history and stay as written.
 - `.claude/skills/work-package/SKILL.md`
 - `README.md`
 - `crates/domain/src/lib.rs` (one doc-comment reference: ADR-014 accepted)
+- `crates/domain/src/output/reports.rs` (module documentation: who renders the reports)
 - `crates/grid-cli/src/args.rs` (the delivering package of five entries, the usage text, the unavailable
   message and their unit tests)
 - `crates/grid-cli/src/main.rs` (module documentation)
@@ -240,3 +243,21 @@ Stop and ask the owner if:
   first A′ test with the ∞-norm.
 - **Still open, unchanged:** P1-01 Amendments row 5; the engine-output-contract §12 open items;
   DR-D30; DR-A3's follow-up ADR; the KI-NEW-Z79 decision request; the P1-12 pre-registrations.
+
+## Changes after review (2026-10-19)
+Two fresh-context review rounds ran on this package before its pull request. The text above was
+edited in place to resolve their findings, before any approval; this section lists the edits, as
+ADR-001 ("On amending a work package mid-implementation") asks.
+
+- **Round 1** (adversarial and security reviews, at `df09fc4`). Ownership and risk: the
+  Security/Release review of the rewritten `.claude/` text named as resting on the owner's merge.
+  Owner decisions depended on: the roles of answer 6 stated; the DR-A5 wording corrected. Scope: both
+  `grid-cli` cells of §8.1 named, and the §8.2 and §10.2.6 errata marked as transcription choices for
+  the owner. Paths affected: `crates/pipeline/src/queries.rs` added; the `args.rs` note widened.
+  Implementation constraints: the CLI change described in full. Acceptance criterion 4: its pattern
+  no longer matches itself, and its exceptions name the history it skips. Follow-up: the `StageId`
+  MAJOR change for P1-02.
+- **Round 2** (adversarial review, at `99aaf3b`). Ownership and risk: the CLI change described in
+  full. Paths affected: `crates/domain/src/output/reports.rs` added, and engine-output-contract §10's
+  CLI sentence states the ruled split.
+

@@ -1,5 +1,6 @@
 //! The report record skeletons (engine-output-contract §7). Each report is a versioned record
-//! type under `grid.output`. The CLI renders them (P1-10); nothing here renders.
+//! type under `grid.output`. The CLI renders them: P1-10 builds the rendering, and each Phase 2
+//! report arrives with its content package (engine-spec §10.2.6). Nothing here renders.
 
 use std::fmt;
 
