@@ -925,9 +925,10 @@ oracle, both legacy and corrected, and sha256-manifested (DR-B2). The RAPM set i
 - The Class B criterion (DR-B3), all three required:
   1. `converged = true`;
   2. the Rust solution's relative residual on the **oracle's** `(A, b)` is ≤ `tol_cg`;
-  3. ‖β_cg − β_dense‖∞/‖β_dense‖∞ ≤ 1e-9, with `tol_cg = 1e-12` (measured 1.4e-11 at that
-     tolerance), so Class B meets the A′ bound in the A′ norm (the ∞-norm, engine-spec §7.12.5;
-     ruling of 2026-10-19, P0-03).
+  3. ‖β_cg − β_dense‖∞/‖β_dense‖∞ ≤ 1e-9, with `tol_cg = 1e-12`, so Class B meets the A′ bound
+     (the ∞-norm, engine-spec §7.12.5; ruling of 2026-10-19, P0-03). The §5.2 measurement gave
+     1.4e-11 at that tolerance in a norm it does not state; the ∞-norm margin is measured when the
+     first Class B fixture lands.
 
 **Truth-anchored semantic tests (new; must pass on the fixed synth, Rust-native):**
 

@@ -523,5 +523,5 @@ and arguments of every subcommand that returns these codes; until then the first
 the invocation: `--version` or `-V`, `--help`, `-h` or `help` (and no argument at all) and
 `exit-codes` exit 0 and ignore any further arguments until P1-10 fixes the argument grammar; every
 other first argument exits 2 with a message on stderr. `crates/grid-cli/tests/cli.rs` asserts
-`--version`, `--help`, `help`, no arguments, `exit-codes`, 13 recognised-but-unavailable argument
+`--version`, `--help`, `help`, no arguments, `exit-codes`, 15 recognised-but-unavailable argument
 lists and 5 unknown ones; `-V` and `-h` are accepted by the parser and asserted by no test.

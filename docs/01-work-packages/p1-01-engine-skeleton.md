@@ -530,7 +530,7 @@ answers in `docs/06-sessions/2026-10-19-P0-03.md`. The repository owner holds ev
 
 | Item | Ruling | Answer | Carried into |
 |---|---|---|---|
-| ADR-014 | Accepted | 1 | `docs/02-adr/014-domain-serialization-boundary.md` and the ADR index; every "ADR-014, Proposed" mention (engine-spec §8.1 and its mirror, `docs/CLAUDE.md`, the three contracts, `README.md`, `crates/domain/src/lib.rs`) |
+| ADR-014 | Accepted | 1 | `docs/02-adr/014-domain-serialization-boundary.md` and the ADR index; every mention of ADR-014 as Proposed (engine-spec §8.1 and its mirror, `docs/CLAUDE.md`, the three contracts, `README.md`, `crates/domain/src/lib.rs`) |
 | Row 11, reviewer agents' Bash | Remove Bash from the five reviewer definitions; their tools are Read, Grep and Glob, and the orchestrating session supplies command outputs as files | 2 | `.claude/agents/` (the five reviewers) and `.claude/skills/work-package/SKILL.md`; `.claude/settings.json` unchanged |
 | Row 20, synchronous façade | Keep the façade traits synchronous; implementors run Tokio and the CPU pool behind them | 3 | engine-spec §8.2 and its mirror; `crates/pipeline/src/lib.rs` |
 | Row 21, Class A′ norm | The ∞-norm everywhere, as engine-spec §7.12.5 defines it; the RAPM model spec's P-3 is amended from the 2-norm | 4 | `docs/05-model-specs/rapm-attribution.md` §10.3 (version 0.1.1); the tolerance helpers already use the ∞-norm |

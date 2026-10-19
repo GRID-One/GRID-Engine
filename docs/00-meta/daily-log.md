@@ -308,7 +308,7 @@ rulings the pull request requested, the owner answered seven questions, one at a
 - **ADR-014:** accepted.
 - **Reviewer agents (P1-01 Amendments row 11):** Bash removed from the five reviewer definitions; the
   orchestrating session supplies command outputs as files.
-- **Library façade (row 20):** stays synchronous.
+- **Library façade (row 20):** stays synchronous; engine-spec §8.2 states it.
 - **Class A′ norm (row 21):** the ∞-norm everywhere; `rapm-attribution.md` P-3 amended (0.1.1).
 - **Phase 2 CLI surfaces (row 22):** each delivered, subcommand included, by its content package;
   engine-spec §8.1 and §10.2.6 errata; the `grid --help` usage names those packages.

@@ -31,7 +31,10 @@ the final content commit are recorded in `.ai/evidence/P0-03/`.
   tests (`crates/grid-cli/`).
 - **Required human approvals.** The owner's merge of this package's pull request, which confirms the
   transcription. The rulings themselves are given: answers 1 to 7 of
-  `docs/06-sessions/2026-10-19-P0-03.md`.
+  `docs/06-sessions/2026-10-19-P0-03.md`. The same merge is the Security/Release owner's review of
+  the rewritten `.claude/agents/` and `.claude/skills/work-package/SKILL.md` text: answer 2 chose to
+  remove Bash, and the way reviewers now receive command outputs is this package's derivation from
+  it.
 - **Agent budget (engine-spec §8.18.1).** One implementing session; one writer per file; fewer than
   ten concurrent agents. This package declares no maximum number of agent turns, wall-clock timeout
   or limit on concurrent writers, which deviates from §8.18.1, as in P0-01 and P0-02.
@@ -55,7 +58,11 @@ All given on 2026-10-19 in `docs/06-sessions/2026-10-19-P0-03.md`; none is unrat
 - **Row 22.** Each Phase 2 surface, subcommand included, belongs to its content package; an erratum
   to engine-spec §8.1 (answer 5).
 - **The other rows and the three contracts.** Approved; the contracts become Approved (answer 6).
-- **DR-A5.** This package's ID (answer 7).
+  The session record files answer 6 under the Product/Architecture owner, but the contracts' front
+  matter also names the Statistical, Data/Licensing and Security/Release owners
+  (`docs/03-contracts/README.md`, "Status values"). The repository owner, who gave answer 6, holds
+  every one of those roles.
+- **This package's ID.** P0-03 (answer 7), chosen under the ratified ID scheme DR-A5.
 
 ## Objective
 No maintained document or code comment in the repository still describes ADR-014, the four P1-01
@@ -76,13 +83,16 @@ entries are history and stay as written.
 ## Scope
 - **Contracts consumed.** None.
 - **Contracts changed.** Status only: `grid.plays` v1, `grid.output` 1.0 and `grid.parity-fixture` 1
-  move from Draft to Approved, and their "ADR-014, Proposed" mentions read "accepted". No field, rule
+  move from Draft to Approved, and their mentions of ADR-014 as Proposed now read "accepted". No field, rule
   or version changes.
 - **Model specs changed.** `rapm-attribution.md` §10.3: P-3's norm becomes the ∞-norm, and Class B
   part 3 names the same norm (version 0.1.1).
 - **Specification.** Errata carrying rulings, in `engine-spec.md` and its mirror: §8.1 (the `domain`
-  cell, rule 5 and the `grid-cli` row), §8.2 (the synchronous façade) and §10.2.6 (the subcommand
-  belongs to the content package).
+  cell, rule 5, and both `grid-cli` rows: the crate table and the target-state table), §8.2 (the
+  synchronous façade) and §10.2.6 (the subcommand belongs to the content package). Answer 5 names
+  only a §8.1 erratum and answer 3 names none; the §8.2 and §10.2.6 sentences are this package's
+  transcription choices, stating the same rulings where a reader of those sections looks, and the
+  owner confirms or strikes them at the merge.
 
 ### Paths affected
 - `.claude/agents/adversarial-pr-reviewer.md`
@@ -93,10 +103,12 @@ entries are history and stay as written.
 - `.claude/skills/work-package/SKILL.md`
 - `README.md`
 - `crates/domain/src/lib.rs` (one doc-comment reference: ADR-014 accepted)
-- `crates/grid-cli/src/args.rs` (usage text and its unit tests)
+- `crates/grid-cli/src/args.rs` (the delivering package of five entries, the usage text, the unavailable
+  message and their unit tests)
 - `crates/grid-cli/src/main.rs` (module documentation)
 - `crates/grid-cli/tests/cli.rs`
 - `crates/pipeline/src/lib.rs` (crate documentation)
+- `crates/pipeline/src/queries.rs` (module documentation)
 - `docs/CLAUDE.md`
 - `docs/00-meta/authority-index.md`
 - `docs/00-meta/daily-log.md`
@@ -142,8 +154,9 @@ None. The tolerance helpers in `grid-synth` already use the ∞-norm; no helper 
 - `engine-spec.md` and `docs/00-meta/specs/engine-spec.md` stay byte-identical.
 - The P1-01 work package keeps its 2026-10-17 "Amendments" text; the rulings go in a new dated section
   (ADR-001, "On amending a work package mid-implementation").
-- The CLI change touches only the usage text and its tests: no subcommand gains behaviour, and every
-  spelling still exits 2 until delivered (engine-output-contract §13).
+- The CLI change touches only static data and text: the delivering package of five entries (the
+  `content_by` field goes), the usage text, the unavailable message, and their tests. No subcommand
+  gains behaviour, and every spelling still exits 2 until delivered (engine-output-contract §13).
 - No model identifier is written into any file.
 
 ## Security and licensing considerations
@@ -161,8 +174,11 @@ Each criterion is verified on the final content commit.
 - [ ] `grep -L '^status: Accepted' docs/02-adr/014-*.md` prints nothing, and
       `grep -L '^status: Approved' docs/03-contracts/plays-contract.md docs/03-contracts/engine-output-contract.md docs/03-contracts/parity-fixture-contract.md`
       prints nothing.
-- [ ] `git grep -n 'ADR-014, Proposed'` prints nothing outside `docs/06-sessions/`, `.ai/evidence/`
-      and the P1-01 work package's 2026-10-17 text.
+- [ ] `git grep -n -E 'ADR-014, Propose[d]'` prints nothing outside `docs/06-sessions/`,
+      `.ai/evidence/`, the daily-log entries before 2026-10-19 and the P1-01 work package's
+      2026-10-17 "Amendments" text (all history). The bracket keeps the
+      pattern from matching this line. Corrected after review: the first wording quoted the bare
+      string and so matched itself.
 - [ ] `grep -n '^tools:' .claude/agents/*-reviewer.md` shows `Read, Grep, Glob` for each of the five
       reviewers, and `git diff --quiet 8755552 HEAD -- .claude/settings.json` exits 0.
 - [ ] `grid --help` and every unavailable-subcommand message carry no "decision request" label, and
@@ -217,7 +233,9 @@ Stop and ask the owner if:
 - **The reviewer workflow.** From this package on, the orchestrating session saves the diff and the
   verification and guard outputs to files and gives the reviewer agents their paths
   (`.claude/skills/work-package/SKILL.md`).
-- **P1-02** implements the synchronous façade traits; **P1-10** builds the CLI adapter and the Phase 1
+- **P1-02** implements the synchronous façade traits. Because `grid.output` is now Approved, extending
+  the closed `StageId` enumeration to the full §8.10 list is a MAJOR change of that contract
+  (engine-output-contract §9; P1-01 Amendments row 8), which P1-02 carries; **P1-10** builds the CLI adapter and the Phase 1
   subcommands; **P2-01, P2-02, P2-06 and P2-07** each add their own subcommand; **P1-12** writes its
   first A′ test with the ∞-norm.
 - **Still open, unchanged:** P1-01 Amendments row 5; the engine-output-contract §12 open items;
