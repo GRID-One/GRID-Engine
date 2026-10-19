@@ -165,8 +165,8 @@ Each criterion is verified on the final content commit.
       and the P1-01 work package's 2026-10-17 text.
 - [ ] `grep -n '^tools:' .claude/agents/*-reviewer.md` shows `Read, Grep, Glob` for each of the five
       reviewers, and `git diff --quiet 8755552 HEAD -- .claude/settings.json` exits 0.
-- [ ] `git grep -n 'decision request' -- crates/grid-cli` prints nothing, and the `grid-cli` tests
-      assert the delivering package of every §8.2 and §8.3 spelling.
+- [ ] `grid --help` and every unavailable-subcommand message carry no "decision request" label, and
+      the `grid-cli` tests assert that and the delivering package of every §8.2 and §8.3 spelling.
 - [ ] `git diff --quiet 8755552 HEAD -- .ai/evidence reference/python justfile scripts .github migrations .sqlx rust-toolchain.toml Cargo.toml Cargo.lock`
       exits 0 before the evidence commit.
 - [ ] `./scripts/check-traceability.sh` and `./scripts/check-evidence-claims.sh` pass against

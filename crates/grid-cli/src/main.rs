@@ -9,12 +9,13 @@
 //! P1-01 delivers the skeleton: `--version` (crate version plus the compile-time git SHA, or
 //! `(git sha unrecorded)`; engine-spec §8.9), `--help`, `exit-codes`, and the recognition of
 //! every §8.2 and §8.3 spelling, each of which exits with the usage code until the package that
-//! delivers it does: P1-10 for every entry (engine-spec §8.1 target table and §8.2). For the five
-//! entries that adapt a Phase 2 output, §10.2.6 names a different package for the content; that
-//! conflict is an open owner decision, and the usage and the unavailable message show both
-//! packages with the label "decision request" (the `content_by` field in [`args`]). The usage
-//! footer records that the content behind the Phase 2 outputs arrives with the package that owns
-//! it (§9.2.7, §10.2.6). No subcommand computes anything.
+//! delivers it does. P1-10 builds the CLI adapter and every subcommand but five (engine-spec §8.1
+//! target table and §8.2); the five entries that adapt a Phase 2 output are delivered, subcommand
+//! included, by the package that owns their content (§10.2.6): `availability import` P2-02,
+//! `report changes` P2-07, `report scorecard` and `report benchmark` P2-06, `report data-quality`
+//! P2-01. The owner ruled this on 2026-10-19 (P0-03; P1-01 Amendments row 22). The usage and the
+//! unavailable message name the delivering package of each entry (the `delivered_by` field in
+//! [`args`]), and the usage footer states the split. No subcommand computes anything.
 
 #![forbid(unsafe_code)]
 
