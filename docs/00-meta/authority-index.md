@@ -103,16 +103,17 @@ just bootstrap                                                            # once
 
 ## Active work
 
-- **Last merged work package:** P0-02 — Record the P0-01 merge review, the DR-A10 ruling and the
-  ADR acceptances (`docs/01-work-packages/p0-02-record-p0-01-merge-rulings.md`), merged on 2026-10-15
-  (`73a8e3b`, the merge of PR #5; `docs/06-sessions/2026-10-15-P0-02.md`). Before it, P0-01, the
-  engine-only consolidation, merged on 2026-10-15 (`b819ae0`), with P1-00 (DR-A6).
-- **In progress:** P1-01 — Domain types, engine API skeleton, oracle-fixture harness and crate
-  restructure (`docs/01-work-packages/p1-01-engine-skeleton.md`), on branch
-  `claude/pensive-fermat-fgaweh` from `73a8e3b`. It proposes ADR-014 (`grid-domain` takes `serde` as
-  its only external dependency), which the owner accepts or rejects at its merge.
+- **Last merged work package:** P1-01 — Domain types, engine API skeleton, oracle-fixture harness and
+  crate restructure (`docs/01-work-packages/p1-01-engine-skeleton.md`), merged on 2026-10-19
+  (`8755552`, the merge of PR #6). Before it, P0-02 recorded the P0-01 merge rulings (`73a8e3b`,
+  PR #5), and P0-01, the engine-only consolidation, merged on 2026-10-15 (`b819ae0`), with P1-00
+  (DR-A6).
+- **In review:** P0-03 — Record the owner's rulings on the decisions P1-01 raised
+  (`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`; `docs/06-sessions/2026-10-19-P0-03.md`),
+  on branch `claude/pensive-fermat-fgaweh` from `8755552`: ADR-014 accepted, the three P1-01
+  contracts Approved, and the four decision requests ruled.
 - **Next:** P1-02 (SQLite schema, migrations, durable jobs) and, in parallel with the P1-02 → P1-05
-  chain, P1-06 (numerical primitives), once P1-01 has merged and its contracts are fixed.
+  chain, P1-06 (numerical primitives). P1-01 has merged and its contracts are Approved.
 - **Sequence:** engine-spec §9.5; index and readiness in `docs/01-work-packages/README.md`. A package
   is not Ready while a decision it depends on is unratified (`docs/00-meta/decision-register.md`).
 

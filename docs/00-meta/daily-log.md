@@ -296,3 +296,21 @@ package is `docs/01-work-packages/p1-01-engine-skeleton.md`; the session log is
   the merge: ADR-014; the synchronous façade; the CLI content-ownership labels (§8.1 against §10.2.6);
   the A′ norm (engine-spec §7.12.5 against `rapm-attribution.md` P-3); the reviewer-permission
   residual risk; whether numerical crates' parity tests may take `grid-synth` as a dev-dependency.
+
+## 2026-10-19 — P1-01 merge and the owner's rulings (P0-03)
+
+The owner merged PR #6 (P1-01) on 2026-10-19 as `8755552`, with no review comment. Asked to settle the
+rulings the pull request requested, the owner answered seven questions, one at a time
+(`docs/06-sessions/2026-10-19-P0-03.md`). Work package P0-03
+(`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`) records them, on branch
+`claude/pensive-fermat-fgaweh` restarted from `8755552`.
+
+- **ADR-014:** accepted.
+- **Reviewer agents (P1-01 Amendments row 11):** Bash removed from the five reviewer definitions; the
+  orchestrating session supplies command outputs as files.
+- **Library façade (row 20):** stays synchronous.
+- **Class A′ norm (row 21):** the ∞-norm everywhere; `rapm-attribution.md` P-3 amended (0.1.1).
+- **Phase 2 CLI surfaces (row 22):** each delivered, subcommand included, by its content package;
+  engine-spec §8.1 and §10.2.6 errata; the `grid --help` usage names those packages.
+- **Other Amendments rows and the three contracts:** approved; `grid.plays` v1, `grid.output` 1.0 and
+  `grid.parity-fixture` 1 are Approved.

@@ -1,7 +1,7 @@
 ---
 contract: grid.parity-fixture
-contract-version: 1 (Draft)
-status: Draft            # Draft | Approved | Superseded
+contract-version: 1 (Approved 2026-10-19 with P1-01)
+status: Approved         # Draft | Approved | Superseded
 authority-level: 3       # engine-spec.md §1.5; the fixtures themselves are level 5 (tests and fixtures)
 semantics-owner: Statistical owner (tolerances, correction levels); Data/Licensing owner (synthetic-only rule); Security/Release owner (CI jobs)
 work-packages: P1-01 (harness skeleton and fixture reader), P1-06 / P1-12 (first fixture sets), P1-05 (synthetic world fixtures)
@@ -486,7 +486,7 @@ explanation** (superseded alpha-spec §6.6 rule 3; root `CLAUDE.md`).
   bound, far above the about 4 MB of §3's canonical world) is refused (`FileTooLarge`).
   `FixtureCase::with_manifest` validates the manifest it is given (`Manifest::validate`), so no
   constructible case carries a non-synthetic or malformed manifest. `grid-domain` may not depend on `serde_json`: its only external dependency
-  is `serde` (ADR-014, Proposed in P1-01; decision 3 puts the format crates in `grid-pipeline` and
+  is `serde` (ADR-014, accepted 2026-10-19; decision 3 puts the format crates in `grid-pipeline` and
   `grid-synth`), so the reader cannot live there. `grid-models` MUST NOT depend on `grid-synth`
   (engine-spec §8.1 rule 3; `synthetic-world.md` §10.1); the structural test
   `crates/pipeline/tests/crate_boundaries.rs` fails on a normal or build dependency. Whether a

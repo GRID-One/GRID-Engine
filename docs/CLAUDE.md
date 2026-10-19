@@ -49,7 +49,7 @@ owns for GRID.
 
 | Crate | Boundary | Engine role |
 |---|---|---|
-| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, Proposed in P1-01). | Canonical IDs, every version ID, the `AsOf` type, typed error codes, output-contract DTOs, plays/players/market/college contract types and their validators |
+| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, accepted 2026-10-19). | Canonical IDs, every version ID, the `AsOf` type, typed error codes, output-contract DTOs, plays/players/market/college contract types and their validators |
 | `persistence` | SQLx, migrations, SQLite. No business logic. | Schema groups, artifact manifest, atomic artifact writes, production-pointer transaction |
 | `ingestion` | nflverse, CFBD adapters. Raw data retention. | Provider adapters, hashed raw retention, normalization and quarantine, once-per-day fetch cap, offline replay, plays-contract builder |
 | `identity` | Player registry, cross-source linking, review queue. | Canonical registry, NCAA linking tiers, identity review queue |
@@ -69,9 +69,11 @@ the crate set; later packages fill it:
 - `application` → `pipeline`: renamed by P1-01, which delivered the library facade as types and
   traits with no implementor. DAG orchestration and durable-job execution follow from P1-02.
 - `grid-cli`, binary `grid`: created by P1-01 as a skeleton (`--version`, `--help`, `exit-codes`; the
-  usage lists every §8.2 and §8.3 spelling and the package that delivers it). Subcommands, reports
-  and export are P1-10's. It depends only on the orchestration crate and `domain`, and the structural
-  test in `crates/pipeline/tests/crate_boundaries.rs` enforces it.
+  usage lists every §8.2 and §8.3 spelling and the package that delivers it). P1-10 builds the
+  adapter, the Phase 1 subcommands, reports and export; each Phase 2 surface of engine-spec §10.2.6
+  comes, subcommand included, with the package that owns its content (owner ruling 2026-10-19,
+  P0-03). It depends only on the orchestration crate and `domain`, and the structural test in
+  `crates/pipeline/tests/crate_boundaries.rs` enforces it.
 - `synth`: created by P1-01 with the fixture reader, the tolerance helpers, `SyntheticTruth` and the
   `from_legacy_v0` loader for the exported oracle worlds. P1-05 commits the first synthetic-world
   case; P1-12 adds the Rust-native generator of the corrected synthetic world, validated by recovery
@@ -90,10 +92,10 @@ the crate set; later packages fill it:
    §10.1); the structural test checks normal and build dependencies. Whether a numerical crate's
    parity tests may take `synth` as a dev-dependency is an open owner item recorded by P1-01.
 4. `domain` takes `serde` with `derive` as its only external dependency, and public contract types
-   derive `Serialize` and `Deserialize` there (ADR-014, Proposed in P1-01; the owner rules on it at
-   the P1-01 merge). Format crates stay outside `domain`: `serde_json` in `pipeline` and `synth`.
-   `Display` and `std::error::Error` are hand-written; no `thiserror` in `domain`. No second external
-   dependency without a superseding ADR; the structural test fails if one appears.
+   derive `Serialize` and `Deserialize` there (ADR-014, accepted 2026-10-19). Format crates stay
+   outside `domain`: `serde_json` in `pipeline` and `synth`. `Display` and `std::error::Error` are
+   hand-written; no `thiserror` in `domain`. No second external dependency without a superseding ADR;
+   the structural test fails if one appears.
 5. P1-12 owns `models::{value, rapm, credit, statespace, priors}` and the `synth` crate; P1-07 does
    not edit them. An overlap is a stop condition.
 6. Not ported: `grid/cache.py`, `scoring/format_registry.py`,

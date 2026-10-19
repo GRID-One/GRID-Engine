@@ -1,7 +1,7 @@
 ---
 contract: grid.output
-contract-version: 1.0 (Draft; skeleton types in grid-domain since P1-01, no producer yet)
-status: Draft            # Draft | Approved | Superseded
+contract-version: 1.0 (Approved 2026-10-19 with P1-01; skeleton types in grid-domain, no producer yet)
+status: Approved         # Draft | Approved | Superseded
 authority-level: 3       # engine-spec.md §1.5
 semantics-owner: Statistical owner (distributions, explanations); Product/Architecture owner (records, reports, exports)
 work-packages: P1-01 (types and serialization skeleton), P1-08 (distributions, explanations), P1-10 (CLI, reports, export), P2-06/P2-07 (scorecards, change log)
@@ -356,7 +356,7 @@ The engine emits **no VOR, tier or draft-ranking output** *(DR-C11)*.
 ## 10. Rust types (fixed by P1-01)
 
 The names below are the ones `grid-domain` (`crates/domain`, package `grid-domain`) defines since
-P1-01. Every record and enum derives `Serialize` and `Deserialize` (ADR-014, Proposed in P1-01);
+P1-01. Every record and enum derives `Serialize` and `Deserialize` (ADR-014, accepted 2026-10-19);
 the serialized field names are the contract's field names, so a rename is a contract change (§9).
 No record carries `#[serde(deny_unknown_fields)]`: a reader tolerates a MINOR addition. A missing
 value is `Option::None` with a documented reason, never 0 or NaN (KI-P1). The crate root re-exports
@@ -424,7 +424,7 @@ checked on draw matrices by `grid-simulation` (P1-08).
 
 **Serialization and formats** (`grid-pipeline`, `crates/pipeline`; ADR-014 decision 3).
 - `grid-domain` depends on `serde` with `derive` and on nothing else outside `std`
-  (ADR-014, Proposed in P1-01; the structural test `crates/pipeline/tests/crate_boundaries.rs`
+  (ADR-014, accepted 2026-10-19; the structural test `crates/pipeline/tests/crate_boundaries.rs`
   fails if a second external dependency appears). `Display` and `std::error::Error` are hand-written.
 - JSON lives in `grid-pipeline::serialization`: `RecordEnvelope<T> { contract, version, record }`
   stamps the contract id and version on every record (§9), `to_json` refuses a non-finite number,

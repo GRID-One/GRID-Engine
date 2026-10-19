@@ -27,7 +27,7 @@ projections* (`engine-spec.md` §3.2, §3.3).
 
 - **Rust engine: skeleton.** The workspace has 13 crates (the DR-A8 set since P1-01). `domain`,
   `pipeline`, `synth` and `grid-cli` hold the P1-01 skeleton: the contract types with serde derives
-  (ADR-014, Proposed), the §8.2–§8.4 library API surface as traits with no implementor, the DR-D29
+  (ADR-014), the §8.2–§8.4 library API surface as traits with no implementor, the DR-D29
   fixture reader with the `from_legacy_v0` loader, and the thin `grid` CLI (`--version`, `--help`,
   `exit-codes`). `persistence` holds the SQLx scaffold with one infrastructure migration. Still no
   engine computation: nothing fits, projects or scores.
@@ -54,7 +54,9 @@ projections* (`engine-spec.md` §3.2, §3.3).
 P0-01, the engine-only consolidation (`docs/01-work-packages/p0-01-engine-consolidation.md`), is
 Done: the owner merged it on 2026-10-15 (`b819ae0`). P0-02, its recording change, merged on
 2026-10-15 (`73a8e3b`, PR #5). P1-01, the engine skeleton
-(`docs/01-work-packages/p1-01-engine-skeleton.md`), is in progress.
+(`docs/01-work-packages/p1-01-engine-skeleton.md`), merged on 2026-10-19 (`8755552`, PR #6). P0-03
+records the owner's rulings on the decisions P1-01 raised
+(`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`).
 
 ## Quick start
 
