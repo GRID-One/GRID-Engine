@@ -22,9 +22,11 @@
 //! implementation in this crate: each is a trait method with no implementor, by design
 //! (`docs/01-work-packages/p1-01-engine-skeleton.md`, "Observable outcome"). Nothing here computes
 //! a projection, touches a database, reads a clock or opens a file. The implementors arrive with the
-//! packages that own their stages (P1-02 onward); the CLI subcommands are P1-10's (engine-spec
-//! §8.1 target table; §8.2 "completed in P1-10"), and the content of each Phase 2 output is the
-//! package §10.2.6 names; `grid-cli` records the delivering package per subcommand.
+//! packages that own their stages (P1-02 onward). P1-10 builds the CLI adapter and the Phase 1
+//! subcommands (engine-spec §8.1 target table; §8.2 "completed in P1-10"); each Phase 2 surface,
+//! subcommand included, is delivered by the package §10.2.6 names as the owner of its content, as
+//! the owner ruled on 2026-10-19 (P0-03; P1-01 Amendments row 22). `grid-cli` records the
+//! delivering package per subcommand.
 //!
 //! # Synchronous façade over an asynchronous interior
 //!
@@ -34,7 +36,8 @@
 //! traits use Tokio internally for I/O and job coordination and a dedicated CPU pool
 //! (`spawn_blocking` or Rayon) for mathematical work, never blocking the async runtime
 //! (engine-spec §8.13); a façade method blocks its caller until the command is enqueued or the
-//! query is answered, and that is the whole of its contract with the caller.
+//! query is answered, and that is the whole of its contract with the caller. The owner ruled on
+//! 2026-10-19 to keep the façade synchronous (P0-03; P1-01 Amendments row 20).
 //!
 //! # No business logic outside this crate's dependents
 //!

@@ -1,7 +1,7 @@
 //! `grid-domain` — IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014).
 //!
 //! The lowest crate of the GRID engine workspace. Its boundary is fixed by `docs/CLAUDE.md`
-//! ("Crate Boundaries", rule 4, which follows ADR-014, Proposed in P1-01), `docs/02-adr/001-repo-bootstrap-decisions.md`
+//! ("Crate Boundaries", rule 4, which follows ADR-014, accepted 2026-10-19), `docs/02-adr/001-repo-bootstrap-decisions.md`
 //! (the crate set and the frozen verify chain), `docs/02-adr/011-engine-only-pivot.md` (engine
 //! only: a library API, a headless CLI and versioned outputs, no UI) and
 //! `docs/02-adr/014-domain-serialization-boundary.md` (`serde` with `derive` is the only external

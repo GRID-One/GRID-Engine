@@ -2,7 +2,7 @@
 model-spec-id: MS-RAPM-ATTRIBUTION
 status: Draft            # Draft | Approved | Superseded
 statistical-owner: statistical owner (role defined in engine-spec §1); approval pending
-version: 0.1.0 (2026-10-01, written under consolidation WP P0-01)
+version: 0.1.1 (2026-10-19, P0-03: the §10.3 P-3 norm ruling; 0.1.0 2026-10-01, written under consolidation WP P0-01)
 supersedes: none. First engine-only spec for this component. Replaces the cautious-nevermore
   prose now archived (non-authoritative) under docs/07-archive/cautious-nevermore/.
 ---
@@ -907,7 +907,7 @@ oracle, both legacy and corrected, and sha256-manifested (DR-B2). The RAPM set i
 |---|---|---|---|
 | P-1 | Design: CSR triplets, `y`, column map, `nCols` | A (exact) | Integer equality. `y` identical |
 | P-2 | `XᵀX` and `Xᵀy` per block and summed | A | `XᵀX` exact (integer sums). `Xᵀy` ≤ 1e-12 abs |
-| P-3 | Dense `β` for: (a) `λ=120`, `μ_team=0.05`, no market; (b) (a) plus market `[+1,+1]` with legacy target, `w=40`; (c) `lambda_by_pos = {QB:0.5, RB:1.5, WR:1.0, TE:1.0}`; (d) a nonzero prior mean (the oracle's re-seed configuration); (e) interactions `μ = 10`, `min_pair_plays = 10` on the `cb_split` synth (design called directly); (f) each situation slice | A′ | ≤ 1e-9 relative (‖·‖₂) vs oracle `np.linalg.solve` |
+| P-3 | Dense `β` for: (a) `λ=120`, `μ_team=0.05`, no market; (b) (a) plus market `[+1,+1]` with legacy target, `w=40`; (c) `lambda_by_pos = {QB:0.5, RB:1.5, WR:1.0, TE:1.0}`; (d) a nonzero prior mean (the oracle's re-seed configuration); (e) interactions `μ = 10`, `min_pair_plays = 10` on the `cb_split` synth (design called directly); (f) each situation slice | A′ | ≤ 1e-9 relative (‖·‖∞, as engine-spec §7.12.5 defines Class A′; the Statistical owner's ruling of 2026-10-19 replaced the 2-norm first pre-registered here, P0-03) vs oracle `np.linalg.solve` |
 | P-4 | PCG `β` for P-3 (a), (b) and the real-scale stress (synthetic, `nCols ≈ 3e3`) | B | See the refinement below |
 | P-5 | Incremental == batch (Rust internal) and vs oracle per-origin ratings with injected `dv` | A (internal), A′ (vs oracle) | Internal ≤ 1e-12 abs. Vs oracle ≤ 1e-9 relative (the oracle asserts 1e-8) |
 | P-6 | Two-path: Rust weekly stage == Rust walk-forward at W | A | ≤ 1e-12 abs (the oracle observes 0.0) |
@@ -925,8 +925,10 @@ oracle, both legacy and corrected, and sha256-manifested (DR-B2). The RAPM set i
 - The Class B criterion (DR-B3), all three required:
   1. `converged = true`;
   2. the Rust solution's relative residual on the **oracle's** `(A, b)` is ≤ `tol_cg`;
-  3. ‖β_cg − β_dense‖/‖β_dense‖ ≤ 1e-9, with `tol_cg = 1e-12` (measured 1.4e-11 at that
-     tolerance), so Class B meets the A′ bound.
+  3. ‖β_cg − β_dense‖∞/‖β_dense‖∞ ≤ 1e-9, with `tol_cg = 1e-12`, so Class B meets the A′ bound
+     (the ∞-norm, engine-spec §7.12.5; ruling of 2026-10-19, P0-03). The §5.2 measurement gave
+     1.4e-11 at that tolerance in a norm it does not state; the ∞-norm margin is measured when the
+     first Class B fixture lands.
 
 **Truth-anchored semantic tests (new; must pass on the fixed synth, Rust-native):**
 

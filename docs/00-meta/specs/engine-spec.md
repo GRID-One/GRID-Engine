@@ -5603,7 +5603,7 @@ engine and GRID.
 
 | Crate | Boundary (`docs/CLAUDE.md`) | Owns for the engine and GRID | Oracle counterpart (`reference/python/backend/…`) |
 |---|---|---|---|
-| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, Proposed in P1-01). | Canonical IDs: `gsis_id`, game, season and week, and every version ID in §8.9. The `AsOf` type with its temporal, scope, state and publication-lag axes (§4.5). Typed error codes. The `TrainingStatus` and terminal-state enums (§8.4, §8.6.4). Public DTOs of the engine output contract (§5.5). The plays, players, market and college contract types and their validators (`docs/03-contracts/plays-contract.md`). | `grid/data_adapters.py` (contract); `validation/asof.py` (`AsOf`) |
+| `domain` | IDs, types, errors, DTOs. One external dependency: `serde` derives (ADR-014, accepted 2026-10-19). | Canonical IDs: `gsis_id`, game, season and week, and every version ID in §8.9. The `AsOf` type with its temporal, scope, state and publication-lag axes (§4.5). Typed error codes. The `TrainingStatus` and terminal-state enums (§8.4, §8.6.4). Public DTOs of the engine output contract (§5.5). The plays, players, market and college contract types and their validators (`docs/03-contracts/plays-contract.md`). | `grid/data_adapters.py` (contract); `validation/asof.py` (`AsOf`) |
 | `persistence` | SQLx, migrations, SQLite. No business logic. | The schema groups (§8.5), the artifact manifest, the atomic artifact-write protocol (§8.11), and the production-pointer transaction (§8.13). | None. The oracle's mutable `.npz`, joblib and parquet caches are not ported (DR-C15). |
 | `ingestion` | nflverse, CFBD adapters. Raw data retention. | Provider adapters per `docs/04-providers/`. Raw retention with content hashes and the §4.1.1 metadata. Normalization, validation and quarantine. The once-per-day-per-source fetch cap and offline replay (§8.6.1). The plays-contract builder. | `grid/nflverse_loader.py`, `grid/nflverse_adapter.py`. Required behaviour differs from the oracle for KI-NEW-V0a and KI-NEW-I1..KI-NEW-I5 (§4.7). |
 | `identity` | Player registry, cross-source linking, review queue. | The canonical registry, the NCAA linking tiers (§4.4.3) and the identity review queue. | None |
@@ -5614,7 +5614,7 @@ engine and GRID.
 | `evaluation` | Rolling-origin backtests, PB-MAE, benchmark comparison. | The walk-forward backtest over the three-season window (§2.4, §7.1). The player pool, PB-MAE and the §7.5 metrics. The week-clustered bootstrap and the naive baselines. The leakage harness: poisoning, tripwire, a watermark that also checks across season seams, and two-path equivalence. Scorecards and benchmark comparison. The lineup-simulation decision metric, with VOR internal to it (DR-C11). The synthetic recovery harness (§7.13). | `validation/{asof,backtest,baselines,metrics,tier1,tier2,lineup_sim,sniff}.py` |
 | `governance` | Model promotion, rollback, snapshot, job queue. | Model states and the promotion gate (§8.8). The pre-registered threshold registry. Production pointers and snapshot records (§8.7.4). The durable job queue (§8.10). | `validation/{thresholds,verdict,report}.py`. The oracle verdict is rendered, never acted on. |
 | `pipeline` | Commands, queries, events, orchestration. Orchestrates crates; `serde_json` for records and sidecars. | The engine façade: the library API (§8.2–§8.4), §8.6 DAG orchestration and durable-job execution (§8.10). Renamed from `application` by P1-01 (DR-A8), which delivered the façade as types and traits with no implementor; orchestration follows from P1-02. | `pipeline/weekly_update.py`, `pipeline/ingest_grid.py`. Neither is a usable oracle for the incremental path (§8.6.6). |
-| `grid-cli` | Thin adapter over the orchestration crate and `domain` (rule 4). No business logic. | Thin adapter: argument parsing, output formatting (table / JSON / CSV), exit codes (§8.6.4). P1-01 skeleton (`--version`, `--help`, `exit-codes`); subcommands, reports and export in P1-10. | None |
+| `grid-cli` | Thin adapter over the orchestration crate and `domain` (rule 4). No business logic. | Thin adapter: argument parsing, output formatting (table / JSON / CSV), exit codes (§8.6.4). P1-01 skeleton (`--version`, `--help`, `exit-codes`); subcommands, reports and export in P1-10, except the five Phase 2 surfaces of §10.2.6, whose subcommands their content packages deliver (owner ruling 2026-10-19, P0-03). | None |
 | `synth` | Synthetic world and parity harness. Synchronous (rule 3). | Planted-truth generator per `docs/05-model-specs/synthetic-world.md` (module homes in its §10.1). P1-01 skeleton: the DR-D29 fixture reader and tolerance helpers, `SyntheticTruth` and the `from_legacy_v0` loader for the exported oracle worlds; P1-12 adds the Rust-native generator of the **corrected** world. | `grid/synth.py`, `grid/data_adapters.py` (`load_synthetic`). The corrected world (DR-B4) diverges from the legacy generator by design. |
 
 **Rules.**
@@ -5638,8 +5638,8 @@ engine and GRID.
    guard SHOULD enforce this.
 5. `domain` declared "no external deps" until P1-01, which was to decide by ADR whether public DTOs
    with serialization derives take the dependency or serialization lives in another crate. P1-01
-   proposes ADR-014 (`domain` takes `serde` as its only external dependency); the Product/Architecture
-   owner accepts or rejects it at the P1-01 merge.
+   proposed ADR-014 (`domain` takes `serde` as its only external dependency), and the
+   Product/Architecture owner accepted it on 2026-10-19 (P0-03).
 6. The following oracle modules are not ported:
    - `grid/cache.py` (`ParquetCache`), which is replaced by raw retention with content hashes;
    - the app-side modules (`scoring/format_registry.py`, `pipeline/{data_pipeline,compute_valuations,sync_*,health_check}.py`).
@@ -5656,7 +5656,7 @@ SQLite stay, because `check-sqlx` and `test-rust` (§8.19) depend on them.
 | Change | Created by | Content |
 |---|---|---|
 | `application` → `pipeline` | P1-01 (rename and façade skeleton) | Library façade (§8.2–§8.4), §8.6 DAG orchestration, durable-job execution (§8.10) |
-| New `grid-cli` crate (binary `grid`) | P1-01 (skeleton); P1-10 (subcommands, reports, export) | Thin adapter: argument parsing, output formatting (table / JSON / CSV), exit codes (§8.6.4) |
+| New `grid-cli` crate (binary `grid`) | P1-01 (skeleton); P1-10 (the adapter, the Phase 1 subcommands, reports and export); each Phase 2 surface of §10.2.6, subcommand included, by the package that owns its content (P2-01, P2-02, P2-06, P2-07; owner ruling 2026-10-19, P0-03) | Thin adapter: argument parsing, output formatting (table / JSON / CSV), exit codes (§8.6.4) |
 | New `synth` crate | P1-01 (crate skeleton, `SyntheticTruth` type and the `from_legacy_v0` loader for the exported oracle worlds); P1-05 (committed synthetic-world fixtures, and the multi-season and publication-lag worlds for the leakage harness); P1-12 (Rust-native generator of the **corrected** world, draw-tape replay and the realistic profile; DR-B4, DR-D28); the stat-vector world (`synthetic-world.md` §4.12) before any Layer A–F recovery gate is written, with its spec revision approved before P1-07 starts and no package yet named to build it (DR-B4; §9.5) | Planted-truth generator per `docs/05-model-specs/synthetic-world.md` (module homes in its §10.1). Byte parity with numpy RNG streams is not required. A Rust-native generator is checked exactly against the oracle's generative model by draw-tape replay (DR-D28; `synthetic-world.md` §5.3) and statistically by the Class D recovery gates over a generator-seed ensemble (§7.13; DR-D26). |
 
 ### 8.2 Engine API: commands
@@ -5672,7 +5672,10 @@ Commands mutate state. Each one:
 - never overwrites a production artifact or a lock snapshot in place, because every change
   produces a new version (§8.9).
 
-Each command is a library function and a CLI subcommand. The CLI spellings below are indicative.
+Each command is a library function and a CLI subcommand. The library functions of §8.2 and §8.3 are
+synchronous methods of the façade traits; their implementors run Tokio and the CPU worker pool behind
+them (§8.13), so a caller such as the CLI needs no runtime of its own (owner ruling 2026-10-19, P0-03).
+The CLI spellings below are indicative.
 `docs/03-contracts/engine-output-contract.md` freezes the final spelling, arguments and exit codes
 (skeleton in P1-01, completed in P1-10).
 
@@ -7636,7 +7639,8 @@ Kept verbatim from the superseded list:
 This item replaces the superseded "Native UI additions". Each superseded screen becomes an engine output
 with its substance kept. The required content of each output is specified once, in §5.6 ("Phase 2
 outputs"), and its library query or command is in §8.2–§8.3. Each output is delivered by the work package
-that owns its content (§10.5):
+that owns its content (§10.5), its library function and `grid` subcommand included (§8.1; owner ruling
+2026-10-19, P0-03):
 
 | Superseded screen | Engine output (§5.6) | Surface (§8.2, §8.3) | Package |
 |---|---|---|---|

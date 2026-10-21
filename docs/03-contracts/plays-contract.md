@@ -1,7 +1,7 @@
 ---
 contract: grid.plays
-contract-version: 0 (legacy, as implemented by the oracle) and 1 (Rust target)
-status: Draft            # Draft | Approved | Superseded
+contract-version: 0 (legacy, as implemented by the oracle) and 1 (Rust target; Approved 2026-10-19 with P1-01)
+status: Approved         # Draft | Approved | Superseded
 authority-level: 3       # engine-spec.md §1.5
 semantics-owner: Statistical owner
 provider-mapping-owner: Data/Licensing owner
@@ -23,7 +23,7 @@ Two versions are specified:
   `reference/python/<path>:<line>`; line numbers equal `cautious-nevermore@59bce1d`. Parity
   fixtures exported from the oracle carry v0 frames
   ([parity-fixture-contract.md](parity-fixture-contract.md)).
-- **v1 (Rust target, Draft)** keeps the v0 semantics. It adds the season, as-of and
+- **v1 (Rust target, Approved 2026-10-19)** keeps the v0 semantics. It adds the season, as-of and
   publication-lag metadata that v0 lacks (§9). It also closes the contract defects in §8, or
   makes each one an explicit typed failure. P1-01 and P1-03 implement v1 (§11).
 
@@ -412,7 +412,7 @@ They never extend `grid.plays`.
 The names below are the ones `grid-domain` (`crates/domain`, module `grid_domain::plays`, with the
 keys in `grid_domain::ids`, the time type in `grid_domain::time` and the errors in
 `grid_domain::error`) defines since P1-01, which fixed them. `grid-domain` depends on `serde` with
-`derive` and on nothing else outside `std` (ADR-014, Proposed in P1-01): every type below derives
+`derive` and on nothing else outside `std` (ADR-014, accepted 2026-10-19): every type below derives
 `Serialize` and `Deserialize`, with the serialized field names equal to the contract's names, and the
 *format* crates stay outside the domain crate (`serde_json` in `grid-pipeline` for records and
 sidecars and in `grid-synth` for fixture manifests; ADR-014 decision 3). `Display` and
@@ -572,7 +572,8 @@ of `from_legacy_v0` on its image (the round-trip tests prove it on a hand-built 
 ## 12. Versioning and compatibility
 
 - **Contract id `grid.plays`.** v0 is frozen: it describes `cautious-nevermore@59bce1d` and
-  changes only if an erratum in this document is found. v1 is Draft until P1-01 is approved.
+  changes only if an erratum in this document is found. v1 was Draft until P1-01 was approved; the
+  owner approved it with P1-01 on 2026-10-19 (answer 6 of `docs/06-sessions/2026-10-19-P0-03.md`).
 - **MAJOR bump.** Removing or renaming a field; changing a unit, a vocabulary or a definition
   (signed-EP `drive_points`, the `two_minute` rule, the terminal-row rule); or tightening a rule
   so that previously valid frames are rejected.

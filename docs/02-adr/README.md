@@ -27,17 +27,18 @@ The `status` values are those of the template: `Proposed`, `Accepted`, `Supersed
   implementing agent writes ADRs as Proposed and never marks one Accepted on its own judgment. The
   exception is an owner-directed transcription: the agent transcribed the owner's acceptance of
   ADR-011, ADR-012 and ADR-013 at the owner's direction (answer 2 of
-  `docs/06-sessions/2026-10-15-P0-02.md`).
+  `docs/06-sessions/2026-10-15-P0-02.md`), and of ADR-014 (answer 1 of
+  `docs/06-sessions/2026-10-19-P0-03.md`).
 - **ADR-011 and ADR-012** were accepted on 2026-10-15 in the owner's merge review of the P0-01 pull
   request (PR #4 comment 6185953773), together with the DR-A decisions they carry
   (`docs/00-meta/decision-register.md`, "How to ratify or override").
 - **ADR-013** records the Statistical owner's 2026-10-14 reversal in part of DR-D19 (register rule 6).
   The Statistical owner accepted it on 2026-10-15 in the same comment, and its text governs the parts
   of DR-D19 it reverses.
-- **ADR-014** is Proposed by P1-01 (2026-10-17) under the authority engine-spec §8.1 rule 5 gives that
-  package. P1-01 implements it while Proposed, as P0-01 implemented ADR-011 and ADR-012; the
-  Product/Architecture owner accepts or rejects it in the P1-01 merge review. It binds nothing until
-  then.
+- **ADR-014** was proposed by P1-01 (2026-10-17) under the authority engine-spec §8.1 rule 5 gives that
+  package, and implemented while Proposed, as P0-01 implemented ADR-011 and ADR-012. The
+  Product/Architecture owner accepted it on 2026-10-19, after merging the P1-01 pull request (PR #6),
+  in answer 1 of `docs/06-sessions/2026-10-19-P0-03.md`; work package P0-03 transcribed the status.
 
 ## Partial supersession
 
@@ -71,7 +72,7 @@ Editing `superseded-by` is the only change permitted to an Accepted ADR. The bod
 | [011](011-engine-only-pivot.md) | Engine-only pivot | Accepted | 2026-10-07 | — |
 | [012](012-python-reference-oracle.md) | Python reference oracle | Accepted | 2026-10-07 | — |
 | [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | Accepted | 2026-10-14 | — |
-| [014](014-domain-serialization-boundary.md) | `grid-domain` takes `serde` as its only external dependency | Proposed | 2026-10-17 | — |
+| [014](014-domain-serialization-boundary.md) | `grid-domain` takes `serde` as its only external dependency | Accepted | 2026-10-17 | — |
 
 **What ADR-011 supersedes in part** (its "Supersession" section is authoritative):
 

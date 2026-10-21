@@ -26,10 +26,11 @@
 //!
 //! **No query has an implementation in P1-01.** [`EngineQueries`] has no implementor in this
 //! workspace; the packages that own each stage provide one from P1-02 on (the GRID diagnostic
-//! queries 12 and 13 are produced by P1-12). The CLI subcommand of every query is P1-10's
-//! (engine-spec §8.1 target table "P1-10 (subcommands, reports, export)"; §8.2 "completed in
-//! P1-10"); the content of each Phase 2 output is owned by the package §10.2.6 names (P2-01,
-//! P2-06, P2-07); `grid-cli` records the delivering package per subcommand.
+//! queries 12 and 13 are produced by P1-12). P1-10 builds the CLI subcommand of every Phase 1
+//! query (engine-spec §8.1 target table; §8.2 "completed in P1-10"); each Phase 2 output, its
+//! subcommand included, is delivered by the package §10.2.6 names as the owner of its content
+//! (P2-01, P2-06, P2-07), as the owner ruled on 2026-10-19 (P0-03; P1-01 Amendments row 22).
+//! `grid-cli` records the delivering package per subcommand.
 //!
 //! **Deviations from the indicative §8.3 signatures**, each deliberate and recorded here: query 2
 //! adds `horizon`, and queries 8, 9, 11 and 14 take a page or filters where the table writes

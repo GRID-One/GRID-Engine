@@ -6,121 +6,67 @@ use std::process::{Command, Output};
 
 use grid_domain::{TerminalState, EXIT_INTERNAL, EXIT_USAGE};
 
-/// One expected usage line: the §8.2 or §8.3 CLI spelling, its library function, the work
-/// package that delivers it (P1-10 for every entry: §8.1 target table and §8.2), and, for the
-/// five Phase 2 outputs, the package §10.2.6 names for their content (P2-01, P2-02, P2-06,
-/// P2-07). Which of the two owns those five subcommands is an open owner decision, so the usage
-/// shows both with the label "decision request".
-type Expected = (
-    &'static str,
-    &'static str,
-    &'static str,
-    Option<&'static str>,
-);
+/// One expected usage line: the §8.2 or §8.3 CLI spelling, its library function, and the work
+/// package that delivers it. The five Phase 2 outputs are delivered, subcommand included, by the
+/// package that owns their content (engine-spec §10.2.6: P2-01, P2-02, P2-06, P2-07); every other
+/// entry by P1-10 (§8.1 target table and §8.2). The owner ruled this on 2026-10-19 (P0-03; P1-01
+/// Amendments row 22).
+type Expected = (&'static str, &'static str, &'static str);
 
 /// Every §8.2 CLI spelling the usage must list (engine-spec §8.2, "CLI (indicative)").
 const COMMANDS: [Expected; 13] = [
-    ("update", "trigger_daily_update", "P1-10", None),
-    ("project", "request_projection_run", "P1-10", None),
-    ("rebuild", "request_model_rebuild", "P1-10", None),
-    (
-        "scoring add|set-default",
-        "set_scoring_profile",
-        "P1-10",
-        None,
-    ),
+    ("update", "trigger_daily_update", "P1-10"),
+    ("project", "request_projection_run", "P1-10"),
+    ("rebuild", "request_model_rebuild", "P1-10"),
+    ("scoring add|set-default", "set_scoring_profile", "P1-10"),
     (
         "availability import",
         "import_availability_overrides",
-        "P1-10",
-        Some("P2-02"),
+        "P2-02",
     ),
-    ("identity approve", "approve_identity_link", "P1-10", None),
-    ("identity reject", "reject_identity_link", "P1-10", None),
-    (
-        "benchmark import",
-        "import_benchmark_snapshot",
-        "P1-10",
-        None,
-    ),
-    ("model promote", "promote_candidate", "P1-10", None),
-    ("model rollback", "rollback_to_snapshot", "P1-10", None),
-    ("export", "export_projections", "P1-10", None),
-    ("model configure", "set_model_config", "P1-10", None),
-    ("backtest", "request_evaluation_run", "P1-10", None),
+    ("identity approve", "approve_identity_link", "P1-10"),
+    ("identity reject", "reject_identity_link", "P1-10"),
+    ("benchmark import", "import_benchmark_snapshot", "P1-10"),
+    ("model promote", "promote_candidate", "P1-10"),
+    ("model rollback", "rollback_to_snapshot", "P1-10"),
+    ("export", "export_projections", "P1-10"),
+    ("model configure", "set_model_config", "P1-10"),
+    ("backtest", "request_evaluation_run", "P1-10"),
 ];
 
 /// Every §8.3 CLI spelling the usage must list (engine-spec §8.3, "CLI (indicative)").
 const QUERIES: [Expected; 14] = [
-    ("query projections", "get_week_projections", "P1-10", None),
-    (
-        "query player",
-        "get_player_projection_detail",
-        "P1-10",
-        None,
-    ),
-    (
-        "query distribution",
-        "get_projection_distribution",
-        "P1-10",
-        None,
-    ),
-    (
-        "report changes",
-        "get_projection_change_log",
-        "P1-10",
-        Some("P2-07"),
-    ),
-    ("status --freshness", "get_data_freshness", "P1-10", None),
-    ("status", "get_ingestion_status", "P1-10", None),
-    ("status", "get_training_status", "P1-10", None),
-    ("identity queue", "get_identity_review_queue", "P1-10", None),
-    (
-        "report scorecard",
-        "get_model_scorecard",
-        "P1-10",
-        Some("P2-06"),
-    ),
-    (
-        "report benchmark",
-        "get_benchmark_results",
-        "P1-10",
-        Some("P2-06"),
-    ),
-    (
-        "report data-quality",
-        "get_data_quality_report",
-        "P1-10",
-        Some("P2-01"),
-    ),
-    ("query ratings", "get_player_ratings", "P1-10", None),
-    ("query bands", "get_confidence_bands", "P1-10", None),
-    ("model status", "get_model_status", "P1-10", None),
+    ("query projections", "get_week_projections", "P1-10"),
+    ("query player", "get_player_projection_detail", "P1-10"),
+    ("query distribution", "get_projection_distribution", "P1-10"),
+    ("report changes", "get_projection_change_log", "P2-07"),
+    ("status --freshness", "get_data_freshness", "P1-10"),
+    ("status", "get_ingestion_status", "P1-10"),
+    ("status", "get_training_status", "P1-10"),
+    ("identity queue", "get_identity_review_queue", "P1-10"),
+    ("report scorecard", "get_model_scorecard", "P2-06"),
+    ("report benchmark", "get_benchmark_results", "P2-06"),
+    ("report data-quality", "get_data_quality_report", "P2-01"),
+    ("query ratings", "get_player_ratings", "P1-10"),
+    ("query bands", "get_confidence_bands", "P1-10"),
+    ("model status", "get_model_status", "P1-10"),
 ];
 
+/// The label P1-01 put on the five Phase 2 entries while their ownership was an open owner
+/// decision, retired by the 2026-10-19 ruling (P0-03). The tests assert that no output carries it.
+const RETIRED_LABEL: &str = "decision request";
+
 /// The usage tag of one entry, as `args::availability_tag` renders it.
-fn tag(delivered_by: &str, content_by: Option<&str>) -> String {
-    match content_by {
-        None => format!("available from {delivered_by}"),
-        Some(content) => {
-            format!("available from {delivered_by}; content {content} (decision request)")
-        }
-    }
+fn tag(delivered_by: &str) -> String {
+    format!("available from {delivered_by}")
 }
 
 /// The unavailable message of one entry, as `args::unavailable_message` renders it.
-fn unavailable(spelling: &str, delivered_by: &str, content_by: Option<&str>) -> String {
-    let mut message = format!(
+fn unavailable(spelling: &str, delivered_by: &str) -> String {
+    format!(
         "grid {spelling}: not available in this engine version: delivered by work package \
-         {delivered_by}"
-    );
-    if let Some(content) = content_by {
-        message.push_str(&format!(
-            "; content by work package {content} (decision request)"
-        ));
-    }
-    message.push('\n');
-    message
+         {delivered_by}\n"
+    )
 }
 
 fn grid(args: &[&str]) -> Output {
@@ -162,8 +108,8 @@ fn help_lists_every_command_and_query_spelling() {
     let help = grid(&["--help"]);
     assert_eq!(help.status.code(), Some(0));
     let text = stdout(&help);
-    for (spelling, library, delivered_by, content_by) in COMMANDS.iter().chain(QUERIES.iter()) {
-        let expected_tag = format!("[{library}; {}]", tag(delivered_by, *content_by));
+    for (spelling, library, delivered_by) in COMMANDS.iter().chain(QUERIES.iter()) {
+        let expected_tag = format!("[{library}; {}]", tag(delivered_by));
         assert!(
             text.lines().any(|line| {
                 line.trim_start().starts_with(spelling) && line.contains(&expected_tag)
@@ -185,27 +131,45 @@ fn help_lists_every_command_and_query_spelling() {
         !text.contains("not available in this engine version]"),
         "no entry is left without a delivering package:\n{text}"
     );
-    // The five Phase 2 outputs name their content package with the decision-request label.
+    // The five Phase 2 outputs name their content package as the delivering one, every other
+    // entry names P1-10, and no line carries the retired decision-request label.
     assert_eq!(
         text.lines()
-            .filter(|line| line.contains(" (decision request)]"))
+            .filter(|line| line.contains("; available from P2-0"))
             .count(),
         5,
-        "five entries carry the decision-request label:\n{text}"
+        "five entries are delivered by a Phase 2 package:\n{text}"
     );
-    // One footer line keeps the engine-spec §10.2.6 nuance: the content behind some outputs
-    // arrives with the package that owns it. The usage is plain ASCII (no section sign).
+    assert_eq!(
+        text.lines()
+            .filter(|line| line.contains("; available from P1-10]"))
+            .count(),
+        13 + 14 - 5,
+        "every other entry is delivered by P1-10:\n{text}"
+    );
+    assert!(
+        !text.lines().any(|line| line.contains(RETIRED_LABEL)),
+        "no line carries the decision-request label:\n{text}"
+    );
+    // One footer line states the ruled split: engine-spec 8.1 gives the CLI adapter and the
+    // Phase 1 subcommands to P1-10, and 10.2.6 gives each Phase 2 surface to the package that owns
+    // its content. The usage is plain ASCII (no section sign).
     assert!(text.is_ascii(), "{text}");
     let footers: Vec<&str> = text
         .lines()
-        .filter(|line| line.contains("engine-spec 9.2.7 and 10.2.6"))
+        .filter(|line| line.contains("engine-spec 10.2.6 assigns"))
         .collect();
     assert_eq!(
         footers.len(),
         1,
         "one content-ownership footer line:\n{text}"
     );
-    for package in ["P2-07", "P2-06", "P2-02", "P2-01"] {
+    assert!(
+        footers[0].contains("engine-spec 8.1 assigns the CLI adapter"),
+        "{}",
+        footers[0]
+    );
+    for package in ["P1-10", "P2-07", "P2-06", "P2-02", "P2-01"] {
         assert!(footers[0].contains(package), "{}", footers[0]);
     }
     assert!(
@@ -256,87 +220,51 @@ fn exit_codes_prints_the_terminal_state_table() {
 
 #[test]
 fn a_recognised_but_unavailable_subcommand_exits_with_the_usage_code() {
-    // (arguments, the spelling reported, the delivering package named, the content package).
-    let cases: [(Vec<&str>, &str, &str, Option<&str>); 15] = [
-        (vec!["update"], "update", "P1-10", None),
-        (vec!["update", "--offline"], "update", "P1-10", None),
+    // (arguments, the spelling reported, the delivering package named). The five Phase 2
+    // surfaces name the package that owns their content (engine-spec §10.2.6).
+    let cases: [(Vec<&str>, &str, &str); 15] = [
+        (vec!["update"], "update", "P1-10"),
+        (vec!["update", "--offline"], "update", "P1-10"),
         (
             vec![
                 "project", "--season", "2023", "--week", "5", "--lock", "sun",
             ],
             "project",
             "P1-10",
-            None,
         ),
         (
             vec!["scoring", "set-default", "ppr"],
             "scoring add|set-default",
             "P1-10",
-            None,
         ),
-        (
-            vec!["model", "promote", "42"],
-            "model promote",
-            "P1-10",
-            None,
-        ),
-        (
-            vec!["query", "projections"],
-            "query projections",
-            "P1-10",
-            None,
-        ),
-        (
-            vec!["status", "--freshness"],
-            "status --freshness",
-            "P1-10",
-            None,
-        ),
+        (vec!["model", "promote", "42"], "model promote", "P1-10"),
+        (vec!["query", "projections"], "query projections", "P1-10"),
+        (vec!["status", "--freshness"], "status --freshness", "P1-10"),
         // A bare `status` is reported under its own spelling, not the `--freshness` entry.
-        (vec!["status"], "status", "P1-10", None),
+        (vec!["status"], "status", "P1-10"),
         (
             vec!["report", "data-quality"],
             "report data-quality",
-            "P1-10",
-            Some("P2-01"),
+            "P2-01",
         ),
-        (
-            vec!["report", "changes"],
-            "report changes",
-            "P1-10",
-            Some("P2-07"),
-        ),
-        (
-            vec!["report", "scorecard"],
-            "report scorecard",
-            "P1-10",
-            Some("P2-06"),
-        ),
-        (
-            vec!["report", "benchmark"],
-            "report benchmark",
-            "P1-10",
-            Some("P2-06"),
-        ),
-        (vec!["identity", "queue"], "identity queue", "P1-10", None),
+        (vec!["report", "changes"], "report changes", "P2-07"),
+        (vec!["report", "scorecard"], "report scorecard", "P2-06"),
+        (vec!["report", "benchmark"], "report benchmark", "P2-06"),
+        (vec!["identity", "queue"], "identity queue", "P1-10"),
         (
             vec!["availability", "import", "x.csv"],
             "availability import",
-            "P1-10",
-            Some("P2-02"),
+            "P2-02",
         ),
-        (vec!["backtest"], "backtest", "P1-10", None),
+        (vec!["backtest"], "backtest", "P1-10"),
     ];
-    for (args, spelling, delivered_by, content_by) in cases {
+    for (args, spelling, delivered_by) in cases {
         let output = grid(&args);
         assert_eq!(output.status.code(), Some(EXIT_USAGE), "{args:?}");
         assert!(stdout(&output).is_empty(), "{args:?}");
         let err = stderr(&output);
-        assert_eq!(
-            err,
-            unavailable(spelling, delivered_by, content_by),
-            "{args:?}"
-        );
+        assert!(!err.contains(RETIRED_LABEL), "{args:?}: {err}");
+        assert_eq!(err, unavailable(spelling, delivered_by), "{args:?}");
     }
 }
 

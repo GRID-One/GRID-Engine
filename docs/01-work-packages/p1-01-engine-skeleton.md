@@ -1,17 +1,24 @@
 ---
 work-package-id: P1-01
-status: In Progress
+status: Done
 risk-class: High
 owner: Product/Architecture owner
 implementer: Claude Code (the implementing agent; model identity unrecorded, see Evidence required)
-reviewer: Pending — a fresh-context reviewer who is not the implementer, then the owner's merge
+reviewer: "Fresh-context agent reviews (security-dependency and adversarial PR, at 07ecd6a), as recorded in .ai/evidence/P1-01/; the owner's merge of PR #6 on 2026-10-19 and the rulings of docs/06-sessions/2026-10-19-P0-03.md"
 phase: 1
 ---
 
 # P1-01 — Domain types, engine API skeleton, oracle-fixture harness and crate restructure
 
 ## Status
-**In Progress.** Started on 2026-10-17 on branch `claude/pensive-fermat-fgaweh`, from `main` at the
+**Done.** The owner merged PR #6 on 2026-10-19 with a merge commit, `8755552`, without a review
+comment. The owner then ruled the same day on ADR-014, on the four decision requests and on the other
+rows of "Amendments" below, and approved the three contracts, in the answers recorded in
+`docs/06-sessions/2026-10-19-P0-03.md`; work package P0-03 carries them into the documents (see
+"Owner rulings at the merge (2026-10-19)" at the end). The text below records the package as it stood
+before the merge.
+
+Started on 2026-10-17 on branch `claude/pensive-fermat-fgaweh`, from `main` at the
 P0-02 merge (`73a8e3b`). That is the harness-assigned branch name, not `wp/P1-01-…` (CLAUDE.md,
 "Branch, commit, PR"), the same deviation P0-01 and P0-02 record under "Known limitations". The
 package was Ready when it started: every decision it depends on is settled (see "Owner decisions
@@ -514,3 +521,23 @@ than decided here: the serialized spelling of the status enums and of `PlayerKey
 (pinned by `crates/pipeline/tests/serialized_spelling.rs`, owner to fix before the first producer);
 whether query 10 carries the research marker per row or per run (a decision request before P2-06);
 the whole key of a derived-horizon record (P1-08).
+
+## Owner rulings at the merge (2026-10-19)
+
+Recorded by P0-03 (`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`) from the owner's
+answers in `docs/06-sessions/2026-10-19-P0-03.md`. The repository owner holds every owner role. The
+"Amendments" section above keeps its 2026-10-17 text; this section gives the ruling on each row.
+
+| Item | Ruling | Answer | Carried into |
+|---|---|---|---|
+| ADR-014 | Accepted | 1 | `docs/02-adr/014-domain-serialization-boundary.md` and the ADR index; every mention of ADR-014 as Proposed (engine-spec §8.1 and its mirror, `docs/CLAUDE.md`, the three contracts, `README.md`, `crates/domain/src/lib.rs`) |
+| Row 11, reviewer agents' Bash | Remove Bash from the five reviewer definitions; their tools are Read, Grep and Glob, and the orchestrating session supplies command outputs as files | 2 | `.claude/agents/` (the five reviewers) and `.claude/skills/work-package/SKILL.md`; `.claude/settings.json` unchanged |
+| Row 20, synchronous façade | Keep the façade traits synchronous; implementors run Tokio and the CPU pool behind them | 3 | engine-spec §8.2 and its mirror; `crates/pipeline/src/lib.rs` |
+| Row 21, Class A′ norm | The ∞-norm everywhere, as engine-spec §7.12.5 defines it; the RAPM model spec's P-3 is amended from the 2-norm | 4 | `docs/05-model-specs/rapm-attribution.md` §10.3 (version 0.1.1); the tolerance helpers already use the ∞-norm |
+| Row 22, the five Phase 2 CLI surfaces (superseding row 10) | Each is delivered, subcommand included, by the package that owns its content (P2-01, P2-02, P2-06, P2-07); P1-10 builds the adapter and the Phase 1 subcommands | 5 | engine-spec §8.1 and §10.2.6 errata and the mirror; `docs/CLAUDE.md`; the `grid --help` usage in `crates/grid-cli/` |
+| Rows 1 to 4, 6 to 9, 12 to 19, 23 and 24 | Approved | 6 | No text change: each row's wording is already in the merged documents |
+| The three contracts (`grid.plays` v1, `grid.output` 1.0, `grid.parity-fixture` 1) | Approved; from now on a breaking change needs a MAJOR version | 6 | The contracts' front matter and status sentences, and `docs/03-contracts/README.md` |
+
+Not ruled, and still open: row 5 (whether a numerical crate's parity tests may take `grid-synth` as a
+dev-dependency; P1-06 or P1-12 raises it); the open items P1-01 added to engine-output-contract §12;
+the §9.5 and §7.12.3 wording on parity-fixture timing.

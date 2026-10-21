@@ -1,6 +1,6 @@
 ---
 adr-id: 014
-status: Proposed
+status: Accepted
 date: 2026-10-17
 deciders: Product/Architecture owner
 supersedes:
@@ -12,9 +12,11 @@ superseded-by:
 ## Status
 
 **Proposed** 2026-10-17 under work package P1-01 (`docs/01-work-packages/p1-01-engine-skeleton.md`).
-The Product/Architecture owner accepts or rejects it in the merge review of the P1-01 pull request.
-An implementing agent writes ADRs as Proposed and never marks one Accepted on its own judgment
-(`docs/02-adr/README.md`, "Status").
+**Accepted** 2026-10-19 by the Product/Architecture owner. The owner merged the P1-01 pull request
+(PR #6, merge commit `8755552`) on 2026-10-19 without a review comment, then accepted this ADR the same
+day in answer 1 of `docs/06-sessions/2026-10-19-P0-03.md` ("Accept (Recommended)"). This status was
+transcribed at the owner's direction by work package P0-03; an implementing agent never marks an ADR
+Accepted on its own judgment (`docs/02-adr/README.md`, "Status").
 
 - **What it decides.** The question engine-spec §8.1 rule 5 assigns to P1-01: "`domain` currently
   declares 'no external deps'. If public DTOs need serialization derives, P1-01 decides by ADR whether
