@@ -1,6 +1,6 @@
 ---
 work-package-id: P0-03
-status: Review
+status: Done
 risk-class: Medium
 owner: Product/Architecture owner
 implementer: Claude Code (the implementing agent; model identity unrecorded, see Evidence required)
@@ -11,7 +11,10 @@ phase: 0
 # P0-03 — Record the owner's rulings on the decisions P1-01 raised
 
 ## Status
-**Review.** Written on branch `claude/pensive-fermat-fgaweh`, restarted from `main` at the P1-01
+**Done.** The owner merged PR #7 on 2026-10-19 with a merge commit, `4b8df86` (status recorded by
+P1-02). The text below records the package as it stood before the merge.
+
+Written on branch `claude/pensive-fermat-fgaweh`, restarted from `main` at the P1-01
 merge commit `8755552`. That is P1-01's harness-assigned branch name, not `wp/P0-03-…` (CLAUDE.md,
 "Branch, commit, PR"), the same deviation P0-01, P0-02 and P1-01 record under "Known limitations". The
 owner chose this package on 2026-10-19 (answer 7 of `docs/06-sessions/2026-10-19-P0-03.md`). It is

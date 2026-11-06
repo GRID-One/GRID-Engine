@@ -54,9 +54,11 @@ projections* (`engine-spec.md` §3.2, §3.3).
 P0-01, the engine-only consolidation (`docs/01-work-packages/p0-01-engine-consolidation.md`), is
 Done: the owner merged it on 2026-10-15 (`b819ae0`). P0-02, its recording change, merged on
 2026-10-15 (`73a8e3b`, PR #5). P1-01, the engine skeleton
-(`docs/01-work-packages/p1-01-engine-skeleton.md`), merged on 2026-10-19 (`8755552`, PR #6). P0-03
-records the owner's rulings on the decisions P1-01 raised
-(`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`).
+(`docs/01-work-packages/p1-01-engine-skeleton.md`), merged on 2026-10-19 (`8755552`, PR #6). P0-03,
+the record of the owner's rulings on the decisions P1-01 raised
+(`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`), merged the same day (`4b8df86`,
+PR #7). P1-02, the SQLite backbone and durable job ledger
+(`docs/01-work-packages/p1-02-sqlite-backbone-and-durable-jobs.md`), is in progress.
 
 ## Quick start
 

@@ -10,12 +10,12 @@ WHERE file.name != "README"
 SORT status ASC, file.name ASC
 ```
 
-## Status (2026-10-17)
+## Status (2026-11-06)
 
 | Item | State |
 |---|---|
 | Scope | Engine only: Rust target, Python reference oracle in `reference/python/` (ADR-011, ADR-012, both Accepted 2026-10-15) |
-| Latest package | P0-03, the recording change for the owner's rulings on the decisions P1-01 raised: **Review** on branch `claude/pensive-fermat-fgaweh` from `8755552` (`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`; session log `docs/06-sessions/2026-10-19-P0-03.md`). P1-01, domain types, engine API skeleton, oracle-fixture harness and crate restructure: **Done**, merged on 2026-10-19 at `8755552` (PR #6); ADR-014 accepted the same day. P0-02, the recording change for the P0-01 merge review, the DR-A10 ruling and the ADR acceptances: **Done**, merged on 2026-10-15 at `73a8e3b` (PR #5). P0-01: Done, merged 2026-10-15 at `b819ae0`. `ai-toolchain.lock` provenance stays unrecorded for every package |
+| Latest package | P1-02, the SQLite backbone, `grid migrate`, durable job ledger, artifact store and production pointers: **In Progress** on branch `claude/zen-hopper-ax8tge` from `4b8df86` (`docs/01-work-packages/p1-02-sqlite-backbone-and-durable-jobs.md`; session log `docs/06-sessions/2026-11-06-P1-02.md`; owner rulings R1 to R6; ADR-015 and ADR-016 Proposed). P0-03, the recording change for the owner's rulings on the decisions P1-01 raised: **Done**, merged on 2026-10-19 at `4b8df86` (PR #7). P1-01, domain types, engine API skeleton, oracle-fixture harness and crate restructure: **Done**, merged on 2026-10-19 at `8755552` (PR #6); ADR-014 accepted the same day. P0-02, the recording change for the P0-01 merge review, the DR-A10 ruling and the ADR acceptances: **Done**, merged on 2026-10-15 at `73a8e3b` (PR #5). P0-01: Done, merged 2026-10-15 at `b819ae0`. `ai-toolchain.lock` provenance stays unrecorded for every package |
 | Rust engine | Skeleton: 13 crates, the DR-A8 set. P1-01 fills `domain` (contract types with serde derives, `AsOf`, typed errors, status enums and exit codes), `pipeline` (the §8.2–§8.4 façade as traits with no implementor; JSON envelope and sidecar), `synth` (DR-D29 fixture reader, tolerance helpers, `SyntheticTruth`, `from_legacy_v0`) and `grid-cli` (`--version`, `--help`, `exit-codes`); `persistence` holds the SQLx scaffold and one migration. No engine computation yet |
 | Reference oracle | `legacy-59bce1d`, imported (105 files); its own suite passed on Linux at import (CPython 3.11.15). Its golden is pinned to CPython 3.11 with `OPENBLAS_CORETYPE=Haswell` (KI-NEW-Z78; DR-D31, ratified 2026-10-08): correction-ledger entry L0 regenerated Layer C once under that platform, and 446 tests pass. No other correction applied |
 | Evidence level | "Experimental projections" (`engine-spec.md` §3.2, §3.3) |
@@ -30,8 +30,8 @@ SORT status ASC, file.name ASC
 | P0-01 | Engine-only consolidation: ADR-011, ADR-012, ADR-013, `engine-spec.md`, registers, contracts, model specs, oracle import, app removal, guard fixes | Done (merged 2026-10-15, `b819ae0`) |
 | P0-02 | Record the P0-01 merge review, the DR-A10 ruling and the ADR acceptances | Done (merged 2026-10-15, `73a8e3b`, PR #5) |
 | P1-01 | Domain IDs, as-of types, errors, library API and output-contract skeleton, oracle-fixture format, crate restructure | Done (merged 2026-10-19, `8755552`, PR #6; ADR-014 accepted 2026-10-19) |
-| P0-03 | Record the owner's rulings on the decisions P1-01 raised: ADR-014, the four decision requests, the Amendments rows, the three contracts Approved | Review (branch `claude/pensive-fermat-fgaweh`) |
-| P1-02 | SQLite schema, migrations, durable jobs, version and artifact-manifest primitives | Planned; after P1-01 |
+| P0-03 | Record the owner's rulings on the decisions P1-01 raised: ADR-014, the four decision requests, the Amendments rows, the three contracts Approved | Done (merged 2026-10-19, `4b8df86`, PR #7) |
+| P1-02 | SQLite backbone schema (R1), `grid migrate` (ADR-015), durable job ledger, artifact manifest and atomic writes, production pointers | In Progress (branch `claude/zen-hopper-ax8tge`) |
 | P1-03 | nflverse provider contracts and ingestion | Planned; after P1-02 |
 | P1-04 | Player registry, NFL identity, NCAA adapter and linking | Planned; after P1-03 |
 | P1-05 | Point-in-time feature store and leakage harness | Planned; after P1-04 |

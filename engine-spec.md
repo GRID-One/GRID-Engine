@@ -5800,10 +5800,17 @@ enum TrainingStatus {
 
 _Source: alpha-spec §8.5 (superseded) — kept verbatim; final-build-spec §8, §8.1–§8.3 (superseded) — domain names replaced for the NFL, otherwise kept; new (GRID) — GRID state group._
 
-P1-02 creates the durable schema. Migrations are append-only (`scripts/check-migrations.sh`), so a
-table's name is fixed when the migration that creates it lands. The names below are binding as
-groups. The GRID additions are indicative names, to be fixed by the creating migration. The only
-existing migration is `migrations/0001_schema_meta.sql`, an infrastructure table.
+P1-02 creates the backbone of the durable schema (owner ruling R1, 2026-10-21; work package P1-02):
+`jobs`, `data_versions`, `raw_data`, `ingestion_runs`, `artifact_manifest`, `production_pointers`,
+`snapshots`, `model_versions`, `training_runs`, `prediction_runs`, `engine_settings`,
+`diagnostic_events` and `quarantined_rows`, in `migrations/0002_backbone.sql`. Three child tables are
+P1-02 decisions recorded in its work package: `job_dependencies`, `data_version_inputs` and
+`snapshot_pointers`. Every other table below, including every NFL-data, identity, feature, context,
+benchmark and model-specific GRID-state table, lands in the migration of the package that owns its
+contract or model specification, under the name given here. Migrations are append-only
+(`scripts/check-migrations.sh`), so a table's name is fixed when the migration that creates it lands.
+The migration policy is an explicit `grid migrate` (owner ruling R3; ADR-015).
+`migrations/0001_schema_meta.sql`, an infrastructure table, is kept.
 
 **SQLx workflow** (final-build-spec §8.2 (superseded), kept; already implemented by ADR-002,
 ADR-003 and ADR-005):
@@ -5821,10 +5828,10 @@ ADR-003 and ADR-005):
 | Context and scoring | `availability_snapshots`, `availability_overrides`, `weather_snapshots`, `market_context_snapshots`, `scoring_profiles` |
 | Features, models, and predictions | `feature_definitions`, `feature_sets`, `feature_values`, `latent_states`, `model_versions`, `model_states`, `training_runs`, `prediction_runs`, `player_week_stat_projections`, `player_week_projection_quantiles`, `projection_explanations` |
 | Benchmarks and evaluation | `benchmark_providers`, `benchmark_snapshots`, `benchmark_player_projections`, `evaluation_runs`, `evaluation_player_errors`, `evaluation_metrics` |
-| Operations | `raw_data`, `ingestion_runs`, `jobs`, `snapshots`, `application_settings`, `diagnostic_events` |
+| Operations | `raw_data`, `ingestion_runs`, `jobs`, `snapshots`, `engine_settings`, `diagnostic_events` |
 
-`application_settings` holds persisted engine settings. P1-02 MAY create it as `engine_settings`
-instead. The name is final once its migration exists.
+`engine_settings` holds persisted engine settings. P1-02 created it under that name, which this
+section permitted in place of `application_settings`, and the name is final.
 
 **Reconciliation with final-build-spec §8.1 (superseded).**
 - The basketball domains `lineups`, `stints` and `possessions` are replaced by `drives`, `plays`
@@ -5841,7 +5848,9 @@ instead. The name is final once its migration exists.
 - `market_context_snapshots` MUST carry the line snapshot's timestamp. Layer-B/Layer-3 market
   pseudo-observations MUST use the line **at lock**, never a closing line observed after lock (DR-B5).
 
-**GRID state group** (new; indicative names):
+**GRID state group** (new). `artifact_manifest`, `production_pointers` and `quarantined_rows` are in
+the P1-02 backbone. Each other table lands with the package that owns its model specification, under
+the name given here (owner ruling R1):
 
 | Table | Holds | Why | Decision |
 |---|---|---|---|
@@ -5901,7 +5910,7 @@ model comes first and the Kalman filter observes weekly credit. This DAG replace
 ```text
 external scheduler or operator
         ↓
-`grid update`: acquire the process lock; resolve stale RUNNING jobs (§8.11)
+`grid update`: take the shared store lock and the update lock; resolve stale RUNNING jobs (§8.11)
         ↓
 catch-up check: missed fetch days and unprocessed completed game-weeks (§8.6.5)
         ↓
@@ -6395,7 +6404,7 @@ PRIOR_TRANSLATE  PREDICT  EVALUATE  SNAPSHOT  ROLLBACK
 | Dependencies | Edges follow the §8.6.2 DAG. A job starts only when every upstream job is `SUCCEEDED`, or `SKIPPED_NO_NEW_DATA` where the edge allows it. |
 | Idempotency | A job whose idempotency key already `SUCCEEDED` is not re-executed. Its registered outputs are reused. |
 | Retries | Attempts are bounded, with backoff. The limits are engine settings fixed in P1-02. Exhaustion sets `FAILED` and emits `JobFailed`. A failed job is never silently skipped. |
-| Stale `RUNNING` | At start-up, a `RUNNING` row whose owner process is gone or whose lease has expired means a crash. The job is resumed if its stage can restart from durable inputs. Otherwise it is marked `FAILED` and re-enqueued under the same key (§8.11). |
+| Stale `RUNNING` | At start-up, a `RUNNING` row whose lease has expired means a crash. The engine never probes the owner process; `owner_pid` is diagnostic (owner ruling R5, P1-02). The job is resumed if its stage can restart from durable inputs. Otherwise it is marked `FAILED` and re-enqueued under the same key (§8.11). |
 | Cancellation | On graceful shutdown the current job reaches a durable boundary or is marked `CANCELLED` (§8.11). |
 | Serialization | `MODEL_PROMOTE` and `ROLLBACK` jobs are serialized globally (§8.13). |
 
@@ -6446,7 +6455,8 @@ recorded in `reference/python/PARITY.md`, and parity fixtures exercise only the 
 **Invocation lifecycle** (converted from final-build-spec §22 (superseded)). Start-up:
 1. initialize tracing;
 2. open SQLite and apply the migration policy;
-3. acquire the process lock;
+3. acquire the store lock: shared for every invocation, exclusive for `grid migrate`; `grid update`
+   also takes the exclusive update lock (owner ruling R5, P1-02);
 4. load production pointers and model metadata (state is loaded lazily);
 5. load engine settings;
 6. detect stale `RUNNING` jobs and resume them or mark them failed;
@@ -6454,7 +6464,8 @@ recorded in `reference/python/PARITY.md`, and parity fixtures exercise only the 
 8. exit with the terminal-state code.
 
 P1-02 decides by ADR whether migrations run automatically at start-up or through an explicit
-subcommand. A destructive migration is always a human gate (§1.4).
+subcommand. It chose the explicit subcommand: start-up refuses while a migration is pending, and only
+`grid migrate` applies one (owner ruling R3; ADR-015). A destructive migration is always a human gate (§1.4).
 
 Shutdown, on SIGINT, SIGTERM or the platform equivalent:
 1. stop accepting new jobs;
@@ -6554,8 +6565,10 @@ NOT depend on the worker-thread count. The oracle pins BLAS threads to 1 for its
 determinism gate (in-process difference < 1e-9).
 
 **Publication serialization.** Promotion and rollback each run in one SQLite write transaction on
-the production pointers (`BEGIN IMMEDIATE`). The engine also holds a process lock file, so two
-`grid update` invocations cannot both promote.
+the production pointers (`BEGIN IMMEDIATE`). `grid update` also holds an exclusive update lock
+file, so two `grid update` invocations never overlap. Every other invocation takes only the shared
+store lock, so no exclusive lock is held across a long job (§9.4); a partial unique index admits at
+most one running `MODEL_PROMOTE` or `ROLLBACK` job (owner ruling R5, P1-02).
 
 **Resource modes.** The engine SHOULD support resource modes (`normal`, `background`,
 `manual_rebuild`), selected by a CLI flag or setting. A mode sizes the Rayon pool and sets a
@@ -7484,7 +7497,7 @@ on 2026-10-15 (PR #4 comment 6185953773; Appendix F).
 |---|---|---|---|---|
 | P0-01 | The consolidation itself. **Specification and decisions:** ADR-011, ADR-012, ADR-013 (DR-D19), all three accepted on 2026-10-15; `engine-spec.md` and its mirror; the superseded specs archived verbatim; the registers, contracts, model specs and provider documents. **Repository:** `crates/ffi/`, `app/`, the Flutter toolchain pin, the FRB dependency and `test-ffi` removed; traceability regex extended to `P[0-9]-[0-9]{2}`; `check-evidence-claims.sh` generalized; `check-authority-sync.sh` retargeted to `engine-spec.md` and its mirror; R4-1/R4-2 guard fixes. **Oracle:** `reference/python/` imported with its manifest, ledger and patches P1/P2, correction-ledger entry L0 (the golden regenerated under the platform pin, with `tools/pytest_platform_pin.py`), plus the `reference-oracle` job. **Records:** session and archive imports. | No Rust parity. At import, the oracle's own suite passes on Linux (python-closure record, CPython 3.11.15). After ledger entry L0 its golden is frozen on CPython 3.11 with `OPENBLAS_CORETYPE=Haswell`, and the suite passes there (446; KI-NEW-Z78 fixed). | DR-A1, DR-A2, DR-A4–DR-A9, DR-A11, DR-A12: adopted; ratified 2026-10-08 in the decision interview and named again in the owner's merge review (PR #4 comment 6185953773) | DR-A10: ruled 2026-10-15, option 1 (`MIT OR Apache-2.0`, chosen 2026-10-08), in PR #4 comment 6185953773 as edited by the owner on 2026-10-15. DR-A3: the default is kept; the follow-up ADR is due before P1-11, and its direction was ratified on 2026-10-08 (Linux authoritative, Windows an additional job). DR-D31 (raised by P0-01; ratified by the owner on 2026-10-08, option 1; implemented here as ledger entry L0): the `reference-oracle` job must be green on the final commit. No tolerance is loosened and no test is skipped. |
 | P1-01 | Domain IDs, the `AsOf` type with publication-lag axis, typed errors; library API and output-contract skeleton; the `domain` dependency boundary for serializable DTOs (an ADR; §8.1 rule 5); oracle-fixture format, synthetic-fixture loader and parity-harness skeleton; `application` → `pipeline` plus `grid-cli` and `synth` skeletons; agent definitions | Committed canonical synthetic fixtures load hash-identically (`data_adapters.py` contract invariants) | DR-A2, DR-A8, DR-A11 (ratified 2026-10-08); DR-B1, DR-B2, DR-B3, DR-C4 | DR-D7; DR-D8; DR-D29 |
-| P1-02 | §8.5 schema groups including the GRID state group; migrations; durable jobs with the full job-type enumeration (§8.10); raw-data, version and artifact-manifest primitives; atomic writes; production pointers | None. The oracle's `.npz`, joblib and Parquet caches are not ported. Corrupt persisted state is a typed failure (§7.12.6). | DR-B6, DR-C15 | — |
+| P1-02 | §8.5 backbone schema (owner ruling R1, 2026-10-21: every other §8.5 table, the model-specific GRID-state tables included, lands with the package that owns its contract or model specification); migrations and the explicit `grid migrate` (owner ruling R3; ADR-015); durable jobs with the full job-type enumeration (§8.10), fixed at the twenty `StageId` values; raw-data, version and artifact-manifest primitives; atomic writes; production pointers | None. The oracle's `.npz`, joblib and Parquet caches are not ported. Corrupt persisted state is a typed failure (§7.12.6). | DR-B6, DR-C15 | — |
 | P1-03 | nflverse provider contracts and raw/normalized ingestion; plays-contract builder; official labels (§4.7); fetch cap and offline replay; per-dataset publication rules; the Phase 1 manual availability override import (§4.1.2, §9.2.2) | Behavioural only: the oracle loader and adapter cases on synthetic nflverse-shaped toy frames, not parity fixtures. KI-NEW-I1 to KI-NEW-I5 and KI-NEW-V0a to KI-NEW-V0d are not reproduced. | DR-A11, DR-C12, DR-C13, DR-C14 | DR-D15 (the involvement-roles field only; KI-NEW-Z50); `docs/04-providers/nflverse/access-and-license.md` (draft exists; per-dataset terms await Data/Licensing verification); a declared publication-lag rule for every dataset (§4.5); `docs/04-providers/availability/` (planned; created by this package) before the override import is built (§4.6); before Layer-1′ consumes snap counts, a snap-count provider contract with a PFR → GSIS crosswalk and a licence ruling (KI-NEW-Z50) |
 | P1-04 | Canonical registry, NFL identity, CFBD adapter, NCAA linking tiers, identity review queue | None | DR-C9 (CFBD play-by-play pass vs box score) | `docs/04-providers/cfbd/` licence and terms record before the adapter is Ready (§4.6) |
 | P1-05 | Point-in-time feature store; leakage harness with the publication-lag axis, the four oracle guards and the §12.3 scope and state checks; committed corrected synthetic fixtures | `validation/asof.py` behaviours: temporal, scope and state axes, the tripwire, `LeakageError` on undated interventions. Leakage canaries, with the watermark checked across season seams (KI-V2 and KI-NEW-W1 not reproduced). | DR-A11, DR-B4, DR-C1, DR-C6, DR-C12 | DR-D4 (only to relax the REG-only reading) |

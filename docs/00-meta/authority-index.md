@@ -108,12 +108,14 @@ just bootstrap                                                            # once
   (`8755552`, the merge of PR #6). Before it, P0-02 recorded the P0-01 merge rulings (`73a8e3b`,
   PR #5), and P0-01, the engine-only consolidation, merged on 2026-10-15 (`b819ae0`), with P1-00
   (DR-A6).
-- **In review:** P0-03 — Record the owner's rulings on the decisions P1-01 raised
-  (`docs/01-work-packages/p0-03-record-p1-01-merge-rulings.md`; `docs/06-sessions/2026-10-19-P0-03.md`),
-  on branch `claude/pensive-fermat-fgaweh` from `8755552`: ADR-014 accepted, the three P1-01
-  contracts Approved, and the four decision requests ruled.
-- **Next:** P1-02 (SQLite schema, migrations, durable jobs) and, in parallel with the P1-02 → P1-05
-  chain, P1-06 (numerical primitives). P1-01 has merged and its contracts are Approved.
+- **Also merged:** P0-03, the record of the owner's rulings on the decisions P1-01 raised
+  (`4b8df86`, PR #7): ADR-014 accepted, the three P1-01 contracts Approved, and the four decision
+  requests ruled.
+- **In progress:** P1-02, the SQLite backbone, `grid migrate`, the durable job ledger, the artifact
+  store and the production pointers (`docs/01-work-packages/p1-02-sqlite-backbone-and-durable-jobs.md`;
+  `docs/06-sessions/2026-11-06-P1-02.md`), on branch `claude/zen-hopper-ax8tge` from `4b8df86`, under
+  the owner's rulings R1 to R6, with ADR-015 and ADR-016 Proposed.
+- **Next:** P1-03, and, in parallel with the P1-02 → P1-05 chain, P1-06 (numerical primitives).
 - **Sequence:** engine-spec §9.5; index and readiness in `docs/01-work-packages/README.md`. A package
   is not Ready while a decision it depends on is unratified (`docs/00-meta/decision-register.md`).
 

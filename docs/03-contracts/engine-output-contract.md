@@ -1,10 +1,10 @@
 ---
 contract: grid.output
-contract-version: 1.0 (Approved 2026-10-19 with P1-01; skeleton types in grid-domain, no producer yet)
+contract-version: 1.1 (1.0 Approved 2026-10-19 with P1-01; 1.1 with P1-02: the §13 store-refusal clarification and `grid migrate`, a clarification by owner ruling R6, not a MAJOR change; no producer yet)
 status: Approved         # Draft | Approved | Superseded
 authority-level: 3       # engine-spec.md §1.5
 semantics-owner: Statistical owner (distributions, explanations); Product/Architecture owner (records, reports, exports)
-work-packages: P1-01 (types and serialization skeleton), P1-08 (distributions, explanations), P1-10 (CLI, reports, export), P2-06/P2-07 (scorecards, change log)
+work-packages: P1-01 (types and serialization skeleton), P1-02 (§13 store refusals, `grid migrate`), P1-08 (distributions, explanations), P1-10 (CLI, reports, export), P2-06/P2-07 (scorecards, change log)
 ---
 
 # Contract — Engine output (projection records, explanations, reports, exports)
@@ -518,11 +518,30 @@ Two process-level codes are not terminal states:
 | Usage error: an unknown, malformed or not-yet-available subcommand (message on stderr) | `EXIT_USAGE` | 2 |
 | Internal error: a failure the engine cannot classify, including a closed output stream | `EXIT_INTERNAL` | 70 |
 
+**Store refusals (1.1; owner ruling R6, work package P1-02).** `DATABASE_FAILURE` (30) means that
+the durable store (the SQLite database, the registered artifacts or the store locks) failed or is not
+usable. Every refusal to open the store exits 30, and the typed error says why:
+
+| Condition | `EngineErrorCode` | Exit code |
+|---|---|---|
+| No database yet, or a migration is pending (run `grid migrate`) | `UnsupportedVersion` | 30 |
+| The database records a migration this build does not have | `UnsupportedVersion` | 30 |
+| A migration checksum mismatch, a dirty migration, a missing or altered registered artifact, or another integrity failure | `StateCorrupt` | 30 |
+| Store I/O failure, or the store lock is held by another invocation | `Internal` | 30 |
+
+An `EngineError` with code `Internal` exits with the terminal state attached to it when it has one
+(here `DATABASE_FAILURE`), and with `EXIT_INTERNAL` (70) only when nothing classifies it. No terminal
+state, error code or exit code is added or moved; the owner ruled this a clarification of meaning, so
+the version moves 1.0 → 1.1 (`grid_domain::GRID_OUTPUT_CONTRACT_VERSION`).
+
 The terminal-state enumeration is closed (engine-spec §8.6.4, "a binding enum"): a new state or a
 moved code is a change to the spec and a MAJOR change to this table. P1-10 completes the CLI spelling
 and arguments of every subcommand that returns these codes; until then the first argument selects
 the invocation: `--version` or `-V`, `--help`, `-h` or `help` (and no argument at all) and
-`exit-codes` exit 0 and ignore any further arguments until P1-10 fixes the argument grammar; every
-other first argument exits 2 with a message on stderr. `crates/grid-cli/tests/cli.rs` asserts
+`exit-codes` exit 0 and ignore any further arguments until P1-10 fixes the argument grammar;
+`migrate` (since 1.1, P1-02; ADR-015) applies pending migrations to the data directory `data/` under
+the working directory and exits 0, 30 or 70, and any further argument after it exits 2, because a
+mutating command never ignores an argument; every other first argument exits 2 with a message on
+stderr. `crates/grid-cli/tests/cli.rs` asserts
 `--version`, `--help`, `help`, no arguments, `exit-codes`, 15 recognised-but-unavailable argument
 lists and 5 unknown ones; `-V` and `-h` are accepted by the parser and asserted by no test.

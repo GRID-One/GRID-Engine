@@ -39,6 +39,11 @@ The `status` values are those of the template: `Proposed`, `Accepted`, `Supersed
   package, and implemented while Proposed, as P0-01 implemented ADR-011 and ADR-012. The
   Product/Architecture owner accepted it on 2026-10-19, after merging the P1-01 pull request (PR #6),
   in answer 1 of `docs/06-sessions/2026-10-19-P0-03.md`; work package P0-03 transcribed the status.
+- **ADR-015 and ADR-016** are proposed by P1-02 (2026-11-06) and implemented while Proposed.
+  - ADR-015 records owner ruling R3 (an explicit `grid migrate`), under the authority engine-spec
+    §8.11 gives P1-02.
+  - ADR-016 records the DR-B6 policy that engine-spec §1.7 requires an ADR to adopt.
+  - The deciding owners accept or reject both at the P1-02 merge.
 
 ## Partial supersession
 
@@ -73,6 +78,8 @@ Editing `superseded-by` is the only change permitted to an Accepted ADR. The bod
 | [012](012-python-reference-oracle.md) | Python reference oracle | Accepted | 2026-10-07 | — |
 | [013](013-feeder-target-season-level.md) | Feeder-equivalency target: the season level, with no seed | Accepted | 2026-10-14 | — |
 | [014](014-domain-serialization-boundary.md) | `grid-domain` takes `serde` as its only external dependency | Accepted | 2026-10-17 | — |
+| [015](015-explicit-grid-migrate.md) | Migrations run only through an explicit `grid migrate` | Proposed | 2026-11-06 | — |
+| [016](016-typed-failure-for-oracle-silent-failure-paths.md) | Typed failure replaces the oracle's silent-failure paths (DR-B6) | Proposed | 2026-11-06 | — |
 
 **What ADR-011 supersedes in part** (its "Supersession" section is authoritative):
 

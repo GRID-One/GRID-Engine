@@ -314,3 +314,21 @@ rulings the pull request requested, the owner answered seven questions, one at a
   engine-spec §8.1 and §10.2.6 errata; the `grid --help` usage names those packages.
 - **Other Amendments rows and the three contracts:** approved; `grid.plays` v1, `grid.output` 1.0 and
   `grid.parity-fixture` 1 are Approved.
+
+## 2026-11-06 — P1-02
+
+P1-02 (SQLite backbone, `grid migrate`, durable job ledger, artifact store, production pointers)
+started on 2026-10-21 on branch `claude/zen-hopper-ax8tge`, from `main` at the P0-03 merge (`4b8df86`,
+PR #7). The work package is `docs/01-work-packages/p1-02-sqlite-backbone-and-durable-jobs.md`; the
+session log is `docs/06-sessions/2026-11-06-P1-02.md`.
+
+- **Readiness check.** DR-B6 and DR-C15 are ratified for this scope; P1-01 and P0-03 are merged.
+- **Owner rulings R1 to R6**, six questions asked one at a time:
+  - backbone-only schema;
+  - `sha2` approved;
+  - an explicit `grid migrate` (ADR-015);
+  - an `Engine` struct, with the façade traits later;
+  - lease-based store locks;
+  - store refusals exit 30 (grid.output 1.1).
+- **Spec edits** in §8.5, §8.6.2, §8.10, §8.11, §8.13 and §9.5. ADR-016 records the DR-B6 policy that
+  §1.7 requires.
