@@ -29,9 +29,14 @@ repository = "https://github.com/GRID-One/GRID-Engine"
 # [workspace.package] version, and members use `<crate>.workspace = true` (P1-01).
 grid-domain = { path = "crates/domain", version = "0.1.0-alpha.1" }
 grid-pipeline = { path = "crates/pipeline", version = "0.1.0-alpha.1" }
+grid-governance = { path = "crates/governance", version = "0.1.0-alpha.1" }
+grid-persistence = { path = "crates/persistence", version = "0.1.0-alpha.1" }
 tokio = { version = "1.40", features = ["full"] }
 sqlx = { version = "0.9", features = ["runtime-tokio", "sqlite", "migrate", "chrono"] }
 serde = { version = "1.0", features = ["derive"] }
+# RustCrypto SHA-256 for the artifact manifest (engine-spec 8.11; DR-C15). Approved by owner ruling
+# R2 (P1-02); already resolved through sqlx-core. Used by grid-persistence only.
+sha2 = "0.10"
 serde_json = "1.0"
 thiserror = "1.0"
 anyhow = "1.0"
