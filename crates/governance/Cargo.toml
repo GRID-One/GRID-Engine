@@ -7,3 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+# Pure, synchronous policy over the domain types, and nothing else: no I/O, no tokio, no sqlx
+# (engine-spec 8.1 governance row and rule 3; work package P1-02 D1). First use of the
+# intra-workspace dependency; it adds no external package to Cargo.lock.
+grid-domain.workspace = true

@@ -37,9 +37,10 @@ pub use reports::*;
 /// (engine-output-contract §9).
 pub const GRID_OUTPUT_CONTRACT_ID: &str = "grid.output";
 
-/// The contract version this crate implements: `grid.output` 1.0 (engine-output-contract §9; the
-/// version line fixed by P1-01). A consumer-facing reader MUST reject an unknown MAJOR.
-pub const GRID_OUTPUT_CONTRACT_VERSION: ContractVersion = ContractVersion::new(1, 0);
+/// The contract version this crate implements: `grid.output` 1.1 (engine-output-contract §9; 1.1:
+/// the §13 store-refusal clarification, P1-02). A consumer-facing reader MUST reject an unknown
+/// MAJOR.
+pub const GRID_OUTPUT_CONTRACT_VERSION: ContractVersion = ContractVersion::new(1, 1);
 
 /// The contract id as a typed [`ContractId`].
 pub fn grid_output_contract_id() -> ContractId {
@@ -113,7 +114,7 @@ mod tests {
     #[test]
     fn contract_identity() {
         assert_eq!(grid_output_contract_id().0, "grid.output");
-        assert_eq!(GRID_OUTPUT_CONTRACT_VERSION, ContractVersion::new(1, 0));
+        assert_eq!(GRID_OUTPUT_CONTRACT_VERSION, ContractVersion::new(1, 1));
         assert_eq!(Position::Qb.to_string(), "QB");
         assert_eq!(Horizon::RestOfSeason.to_string(), "RestOfSeason");
     }

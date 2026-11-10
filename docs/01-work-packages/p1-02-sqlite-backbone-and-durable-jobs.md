@@ -154,9 +154,9 @@ the owner's merge review.
 | D4 | **Columns beyond the spec's lists.** `jobs`: `config_json` (durable stage inputs), `max_attempts` (the setting at enqueue), `not_before` (persisted backoff), `restartable` (declared at enqueue, §8.10 "if its stage can restart from durable inputs"), `heartbeat_at`, `lease_expires_at`. `ingestion_runs`: `offline`, `network_fetch`. `artifact_manifest`: a surrogate `artifact_id`. `data_versions`: `parent_data_version`, `job_id`. `snapshots`: `pointer_count`, `config_hash`, `contract_version`. `model_versions`: `state_changed_at`, `contract_version`. `production_pointers`: `pre_move_snapshot_id`, `moved_by_job_id`. `prediction_runs`: `job_id`, `contract_version`. `engine_settings`: `version`, `note` | §8.5, §8.9, §8.10; contracts README "derived artifacts" |
 | D5 | **Stored spellings.** Enum text uses the spec spellings (`StageId`, `JobStatus`, `TerminalState`, `ModelState`: SCREAMING_SNAKE) under `CHECK … IN` lists; `LockKind` uses its variant names. This is internal database spelling and does not pre-empt engine-output-contract §12's serialized-spelling item. Ids are `INTEGER` (u64 ↔ i64, checked); instants are `UtcInstant` seconds; tables are `STRICT` | §8.10; contract §12 |
 | D6 | **Idempotency.** `idempotency_key = "<STAGE>:<data version or ->:<config_hash>"`. `config_hash` = sha256 of the canonical JSON of the job's configuration (keys sorted recursively, compact, root an object). The configuration carries the job's scope (season, week, source, lock kind, local day), which keeps §8.10's triple exact while separating per-week, per-source and per-lock jobs. A key with a PENDING, RUNNING, SUCCEEDED or SKIPPED row is reused, never re-executed. A FAILED or CANCELLED key re-enqueues as a new row | §8.10 Idempotency, Stale `RUNNING` |
-| D7 | **Edges are by key**, so a re-enqueued upstream key reconnects its dependents. Enqueue refuses a cycle. A job starts only when every upstream key's latest row is SUCCEEDED, or SKIPPED_NO_NEW_DATA where its edge allows it. Otherwise it stays PENDING and is reported as *blocked*. That is a derived view, never a stored status: no `JobStatus` meaning changes | §8.10 Dependencies; `status.rs` docs |
+| D7 | **Edges are by key**, so a re-enqueued upstream key reconnects its dependents. Enqueue refuses a cycle. A job starts only when every upstream key's latest row is SUCCEEDED, or SKIPPED_NO_NEW_DATA where its edge allows it. While an upstream's latest row is PENDING or RUNNING the job is *waiting*. It is *blocked* when an upstream's latest row is FAILED or CANCELLED, SKIPPED on an edge that does not allow it, or missing. Both stay PENDING: they are derived views, never a stored status, so no `JobStatus` meaning changes | §8.10 Dependencies; `status.rs` docs |
 | D8 | **Retries.** Every failure retries with persisted backoff until `max_attempts`; exhaustion sets FAILED and writes `JobFailed` ("Failed: attempts exhausted"). CANCELLED is used only at shutdown. SKIPPED_NO_NEW_DATA only when the stage reports it. Settings defaults: `jobs.max_attempts = 3`, `jobs.backoff_initial_secs = 5`, `jobs.backoff_max_secs = 60` (delay before attempt n ≥ 2 is min(5 s × 2ⁿ⁻², 60 s)), `jobs.lease_secs = 300`, `jobs.heartbeat_secs = 30` (2 × heartbeat < lease), `engine.shutdown_grace_secs = 30` | §8.10 Retries ("fixed in P1-02") |
-| D9 | **Stale `RUNNING`** (R5). A RUNNING row whose lease has expired is stale. If its job is `restartable`, it goes back to PENDING (the crashed attempt counts). Otherwise it is marked FAILED, with `JobFailed`, and re-enqueued under the same key. If its attempts are exhausted it is FAILED. Recovery runs at every writer start-up; compare-and-set makes concurrent recoverers safe | §8.10 as edited; §8.11 step 6 |
+| D9 | **Stale `RUNNING`** (R5). A RUNNING row whose lease has expired is stale. If its job is `restartable`, it goes back to PENDING (the crashed attempt counts). Otherwise it is marked FAILED, with `JobFailed`, and re-enqueued under the same key as a new row that **carries the attempt count over** (D22). If its attempts are exhausted it is FAILED. Recovery runs at every writer start-up; compare-and-set makes concurrent recoverers safe | §8.10 as edited; §8.11 step 6 |
 | D10 | **Ingestion runs** are one row per source fetch, written in the stage's final success or failure commit, so no orphan RUNNING row exists. A running fetch is visible as its RUNNING `DATA_FETCH` job | `SourceFetchResult` (`queries.rs`); §8.6.4 |
 | D11 | **`raw_data` has no uniqueness on (source, hash).** Whether a re-retrieval identical to an *earlier* (not the latest) retrieval is NO_NEW_DATA, the A → B → A revert case of the KI-A9 class, is P1-03's decision (Follow-up F-3). Bytes are de-duplicated in the artifact store | §4.1.1; KI-A9 |
 | D12 | **Data versions** form one global linear chain per store; backtests and tests isolate by data directory (§4.5 "an injected namespace") | §8.6.2 "commit SQLite data version"; contract §2 |
@@ -166,6 +166,11 @@ the owner's merge review.
 | D16 | **The artifact store.** Content-addressed paths `artifacts/sha256/<h[0..2]>/<h>` under the data directory (default `data/`); temporary files in `artifacts/tmp/`. The §8.11 order: write the temp file, `sync_all`, rename, fsync the directory (Unix; Windows cannot fsync a directory from std, a gap recorded for P1-11), register in the caller's transaction. A missing, short or altered file is `StateCorrupt`. Unregistered files are collectable by a tested primitive; scheduling is P1-11's | §8.11; DR-C15; §14.3 |
 | D17 | **SQLite connection.** WAL, `synchronous = FULL`, `foreign_keys`, `busy_timeout` 5 s. Every write uses `BEGIN IMMEDIATE`, and no write transaction spans a computation, so readers are never blocked | §8.13 |
 | D18 | **No closed enum grows.** `StageId` 20, `JobStatus` 6, `TerminalState` 14, `EngineErrorCode` 17, `EngineEvent` 21, `ModelState` 6 | contract §9 |
+| D19 | **Model-state causes.** `governance::model_state::TransitionCause` has three values: `StateOnly` (TRAINING → CANDIDATE, CANDIDATE → VALIDATING, VALIDATING → REJECTED, TRAINING → REJECTED), `Promotion` (VALIDATING → PRODUCTION, PRODUCTION → SUPERSEDED) and `Rollback` (SUPERSEDED → PRODUCTION, PRODUCTION → SUPERSEDED). PRODUCTION is entered and left only by a pointer move. Every §8.8 transition stays permitted. The store trigger checks the pairs; the pipeline checks the cause before calling persistence | §8.8 ("its state changes in the same write transaction that moves the pointer"; "SUPERSEDED → PRODUCTION only through rollback_to_snapshot") |
+| D20 | **Error classes of the pointer plans.** These are request errors (`Internal`, exit 70): a candidate from another family; a candidate that is not VALIDATING; a redundant promotion of the version the pointer already names. These read corrupt state (`StateCorrupt`, exit 30): a PRODUCTION version no pointer names; a pointer naming a non-PRODUCTION version; a snapshot target that is not SUPERSEDED (`NotRestorable`); a family that a snapshot records but that has no pointer now; a duplicated family or version | §8.8; R6 |
+| D21 | **Settings namespaces.** `governance::jobs::JobPolicy` owns the `jobs.*` and `engine.*` namespaces whole: an unknown, missing or malformed key there is `StateCorrupt`. A later package that adds a key in these namespaces adds it to `JobPolicy::KEYS`. Other namespaces belong to the packages that add them. Bounds: `jobs.lease_secs` 3..=86400 (2 × heartbeat < lease) | §8.10 Retries |
+| D22 | **Bounded attempts across recovery.** A stale job that cannot restart is marked FAILED and re-enqueued under the same key (§8.10). The new row carries the old row's attempt count, so attempts stay bounded per key, as "Attempts are bounded" requires. A plan enqueued by a later invocation for a FAILED key starts a fresh attempt series at 0 | §8.10 Retries, Stale `RUNNING` |
+| D23 | **Where the trigger-equality tests live.** The tests that compare the store's transition triggers with governance's tables are in `crates/pipeline/tests/`, which depends on both crates, so `grid-persistence` takes no `grid-governance` edge (D1) | D1 |
 
 ## Objective
 `migrations/0002_backbone.sql` creates the R1 backbone, and the workspace delivers:
@@ -215,6 +220,7 @@ All of it passes the frozen verify chain on Linux and on the merge-authoritative
 - **`migrations/0002_backbone.sql`:** the backbone tables, indexes and triggers. `.sqlx/` is
   regenerated by `cargo sqlx prepare --workspace -- --lib`.
 - **`crates/domain/`:**
+  - `src/lib.rs` (re-exports);
   - `ModelState` moves into `src/status.rs`;
   - the R6 clarifications of `TerminalState::DatabaseFailure` (`src/status.rs`) and
     `EngineErrorCode::Internal` (`src/error.rs`);
@@ -234,6 +240,7 @@ All of it passes the frozen verify chain on Linux and on the merge-authoritative
   - `src/jobs/` (job plan, runner, stage traits);
   - `src/canonical.rs`;
   - the `ModelState` re-export in `src/queries.rs`;
+  - the contract-version pins in `src/serialization.rs` and `tests/output_round_trip.rs` (1.1);
   - doc updates in `src/lib.rs` and `src/events.rs`;
   - integration tests;
   - additive rules in `tests/crate_boundaries.rs` and an additive pin in
@@ -365,9 +372,9 @@ Each criterion is verified on the final content commit; the test that evidences 
   rejects extra arguments: `engine_lifecycle.rs` (`migrate_*`), `crates/grid-cli/tests/cli.rs` (ADR-015 D3).
 
 **Schema rules**
-- [ ] Enum `CHECK` lists admit exactly the domain values; the job and model-state triggers equal governance's
-  tables over every pair; append-only tables reject UPDATE and DELETE:
-  `crates/persistence/tests/schema_rules.rs`.
+- [ ] Enum `CHECK` lists admit exactly the domain values, and append-only tables reject UPDATE and DELETE:
+  `crates/persistence/tests/schema_rules.rs`. The job and model-state triggers equal governance's
+  tables over every pair: `crates/pipeline/tests/store_policy.rs` (D23).
 
 **Artifacts (§8.11; DR-C15)**
 - [ ] SHA-256 known answers; a put lands at its content address with no temp file left; identical

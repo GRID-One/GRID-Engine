@@ -644,7 +644,7 @@ fn reader_rejects_an_unknown_major() {
 fn reader_tolerates_a_minor_addition() {
     let json = to_json(&projection()).unwrap();
     let mut value: serde_json::Value = serde_json::from_str(&json).unwrap();
-    // A later MINOR adds an optional field a 1.0 reader does not know.
+    // A later MINOR adds an optional field a 1.1 reader does not know.
     value["version"]["minor"] = serde_json::Value::from(3);
     value["record"]["flags"]["added_in_1_3"] = serde_json::Value::from(true);
     let envelope = from_json::<PlayerWeekProjection>(&value.to_string()).unwrap();

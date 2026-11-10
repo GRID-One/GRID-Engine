@@ -16,9 +16,9 @@
 //! | [`time`] | `UtcInstant`, whole seconds since the Unix epoch | engine-spec §4.5 |
 //! | [`asof`] | the `AsOf` information model with its publication-lag axis | engine-spec §4.5; `docs/05-model-specs/evaluation-and-leakage.md` §4.1 |
 //! | [`error`] | the typed error vocabulary: `EngineErrorCode`, `EngineError`, `ContractError`, `LeakageError`, `OutputInvariantError` | engine-spec §6.8 rule 4, §8.10; plays-contract §11; engine-output-contract §3.9 |
-//! | [`status`] | `TerminalState` with its exit codes, `JobStatus`, `StageId`, `RunOutcome`, `TrainingStatus` | engine-spec §8.4, §8.6.4, §8.10; engine-output-contract §13 |
+//! | [`status`] | `TerminalState` with its exit codes, `JobStatus`, `StageId`, `ModelState`, `RunOutcome`, `TrainingStatus` | engine-spec §8.4, §8.6.4, §8.8, §8.10; engine-output-contract §13 |
 //! | [`plays`] | the `grid.plays` v1 frames and their validator | `docs/03-contracts/plays-contract.md` §7, §9, §11 |
-//! | [`output`] | the `grid.output` 1.0 records, reports and the §3.9 invariant checks | `docs/03-contracts/engine-output-contract.md` |
+//! | [`output`] | the `grid.output` 1.1 records, reports and the §3.9 invariant checks | `docs/03-contracts/engine-output-contract.md` |
 //!
 //! # What this crate deliberately does not contain
 //!

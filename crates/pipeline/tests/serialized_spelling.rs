@@ -9,8 +9,8 @@
 
 use grid_domain::{
     AsOfMode, AvailabilitySource, FrameProfile, Freshness, Horizon, Lock, LockKind, MarketUnits,
-    ParticipantPosition, PlayerKey, Position, RegimeFlags, StatComponent, StatDistribution,
-    TeamKey, TerminalState, TouchdownType, UtcInstant,
+    ModelState, ParticipantPosition, PlayerKey, Position, RegimeFlags, StatComponent,
+    StatDistribution, TeamKey, TerminalState, TouchdownType, UtcInstant,
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -126,6 +126,34 @@ fn terminal_state_is_the_variant_name() {
     for (state, text) in expected {
         pins(&state, json!(text));
     }
+}
+
+#[test]
+fn model_state_is_the_spec_spelling() {
+    // engine-spec §8.8 "States": the SCREAMING_SNAKE names, unlike `TerminalState` above.
+    // P1-02 moved the type from `grid_pipeline::queries` to `grid_domain::status` (work package
+    // P1-02 D1) with no serialization change; this pins the text across the move, through both
+    // paths.
+    let expected = [
+        (ModelState::Training, "TRAINING"),
+        (ModelState::Validating, "VALIDATING"),
+        (ModelState::Candidate, "CANDIDATE"),
+        (ModelState::Production, "PRODUCTION"),
+        (ModelState::Rejected, "REJECTED"),
+        (ModelState::Superseded, "SUPERSEDED"),
+    ];
+    assert_eq!(expected.len(), ModelState::ALL.len());
+    for (state, text) in expected {
+        pins(&state, json!(text));
+    }
+    pins(
+        &grid_pipeline::queries::ModelState::Superseded,
+        json!("SUPERSEDED"),
+    );
+    // The two paths name one type, not two copies with the same spelling: this compiles only if
+    // the re-export is the domain type itself.
+    let same_type: fn(grid_domain::ModelState) -> grid_pipeline::queries::ModelState = |s| s;
+    assert_eq!(same_type(ModelState::Rejected), ModelState::Rejected);
 }
 
 #[test]

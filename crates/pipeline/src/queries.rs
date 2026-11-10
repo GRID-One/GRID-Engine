@@ -635,55 +635,11 @@ pub struct ModelStatusQuery {
     pub model_family: Option<ModelFamily>,
 }
 
-/// The state of a model version (engine-spec §8.8 "States"). Exactly one per version; the
-/// permitted transitions are those §8.8 lists and no other. Serialized as the spec's
-/// `SCREAMING_SNAKE_CASE` names. **Closed** enum.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum ModelState {
-    /// Training in progress.
-    Training,
-    /// A candidate under time-aware validation.
-    Validating,
-    /// Trained, awaiting validation.
-    Candidate,
-    /// Named by a production pointer.
-    Production,
-    /// Failed validation, or training failed or was aborted. Never returns to `Production`.
-    Rejected,
-    /// Formerly production; a later version was promoted or a rollback moved the pointer.
-    Superseded,
-}
-
-impl ModelState {
-    /// Every state, in the order engine-spec §8.8 lists them.
-    pub const ALL: [ModelState; 6] = [
-        ModelState::Training,
-        ModelState::Validating,
-        ModelState::Candidate,
-        ModelState::Production,
-        ModelState::Rejected,
-        ModelState::Superseded,
-    ];
-
-    /// The `SCREAMING_SNAKE_CASE` name engine-spec §8.8 writes.
-    pub const fn spec_name(self) -> &'static str {
-        match self {
-            ModelState::Training => "TRAINING",
-            ModelState::Validating => "VALIDATING",
-            ModelState::Candidate => "CANDIDATE",
-            ModelState::Production => "PRODUCTION",
-            ModelState::Rejected => "REJECTED",
-            ModelState::Superseded => "SUPERSEDED",
-        }
-    }
-}
-
-impl fmt::Display for ModelState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.spec_name())
-    }
-}
+/// The state of a model version (engine-spec §8.8 "States"), re-exported from
+/// [`grid_domain::status::ModelState`], where P1-02 moved it (work package P1-02 D1) so that the
+/// policy crate `grid-governance` can name it. The path `grid_pipeline::queries::ModelState` and
+/// the serialized form (the spec's `SCREAMING_SNAKE_CASE` names) are unchanged.
+pub use grid_domain::status::ModelState;
 
 /// A reference to the validation report of one model version (engine-spec §8.3 query 14 "last
 /// validation report"; §8.8 "Validation metrics must be persisted with each model"). The report's

@@ -17,7 +17,10 @@ use crate::ids::{ContractVersion, DriveKey, PlayKey, PlayerKey, Season, TeamKey}
 ///
 /// **Closed** enum: adding a value is a MAJOR change of every contract that carries it. The
 /// variants are the failure classes the spec names as typed failures; `Internal` is the only
-/// catch-all and maps to the process exit code [`crate::status::EXIT_INTERNAL`].
+/// catch-all. An `Internal` error exits with the terminal state attached to it when it has one (a
+/// store refusal exits 30, `DatabaseFailure`), and with the process exit code
+/// [`crate::status::EXIT_INTERNAL`] only when nothing classifies it (engine-output-contract §13,
+/// 1.1; owner ruling R6, P1-02).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EngineErrorCode {
     /// An input frame or record violated its contract (a [`ContractError`]).
@@ -52,7 +55,9 @@ pub enum EngineErrorCode {
     UncoveredDefender,
     /// The evaluation player pool is too small for the declared metric.
     InsufficientPool,
-    /// Any other failure. Maps to the internal-error exit code.
+    /// Any other failure. An error with this code exits with the terminal state attached to it
+    /// when it has one, and with [`EXIT_INTERNAL`](crate::status::EXIT_INTERNAL) only when
+    /// nothing classifies it (engine-output-contract §13, 1.1).
     Internal,
 }
 

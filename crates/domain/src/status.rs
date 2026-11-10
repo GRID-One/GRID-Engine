@@ -1,5 +1,5 @@
-//! Terminal states, exit codes, job and training status (engine-spec §8.4, §8.6.4, §8.10;
-//! engine-output-contract §13).
+//! Terminal states, exit codes, job, model and training status (engine-spec §8.4, §8.6.4, §8.8,
+//! §8.10; engine-output-contract §13).
 
 use std::fmt;
 
@@ -49,7 +49,8 @@ pub enum TerminalState {
     SchemaFailure,
     /// Fetched data failed validation and was not committed.
     DataValidationFailure,
-    /// The SQLite store failed.
+    /// The durable store (the SQLite database, the registered artifacts or the store locks) failed
+    /// or is not usable (engine-output-contract §13, 1.1; owner ruling R6, P1-02).
     DatabaseFailure,
     /// A learning stage failed (a typed numerical or statistical failure).
     LearningFailure,
@@ -154,7 +155,10 @@ pub enum JobStatus {
     Running,
     /// Completed; its registered outputs are reusable under its idempotency key.
     Succeeded,
-    /// Attempts exhausted; `JobFailed` was emitted. Never silently skipped.
+    /// Attempts exhausted, or the job was found stale `RUNNING` after a crash and its stage cannot
+    /// restart from durable inputs, in which case its key is re-enqueued as a new row
+    /// (engine-spec §8.10 "Retries", "Stale `RUNNING`"); `JobFailed` was emitted. Never silently
+    /// skipped.
     Failed,
     /// Cancelled at a durable boundary on graceful shutdown (engine-spec §8.11).
     Cancelled,
@@ -194,9 +198,9 @@ impl fmt::Display for JobStatus {
 
 /// The job types of engine-spec §8.10: ten kept from the superseded final-build-spec §15 and ten
 /// added for the engine and GRID. Twenty values. **Closed** enum: the engine dispatches on the
-/// stage, so a consumer cannot tolerate an unknown one. P1-02 fixes the full enumeration
-/// (engine-spec §8.10); adding a value to this closed enum is a MAJOR contract change
-/// (engine-spec §5.5 "Compatibility"), never a MINOR one.
+/// stage, so a consumer cannot tolerate an unknown one. The 20 values are the full enumeration
+/// that P1-02 fixes (engine-spec §8.10; work package P1-02 D2); adding a value to this closed enum
+/// is a MAJOR contract change (engine-spec §5.5 "Compatibility"), never a MINOR one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StageId {
     /// `DATA_FETCH`: fetch a source (once per day per source).
@@ -294,6 +298,60 @@ impl StageId {
 }
 
 impl fmt::Display for StageId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.spec_name())
+    }
+}
+
+/// The state of a model version (engine-spec §8.8 "States"). Exactly one per version; the
+/// permitted transitions are those §8.8 lists and no other. Serialized as the spec's
+/// `SCREAMING_SNAKE_CASE` names. **Closed** enum.
+///
+/// Moved here from `grid_pipeline::queries` by P1-02 (work package P1-02 D1), so that the policy
+/// crate `grid-governance` can name it; `grid_pipeline::queries::ModelState` re-exports it, and
+/// the serialized form is unchanged.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ModelState {
+    /// Training in progress.
+    Training,
+    /// A candidate under time-aware validation.
+    Validating,
+    /// Trained, awaiting validation.
+    Candidate,
+    /// Named by a production pointer.
+    Production,
+    /// Failed validation, or training failed or was aborted. Never returns to `Production`.
+    Rejected,
+    /// Formerly production; a later version was promoted or a rollback moved the pointer.
+    Superseded,
+}
+
+impl ModelState {
+    /// Every state, in the order engine-spec §8.8 lists them.
+    pub const ALL: [ModelState; 6] = [
+        ModelState::Training,
+        ModelState::Validating,
+        ModelState::Candidate,
+        ModelState::Production,
+        ModelState::Rejected,
+        ModelState::Superseded,
+    ];
+
+    /// The `SCREAMING_SNAKE_CASE` name engine-spec §8.8 writes.
+    pub const fn spec_name(self) -> &'static str {
+        match self {
+            ModelState::Training => "TRAINING",
+            ModelState::Validating => "VALIDATING",
+            ModelState::Candidate => "CANDIDATE",
+            ModelState::Production => "PRODUCTION",
+            ModelState::Rejected => "REJECTED",
+            ModelState::Superseded => "SUPERSEDED",
+        }
+    }
+}
+
+impl fmt::Display for ModelState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.spec_name())
     }
@@ -440,6 +498,169 @@ mod tests {
             JobStatus::SkippedNoNewData.to_string(),
             "SKIPPED_NO_NEW_DATA"
         );
+    }
+
+    /// A serializer that accepts a unit variant only and returns the name serde writes for it.
+    /// It checks the serialized form without a format crate: `grid-domain` has no dev
+    /// dependency (ADR-014 decision 1).
+    struct UnitVariantName;
+
+    /// Every non-unit-variant method of [`UnitVariantName`] refuses with this error.
+    fn not_a_unit_variant() -> serde::de::value::Error {
+        serde::ser::Error::custom("not a unit variant")
+    }
+
+    /// Writes the [`serde::Serializer`] methods that take plain arguments and always refuse.
+    macro_rules! refuse {
+        ($($method:ident($($arg:ty),*);)*) => {
+            $(fn $method(self, $(_: $arg),*) -> Result<Self::Ok, Self::Error> {
+                Err(not_a_unit_variant())
+            })*
+        };
+    }
+
+    impl serde::Serializer for UnitVariantName {
+        type Ok = &'static str;
+        type Error = serde::de::value::Error;
+        type SerializeSeq = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeTuple = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeTupleStruct = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeTupleVariant = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeMap = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeStruct = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+        type SerializeStructVariant = serde::ser::Impossible<&'static str, serde::de::value::Error>;
+
+        fn serialize_unit_variant(
+            self,
+            _name: &'static str,
+            _index: u32,
+            variant: &'static str,
+        ) -> Result<Self::Ok, Self::Error> {
+            Ok(variant)
+        }
+
+        refuse! {
+            serialize_bool(bool);
+            serialize_i8(i8);
+            serialize_i16(i16);
+            serialize_i32(i32);
+            serialize_i64(i64);
+            serialize_u8(u8);
+            serialize_u16(u16);
+            serialize_u32(u32);
+            serialize_u64(u64);
+            serialize_f32(f32);
+            serialize_f64(f64);
+            serialize_char(char);
+            serialize_str(&str);
+            serialize_bytes(&[u8]);
+            serialize_none();
+            serialize_unit();
+            serialize_unit_struct(&'static str);
+        }
+
+        fn serialize_some<T: ?Sized + Serialize>(self, _: &T) -> Result<Self::Ok, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_newtype_struct<T: ?Sized + Serialize>(
+            self,
+            _: &'static str,
+            _: &T,
+        ) -> Result<Self::Ok, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_newtype_variant<T: ?Sized + Serialize>(
+            self,
+            _: &'static str,
+            _: u32,
+            _: &'static str,
+            _: &T,
+        ) -> Result<Self::Ok, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_seq(self, _: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_tuple(self, _: usize) -> Result<Self::SerializeTuple, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_tuple_struct(
+            self,
+            _: &'static str,
+            _: usize,
+        ) -> Result<Self::SerializeTupleStruct, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_tuple_variant(
+            self,
+            _: &'static str,
+            _: u32,
+            _: &'static str,
+            _: usize,
+        ) -> Result<Self::SerializeTupleVariant, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_map(self, _: Option<usize>) -> Result<Self::SerializeMap, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_struct(
+            self,
+            _: &'static str,
+            _: usize,
+        ) -> Result<Self::SerializeStruct, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+
+        fn serialize_struct_variant(
+            self,
+            _: &'static str,
+            _: u32,
+            _: &'static str,
+            _: usize,
+        ) -> Result<Self::SerializeStructVariant, Self::Error> {
+            Err(not_a_unit_variant())
+        }
+    }
+
+    #[test]
+    fn model_state_names_are_distinct_and_equal_the_serde_form() {
+        use serde::de::IntoDeserializer;
+
+        let names: HashSet<&str> = ModelState::ALL.iter().map(|s| s.spec_name()).collect();
+        assert_eq!(names.len(), 6, "the six §8.8 names are distinct");
+        let expected = [
+            (ModelState::Training, "TRAINING"),
+            (ModelState::Validating, "VALIDATING"),
+            (ModelState::Candidate, "CANDIDATE"),
+            (ModelState::Production, "PRODUCTION"),
+            (ModelState::Rejected, "REJECTED"),
+            (ModelState::Superseded, "SUPERSEDED"),
+        ];
+        assert_eq!(expected.map(|(state, _)| state), ModelState::ALL);
+        for (state, name) in expected {
+            assert_eq!(state.spec_name(), name);
+            assert_eq!(state.to_string(), name);
+            // Serialize: serde writes the spec name.
+            assert_eq!(state.serialize(UnitVariantName), Ok(name), "{state:?}");
+            // Deserialize: the spec name reads back as the state.
+            let read = ModelState::deserialize(
+                IntoDeserializer::<serde::de::value::Error>::into_deserializer(name),
+            );
+            assert_eq!(read, Ok(state), "{name}");
+        }
+        // The variant name is not the serialized form.
+        let variant_name = ModelState::deserialize(
+            IntoDeserializer::<serde::de::value::Error>::into_deserializer("Production"),
+        );
+        assert!(variant_name.is_err());
     }
 
     #[test]

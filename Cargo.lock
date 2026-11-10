@@ -433,6 +433,9 @@ version = "0.1.0-alpha.1"
 [[package]]
 name = "grid-governance"
 version = "0.1.0-alpha.1"
+dependencies = [
+ "grid-domain",
+]
 
 [[package]]
 name = "grid-identity"

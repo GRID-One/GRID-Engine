@@ -537,7 +537,7 @@ mod tests {
         let json = to_json(&42u8).unwrap();
         assert_eq!(
             json,
-            "{\"contract\":\"grid.output\",\"version\":{\"major\":1,\"minor\":0},\"record\":42}"
+            "{\"contract\":\"grid.output\",\"version\":{\"major\":1,\"minor\":1},\"record\":42}"
         );
         let back: RecordEnvelope<u8> = from_json(&json).unwrap();
         assert_eq!(back.record, 42);
