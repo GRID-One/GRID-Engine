@@ -453,6 +453,8 @@ version = "0.1.0-alpha.1"
 name = "grid-persistence"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "grid-domain",
+ "sha2 0.10.9",
  "sqlx",
 ]
 

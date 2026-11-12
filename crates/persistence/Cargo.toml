@@ -7,5 +7,13 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-# First use of an already-declared workspace dependency; not a new dependency.
+# The typed ids, statuses, instants and errors the store reads and writes (work package P1-02 D1).
+# Intra-workspace; it adds no external package to Cargo.lock.
+grid-domain.workspace = true
+# SQLite through SQLx with compile-time-checked queries and embedded migrations (engine-spec 8.5;
+# ADR-002, ADR-015 D1). First use of an already-declared workspace dependency (P1-00).
 sqlx.workspace = true
+# RustCrypto SHA-256 for the content-addressed artifact store and the manifest hash (engine-spec
+# 8.11 step 4; DR-C15). Approved by owner ruling R2 (P1-02); already locked at 0.10.9 through
+# sqlx-core, so nothing new is downloaded. grid-persistence is its only user (P1-02 D1).
+sha2.workspace = true
